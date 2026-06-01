@@ -17,7 +17,7 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'Updated!',
-                    text: 'Your Profile​ has been successfully updated.',
+                    text: 'Your Profile has been successfully updated.',
                     showConfirmButton: false,
                     timer: 2000, // បិទដោយស្វ័យប្រវត្តិក្នុង 2 វិនាទី
                     position: 'top-end', // ឱ្យវាលោតនៅជ្រុងខាងលើ

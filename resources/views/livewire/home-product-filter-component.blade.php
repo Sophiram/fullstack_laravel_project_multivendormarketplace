@@ -3,6 +3,7 @@
 use App\Models\Product;
 use App\Models\Category;
 use Livewire\Volt\Component;
+use Livewire\Attributes\On;
 
 new class extends Component {
     public $selectedCategory = null;
@@ -23,7 +24,7 @@ new class extends Component {
     {
         $quantity = intval($quantity);
 
-        if (!$productId) {
+        if (!$productId || $quantity < 1) {
             return;
         }
 
@@ -67,7 +68,11 @@ new class extends Component {
                 'type' => 'error',
             ]);
         } else {
-            $product = \App\Models\Product::with('images')->findOrFail($productId);
+            $product = Product::with('images')->find($productId);
+            if (!$product) {
+                return;
+            }
+
             $productImage = $product->images->first() ? $product->images->first()->image_path : null;
 
             $wishlist[$productId] = [
@@ -89,8 +94,8 @@ new class extends Component {
     public function with(): array
     {
         return [
-            'products' => Product::with('images')
-                // កំណត់ឱ្យបង្ហាញតែផលិតផលដែល Status ជា published
+            // 💡 បានបន្ថែម 'productReviews' ដើម្បីទាញយកទិន្នន័យផ្កាយមកបង្ហាញជៀសវាង Error N+1 Query
+            'products' => Product::with(['images', 'productReviews'])
                 ->where('status', 'published')
                 ->when($this->selectedCategory, function ($query) {
                     $query->where('category_id', $this->selectedCategory);
@@ -102,39 +107,60 @@ new class extends Component {
 }; ?>
 
 <div>
-    <!-- 🛒 Header Section -->
     <section id="product-header" class="mt-4 mt-md-5 mb-4">
         <div class="row">
             <div class="col-12 text-center mb-3 mb-md-4">
                 <h5 class="text-muted text-uppercase tracking-wider small mb-2"
                     style="font-size: 0.75rem; letter-spacing: 1px;">Discover Your Required Product</h5>
-                <h2 class="fw-bold text-dark header-main-title">From 267+ Different Vendors, 30+ Categories</h2>
+                <h2 class="fw-bold text-dark header-main-title fs-3 fs-md-2">From 267+ Different Vendors, 30+ Categories
+                </h2>
             </div>
 
-            <div class="col-12 mb-2 mb-md-4">
-                <div class="d-flex flex-wrap align-items-center justify-content-center gap-2 pb-2">
-                    <button wire:click="filterByCategory(null)"
-                        class="btn px-3 py-2 rounded-3 d-flex align-items-center gap-2 fw-semibold shadow-sm transition-all
-                        {{ $selectedCategory === null ? 'btn-danger text-white' : 'btn-light text-danger border-0' }}"
-                        style="{{ $selectedCategory === null ? 'background: linear-gradient(135deg, #dc3545, #bd2130);' : 'background-color: #ffeef0;' }}">
-                        <i class="fas fa-fire-alt"></i>
-                        <span>Hot in Sale</span>
+            <div class="col-12 mb-2 mb-md-4 position-relative" x-data="{
+                scrollNext() { $refs.scrollContainer.scrollBy({ left: 200, behavior: 'smooth' }) },
+                    scrollPrev() { $refs.scrollContainer.scrollBy({ left: -200, behavior: 'smooth' }) }
+            }">
+
+                <div class="category-scroll-wrapper position-relative">
+
+                    <button type="button" @click="scrollPrev()" class="category-nav-btn prev-btn d-md-none"
+                        aria-label="Previous">
+                        <i class="fas fa-chevron-left"></i>
                     </button>
 
-                    @foreach ($categories as $category)
-                        <button wire:click="filterByCategory({{ $category->id }})"
-                            class="btn px-3 py-2 rounded-3 fw-medium transition-all shadow-sm
-                            {{ $selectedCategory === $category->id ? 'btn-primary text-white' : 'btn-light text-primary border-0' }}"
-                            style="{{ $selectedCategory === $category->id ? 'background: linear-gradient(135deg, #0d6efd, #0a58ca);' : 'background-color: #e0e7ff; color: #4338ca;' }}">
-                            {{ $category->category_name }}
+                    <div x-ref="scrollContainer"
+                        class="category-scroll-container d-flex flex-nowrap flex-md-wrap align-items-center justify-content-start justify-content-md-center gap-2 pb-2">
+
+                        <button wire:click="filterByCategory(null)"
+                            class="btn px-3 py-2 rounded-3 d-flex align-items-center gap-2 fw-semibold shadow-sm transition-all text-nowrap
+                        {{ $selectedCategory === null ? 'btn-danger text-white' : 'btn-light text-danger border-0' }}"
+                            style="{{ $selectedCategory === null ? 'background: linear-gradient(135deg, #dc3545, #bd2130);' : 'background-color: #ffeef0;' }}">
+                            <i class="fas fa-fire-alt"></i>
+                            <span>Hot in Sale</span>
                         </button>
-                    @endforeach
+
+                        @foreach ($categories as $category)
+                            <button wire:key="category-{{ $category->id }}"
+                                wire:click="filterByCategory({{ $category->id }})"
+                                class="btn px-3 py-2 rounded-3 fw-medium transition-all shadow-sm text-nowrap
+                            {{ $selectedCategory === $category->id ? 'btn-primary text-white' : 'btn-light text-primary border-0' }}"
+                                style="{{ $selectedCategory === $category->id ? 'background: linear-gradient(135deg, #0d6efd, #0a58ca);' : 'background-color: #e0e7ff; color: #4338ca;' }}">
+                                {{ $category->category_name }}
+                            </button>
+                        @endforeach
+
+                    </div>
+
+                    <button type="button" @click="scrollNext()" class="category-nav-btn next-btn d-md-none"
+                        aria-label="Next">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 🛍️ Products Grid Section -->
     <div class="mt-4 mt-md-5">
         @if (session()->has('success'))
             <div class="alert alert-success alert-dismissible fade show rounded-3 small py-2" role="alert">
@@ -143,33 +169,30 @@ new class extends Component {
             </div>
         @endif
 
-        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3 g-sm-4">
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 g-md-4">
             @forelse($products as $product)
                 <div class="col d-flex align-items-stretch">
                     <div
                         class="card w-100 border-0 custom-product-card position-relative overflow-hidden d-flex flex-column">
 
-                        <!-- Product Image Container -->
                         <div class="position-relative product-img-container">
                             <a href="{{ route('product.details', ['productId' => $product->id]) }}"
                                 class="d-block w-100 h-100">
-                                <img src="{{ $product->images->first() ? asset('storage/' . $product->images->first()->image_path) : 'no image data' }}"
+                                <img src="{{ $product->images->first() ? asset('storage/' . $product->images->first()->image_path) : 'https://placehold.co/300x300?text=No+Image' }}"
                                     class="card-img-top product-main-img" alt="{{ $product->product_name }}">
                             </a>
 
-                            <!-- Wishlist Button -->
                             <button wire:click="toggleWishlist({{ $product->id }})"
-                                class="btn p-0 border-0 shadow-none position-absolute top-0 end-0 mt-3 me-3"
+                                class="btn p-0 border-0 shadow-none position-absolute top-0 end-0 mt-2 me-2 mt-md-3 me-md-3"
                                 style="z-index: 10;">
                                 @if (isset(session()->get('wishlist', [])[$product->id]))
                                     <i
-                                        class="fa-solid fa-heart fs-4 text-danger animate__animated animate__bounceIn"></i>
+                                        class="fa-solid fa-heart fs-5 fs-md-4 text-danger animate__animated animate__bounceIn"></i>
                                 @else
-                                    <i class="fa-regular fa-heart fs-4 text-secondary"></i>
+                                    <i class="fa-regular fa-heart fs-5 fs-md-4 text-secondary"></i>
                                 @endif
                             </button>
 
-                            <!-- កែសម្រួលត្រង់ផ្នែក Badge -->
                             @if ($product->status === 'published')
                                 <span
                                     class="badge position-absolute top-0 start-0 m-2 m-md-3 px-2 py-1 vendor-premium-badge">
@@ -178,8 +201,7 @@ new class extends Component {
                             @endif
                         </div>
 
-                        <!-- Card Body -->
-                        <div class="card-body p-2.5 p-md-3.5 d-flex flex-column justify-content-between flex-grow-1">
+                        <div class="card-body p-2 p-md-3 d-flex flex-column justify-content-between flex-grow-1">
                             <div>
                                 <h5 class="product-title mb-1" title="{{ $product->product_name }}">
                                     <a href="{{ route('product.details', ['productId' => $product->id]) }}"
@@ -187,6 +209,33 @@ new class extends Component {
                                         {{ $product->product_name }}
                                     </a>
                                 </h5>
+
+                                {{-- 💡 ផ្នែកបង្ហាញផ្កាយ Review Stars --}}
+                                <div class="d-flex align-items-center gap-1 mb-2" style="font-size: 0.78rem;">
+                                    @php
+                                        $reviewCount = $product->productReviews->count();
+                                        $avgRating =
+                                            $reviewCount > 0 ? round($product->productReviews->avg('rating')) : 0;
+                                    @endphp
+
+                                    <div class="text-warning">
+                                        @for ($i = 1; $i <= 5; $i++)
+                                            @if ($i <= $avgRating)
+                                                &#9733;
+                                            @else
+                                                &#9734;
+                                            @endif
+                                        @endfor
+                                    </div>
+
+                                    @if ($reviewCount > 0)
+                                        <span class="text-muted">({{ $reviewCount }})</span>
+                                    @else
+                                        <span class="text-light-emphasis text-muted" style="font-size: 0.7rem;">(0
+                                            reviews)</span>
+                                    @endif
+                                </div>
+
                                 <p class="product-short-desc mb-2 mb-md-3">
                                     {{ $product->description ?? 'No description available for this premium item.' }}
                                 </p>
@@ -198,11 +247,11 @@ new class extends Component {
                                     <div class="price-section">
                                         <span class="price-label">Price</span>
                                         <div class="d-flex align-items-baseline gap-1">
-                                            <span class="current-price">
+                                            <span class="current-price fs-6 fs-md-5">
                                                 ${{ number_format($product->discounted_price ?? $product->regular_price, 2) }}
                                             </span>
                                             @if (isset($product->discounted_price) && $product->discounted_price < $product->regular_price)
-                                                <span class="old-price">
+                                                <span class="old-price small">
                                                     ${{ number_format($product->regular_price, 2) }}
                                                 </span>
                                             @endif
@@ -215,27 +264,25 @@ new class extends Component {
                                     </div>
                                 </div>
 
-                                <!-- ✨ ផ្នែកប៊ូតុង និងប្រអប់លេខថ្មី ដែលមានលក្ខណៈ Responsive ឥតខ្ចោះ -->
-                                <div x-data="{ quantity: 1 }" class="mt-3 px-1 pb-2">
+                                <div x-data="{ quantity: 1, maxStock: {{ $product->stock_quantity ?? 99 }} }" class="mt-2">
                                     <div class="responsive-cart-container">
 
-                                        <!-- Stepper សម្រាប់គ្រប់គ្រងចំនួនលំអិត -->
-                                        {{-- <div class="custom-qty-stepper">
+                                        <div class="custom-qty-stepper">
                                             <button type="button" @click="if(quantity > 1) quantity--"
                                                 class="qty-control-btn">-</button>
-                                            <input type="number" x-model="quantity" min="1"
-                                                max="{{ $product->stock_quantity }}" class="qty-modern-input"
-                                                aria-label="Quantity">
-                                            <button type="button" @click="quantity++"
+                                            <input type="number" x-model.number="quantity"
+                                                @input="if(quantity < 1) quantity = 1; if(quantity > maxStock) quantity = maxStock;"
+                                                min="1" class="qty-modern-input" aria-label="Quantity">
+                                            <button type="button" @click="if(quantity < maxStock) quantity++"
                                                 class="qty-control-btn">+</button>
-                                        </div> --}}
+                                        </div>
 
-                                        <!-- ប៊ូតុង Add to Cart Premium -->
                                         <button type="button"
                                             wire:click="addToCartFromAnywhere({{ $product->id }}, quantity)"
                                             class="btn-premium-inline-cart">
                                             <i class="fa-solid fa-basket-shopping"></i>
-                                            <span>Add to Cart</span>
+                                            <span class="d-none d-sm-inline">Add to Cart</span>
+                                            <span class="d-inline d-sm-none">Add</span>
                                         </button>
 
                                     </div>
@@ -257,24 +304,36 @@ new class extends Component {
 </div>
 
 <style>
-    /* 📱 Responsive Flex Layout សម្រាប់ប្រអប់ទិញទំនិញ */
+    /* Layout Base */
     .responsive-cart-container {
         display: flex;
-        gap: 8px;
+        gap: 6px;
         align-items: center;
         width: 100%;
     }
 
-    /* 🔢 Modern Quantity Stepper */
+    /* Category horizontal scroll on mobile */
+    .category-scroll-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        scrollbar-width: none;
+    }
+
+    .category-scroll-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Modern Quantity Stepper */
     .custom-qty-stepper {
         display: flex;
         align-items: center;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        border-radius: 10px;
         overflow: hidden;
         background: #f8fafc;
-        height: 40px;
-        box-sizing: border-box;
+        height: 36px;
+        flex-shrink: 0;
     }
 
     .qty-control-btn {
@@ -297,12 +356,12 @@ new class extends Component {
     }
 
     .qty-modern-input {
-        width: 34px !important;
+        width: 30px !important;
         border: none !important;
         background: transparent !important;
         text-align: center;
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         color: #1e293b;
         padding: 0 !important;
         box-shadow: none !important;
@@ -319,20 +378,20 @@ new class extends Component {
         -moz-appearance: textfield;
     }
 
-    /* 🛍️ Premium Add to Cart Button */
+    /* Premium Add to Cart Button */
     .btn-premium-inline-cart {
         flex-grow: 1;
-        height: 40px;
+        height: 36px;
         background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
         color: #ffffff !important;
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         border: none !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 6px;
         cursor: pointer;
         transition: all 0.25s ease-in-out !important;
         white-space: nowrap;
@@ -344,41 +403,28 @@ new class extends Component {
         transform: translateY(-1px);
     }
 
-    .btn-premium-inline-cart:active {
-        transform: translateY(1px);
-    }
-
-    /* 🎨 Global Card Styling */
-    .transition-all {
-        transition: all 0.2s ease-in-out;
-    }
-
-    .btn-light.text-primary:hover {
-        background-color: #c7d2fe !important;
-        transform: translateY(-1px);
-    }
-
+    /* Card & Animations */
     .custom-product-card {
         background: #ffffff;
-        border-radius: 20px !important;
+        border-radius: 16px !important;
         box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
         transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .custom-product-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.12);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 25px rgba(99, 102, 241, 0.1);
     }
 
     .product-img-container {
-        height: 240px;
+        height: 200px;
         background-color: #f8fafc;
-        border-radius: 20px 20px 0 0;
+        border-radius: 16px 16px 0 0;
         overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 15px;
+        padding: 12px;
     }
 
     .product-main-img {
@@ -389,7 +435,7 @@ new class extends Component {
     }
 
     .custom-product-card:hover .product-main-img {
-        transform: scale(1.06);
+        transform: scale(1.05);
     }
 
     .vendor-premium-badge {
@@ -397,150 +443,118 @@ new class extends Component {
         backdrop-filter: blur(4px);
         color: #1e293b;
         font-weight: 600;
-        font-size: 0.75rem;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        font-size: 0.7rem;
+        border-radius: 6px !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     }
 
     .product-title {
-        font-size: 0.975rem;
+        font-size: 0.9rem;
         font-weight: 700;
-        line-height: 1.4;
-        height: 2.8rem;
+        line-height: 1.3;
+        height: 2.4rem;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
 
-    .custom-product-card:hover .product-title a {
-        color: #4f46e5 !important;
-    }
-
     .product-short-desc {
-        font-size: 0.825rem;
+        font-size: 0.8rem;
         color: #64748b;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        height: 2.3rem;
-        line-height: 1.4;
+        height: 2.2rem;
+        line-height: 1.3;
     }
 
     .price-label {
-        font-size: 0.65rem;
-        text-transform: uppercase;
-        font-weight: 700;
+        font-size: 0.7rem;
         color: #94a3b8;
-        letter-spacing: 0.5px;
         display: block;
+        text-uppercase: uppercase;
+        font-weight: 600;
     }
 
     .current-price {
-        font-size: 1.2rem;
         font-weight: 800;
         color: #ef4444;
     }
 
     .old-price {
-        font-size: 0.825rem;
         color: #94a3b8;
         text-decoration: line-through;
     }
 
     .stock-status-badge {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         color: #10b981;
         font-weight: 600;
         background: #ecfdf5;
-        padding: 4px 10px;
+        padding: 2px 8px;
         border-radius: 6px;
     }
 
-    /* ==========================================================================
-       📱 RESPONSIVE DESIGN FOR TABLET & MOBILE SCREENS
-       ========================================================================== */
-
-    /* 📑 1. សម្រាប់ឧបករណ៍ Tablet និងអេក្រង់ទំហំមធ្យម (Medium Screens: ល្អិតជាង 991.98px) */
-    @media (max-width: 991.98px) {
-        .product-img-container {
-            height: 190px !important;
-            padding: 10px;
-        }
-
-        .product-title {
-            font-size: 0.9rem;
-            height: 2.6rem;
-        }
-
-        .product-short-desc {
-            font-size: 0.8rem;
-            height: 2.2rem;
-            margin-bottom: 0.5rem !important;
-        }
-
-        .current-price {
-            font-size: 1.05rem;
-        }
-
-        .stock-status-badge {
-            font-size: 0.7rem;
-            padding: 2px 8px;
-        }
-
-        .custom-qty-stepper,
-        .btn-premium-inline-cart {
-            height: 42px;
-        }
-
-        .qty-control-btn {
-            width: 32px;
-            font-size: 1rem;
-        }
-
-        .qty-modern-input {
-            width: 36px !important;
-        }
+    .category-nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32px;
+        height: 32px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid #e2e8f0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4f46e5;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
 
-    /* 📱 2. សម្រាប់ឧបករណ៍ទូរស័ព្ទដៃផ្ទាល់ (Small Mobile Screens: ល្អិតជាង 575.98px) */
-    @media (max-width: 575.98px) {
-        .responsive-cart-container {
-            flex-direction: column;
-            gap: 8px;
+    .category-nav-btn:active {
+        background: #4f46e5;
+        color: #ffffff;
+    }
+
+    .prev-btn {
+        left: -5px;
+    }
+
+    .next-btn {
+        right: -5px;
+    }
+
+    @media (max-width: 767.98px) {
+        .category-scroll-wrapper::after {
+            display: none !important;
         }
 
-        .custom-qty-stepper {
-            width: 100% !important;
-            justify-content: space-between;
-            height: 42px;
-        }
-
-        .qty-control-btn {
-            width: 46px;
-            font-size: 1.1rem;
-        }
-
-        .qty-modern-input {
-            font-size: 1rem;
-            width: 40px !important;
-        }
-
-        .btn-premium-inline-cart {
-            width: 100% !important;
-            height: 42px;
-            font-size: 0.85rem;
+        .category-scroll-container {
+            padding-left: 25px !important;
+            padding-right: 25px !important;
         }
 
         .product-img-container {
-            height: 160px !important;
+            height: 150px;
+        }
+
+        .row-cols-2>.col {
+            padding-left: 6px;
+            padding-right: 6px;
+        }
+
+        .g-3 {
+            --bs-gutter-x: 0.75rem;
+            --bs-gutter-y: 0.75rem;
         }
     }
 </style>
 
-<!-- 🔔 SweetAlert2 JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('livewire:init', () => {
@@ -552,15 +566,11 @@ new class extends Component {
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 1000,
+                timer: 1500,
                 timerProgressBar: true,
                 background: '#ffffff',
                 color: '#1e293b',
-                iconColor: data.type === 'success' ? '#10b981' : '#ef4444',
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer)
-                    toast.addEventListener('mouseleave', Swal.resumeTimer)
-                }
+                iconColor: data.type === 'success' ? '#10b981' : '#ef4444'
             });
         });
     });

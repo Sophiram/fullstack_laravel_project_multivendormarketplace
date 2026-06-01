@@ -37,5 +37,11 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => 2, // សន្មតថា 2 គឺជា Customer
         ]);
+
+
+        $this->call([
+            CategorySeeder::class,
+            SubCategorySeeder::class,
+        ]);
     }
 }

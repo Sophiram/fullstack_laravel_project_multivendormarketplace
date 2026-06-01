@@ -13,6 +13,7 @@ protected $table = 'product_reviews';
         'user_id',
         'rating',
         'review',
+        'status',
         'verified_purchase', // បន្ថែមវាចូល
         'created_at',
         'updated_at'

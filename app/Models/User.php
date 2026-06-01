@@ -67,4 +67,21 @@ class User extends Authenticatable
     public function isCustomer() {
         return $this->role == 2;
     }
+    public function vendor()
+    {
+        // សន្មតថា User ម្នាក់មាន Vendor profile មួយ
+        return $this->hasOne(Vendor::class, 'user_id');
+    }
+    public function stores()
+    {
+        // ដោយសារក្នុង Table stores របស់អ្នកប្រើ 'vendor_id' ជា Foreign Key
+        // ប្រសិនបើ 'vendor_id' នោះជា ID របស់ User តែម្តង កូដនឹងដំណើរការត្រឹមត្រូវ
+        return $this->hasMany(Store::class, 'vendor_id');
+    }
+
+    // ក្នុង app/Models/User.php
+    public function payoutRequests()
+    {
+        return $this->hasMany(PayoutRequest::class);
+    }
 }

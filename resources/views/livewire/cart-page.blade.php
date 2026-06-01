@@ -1,27 +1,40 @@
 <?php
 
 use Livewire\Volt\Component;
+use App\Models\PaymentMethod; // 👈 នាំចូល Model ដើម្បីទាញទិន្នន័យវិធីសាស្ត្រទូទាត់
 
 new class extends Component {
-    public $paymentMethod = 'aba';
+    public $paymentMethod = ''; // ទុកឱ្យទទេរដើម្បីចាំចាប់យក ID នៃ Gateway ដំបូងគេ
     public $promoCode = '';
-    public $discount = 0.00;
-    public $shipping = 5.00;
-    public $appliedCoupon = null; // រក្សាទុកឈ្មោះ Coupon ដែលបានប្រើជោគជ័យ
+    public $discount = 0.0;
+    public $shipping = 5.0;
+    public $appliedCoupon = null;
 
-    // ទាញយកទិន្នន័យពី Cart Session
+    // ចាប់ផ្តើមទាញយកវិធីសាស្ត្រទូទាត់ដំបូងគេដែល Active មកធ្វើជា Default
+    public function mount()
+    {
+        $defaultMethod = PaymentMethod::where('status', true)->first();
+        if ($defaultMethod) {
+            $this->paymentMethod = $defaultMethod->id;
+        }
+    }
+
+    // ទាញយកវិធីសាស្ត្រទូទាត់ទាំងអស់ដែល Active ពី Database ទៅកាន់ UI
+    public function getActivePaymentMethodsProperty()
+    {
+        return PaymentMethod::where('status', true)->get();
+    }
+
     public function getCartItemsProperty()
     {
         return session()->get('cart', []);
     }
 
-    // គណនាតម្លៃទំនិញសរុប (មិនទាន់បូកសេវាដឹក និងដក Discount)
     public function getSubtotalProperty()
     {
         return collect($this->cartItems)->sum(fn($item) => $item['price'] * $item['quantity']);
     }
 
-    // គណនាតម្លៃចុងក្រោយដែលត្រូវទូទាត់
     public function getTotalProperty()
     {
         if (count($this->cartItems) === 0) {
@@ -31,7 +44,6 @@ new class extends Component {
         return $total > 0 ? $total : 0;
     }
 
-    // មុខងារបង្កើន ឬបន្ថយបរិមាណទំនិញ (+ / -)
     public function updateQuantity($id, $change)
     {
         $cart = session()->get('cart', []);
@@ -46,16 +58,12 @@ new class extends Component {
                 session()->put('cart', $cart);
             }
 
-            session()->put('cart', $cart);
-
-            // គណនា Discount ឡើងវិញបើមានការផ្លាស់ប្តូរបរិមាណទំនិញ
             if ($this->appliedCoupon) {
                 $this->applyPromo();
             }
         }
     }
 
-    // មុខងារលុបទំនិញចេញពីកន្ត្រក (រូបធុងសំរាម)
     public function removeItem($id)
     {
         $cart = session()->get('cart', []);
@@ -73,7 +81,6 @@ new class extends Component {
         }
     }
 
-    // 🎯 មុខងារថ្មី៖ ពិនិត្យ និងអនុវត្តកូដបញ្ចុះតម្លៃ (Apply Promo Code)
     public function applyPromo()
     {
         if (empty($this->promoCode)) {
@@ -81,52 +88,59 @@ new class extends Component {
             return;
         }
 
-        // ឧទាហរណ៍៖ បង្កើតលក្ខខណ្ឌកូដបញ្ចុះតម្លៃ (បងអាចដូរទៅទាញពី DB តាមក្រោយបាន)
-        $coupons = [
-            'DISCOUNT10' => ['type' => 'percentage', 'value' => 10], // ចុះ ១០ ភាគរយ
-            'QUICK5'     => ['type' => 'fixed', 'value' => 5.00],    // ចុះ ៥ ដុល្លារថេរ
-        ];
-
         $code = strtoupper(trim($this->promoCode));
 
-        if (array_key_exists($code, $coupons)) {
-            $coupon = $coupons[$code];
-            $this->appliedCoupon = $code;
+        // 🔍 1. ស្វែងរកកូដ Coupon នៅក្នុង Database ដែលមានស្ថានភាព Active (status = 1)
+        // លោកអ្នកអាចបន្ថែមលក្ខខណ្ឌពិនិត្យកាលបរិច្ឆេទ (Expiry Date) ប្រសិនបើមាន
+        $coupon = \App\Models\Discount::where('code', $code)->where('status', 1)->first();
 
-            if ($coupon['type'] === 'percentage') {
-                $this->discount = ($this->subtotal * $coupon['value']) / 100;
-            } else {
-                $this->discount = $coupon['value'];
+        if ($coupon) {
+            // 💰 2. ពិនិត្យលក្ខខណ្ឌទឹកប្រាក់ទិញអប្បបរមា (Minimum Requirement) ពី Admin
+            if ($this->subtotal < $coupon->min_requirement) {
+                $this->discount = 0.0;
+                $this->appliedCoupon = null;
+                session()->flash('error', 'Your order does not meet the minimum spend of $' . number_format($coupon->min_requirement, 2) . ' for this coupon.');
+                return;
             }
 
-            // ការពារកុំឱ្យតម្លៃ Discount ធំជាងតម្លៃទំនិញសរុប
+            $this->appliedCoupon = $code;
+
+            // 🧮 3. គណនាចំនួនទឹកប្រាក់ដែលត្រូវបញ្ចុះ (Percentage % ឬ Fixed Amount $)
+            if ($coupon->type === 'percentage') {
+                $this->discount = ($this->subtotal * $coupon->value) / 100;
+            } else {
+                $this->discount = $coupon->value;
+            }
+
+            // ការពារកុំឱ្យតម្លៃបញ្ចុះតម្លៃ លើសពីតម្លៃទំនិញសរុប
             if ($this->discount > $this->subtotal) {
                 $this->discount = $this->subtotal;
             }
 
-            session()->flash('success', 'Promo code applied successfully!');
+            session()->flash('success', 'Promo code "' . $code . '" applied successfully!');
         } else {
-            $this->discount = 0.00;
+            // ❌ ករណីរកមិនឃើញ ឬ កូដត្រូវបានហួសសុពលភាព
+            $this->discount = 0.0;
             $this->appliedCoupon = null;
-            session()->flash('error', 'Invalid or expired promo code.');
+            session()->flash('error', 'Invalid, expired, or deactivated promo code.');
         }
     }
 
-    // 🎯 មុខងារថ្មី៖ លុបកូដបញ្ចុះតម្លៃវិញ
     public function removePromo()
     {
-        $this->discount = 0.00;
+        $this->discount = 0.0;
         $this->promoCode = '';
         $this->appliedCoupon = null;
         session()->flash('info', 'Promo code removed.');
     }
 
-    // ដំណើរការបន្តទៅកាន់ការទូទាត់ប្រាក់
     public function proceedToCheckout()
     {
-        if (count($this->cartItems) === 0) return;
+        if (count($this->cartItems) === 0) {
+            return;
+        }
 
-        session()->put('selected_payment_method', $this->paymentMethod);
+        session()->put('selected_payment_method_id', $this->paymentMethod); // រក្សាទុក ID នៃ Gateway ដែលបានជ្រើសរើស
         session()->put('cart_shipping', $this->shipping);
         session()->put('cart_discount', $this->discount);
         session()->put('applied_coupon', $this->appliedCoupon);
@@ -135,285 +149,392 @@ new class extends Component {
     }
 }; ?>
 
-<div class="cart-wrapper" style="background-color: #f8f9fa; min-height: 100vh; padding: 40px 0; font-family: 'Inter', sans-serif;">
-    <div class="container">
+<div class="cart-wrapper py-5">
+    <!-- Google Fonts & Dynamic UI Resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-        <!-- 🔔 ផ្ទាំងបង្ហាញសារជូនដំណឹង (Alert Messages) -->
+    <style>
+        .cart-wrapper {
+            background-color: #f8fafc;
+            min-height: 100vh;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .premium-heading {
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: -0.5px;
+        }
+
+        .premium-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -15px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+        }
+
+        /* Product Card Item Styles */
+        .cart-item-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.7);
+            border-radius: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cart-item-card:hover {
+            transform: translateY(-3px);
+            border-color: #cbd5e1;
+            box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.06);
+        }
+
+        .product-image-box {
+            height: 95px;
+            width: 100%;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        /* Quantity Incrementor Elements */
+        .quantity-btn {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: #f1f5f9;
+            border: none;
+            font-weight: 700;
+            color: #475569;
+            transition: all 0.2s;
+        }
+
+        .quantity-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .quantity-input {
+            width: 45px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .remove-btn {
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 8px;
+            border-radius: 50%;
+            background: #f8fafc;
+        }
+
+        .remove-btn:hover {
+            color: #ef4444;
+            background: #fee2e2;
+            transform: scale(1.05);
+        }
+
+        /* Dynamic Payment Grid Selection Cards */
+        .dynamic-payment-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            display: flex;
+            flex-column: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 82px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dynamic-payment-card:hover {
+            border-color: #cbd5e1 !important;
+            background-color: #f8fafc;
+            transform: translateY(-2px);
+        }
+
+        .btn-check:checked+.dynamic-payment-card {
+            border-color: #7c3aed !important;
+            background: linear-gradient(to bottom right, #ffffff, #f5f3ff) !important;
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+        }
+
+        .payment-logo-container {
+            width: 100%;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Summary Right Sticky Section */
+        .summary-price-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
+
+        .checkout-btn-premium {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 14px !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25);
+        }
+
+        .checkout-btn-premium:hover:not([disabled]) {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            box-shadow: 0 6px 20px rgba(249, 115, 22, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .border-dashed {
+            border-style: dashed !important;
+        }
+    </style>
+
+    <div class="container">
+        {{-- System Alerts Pipeline Notice Feedback --}}
         <div class="row">
             <div class="col-12">
                 @if (session()->has('success'))
-                    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 rounded-3" role="alert">
+                    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 rounded-4 p-3 animate__animated animate__fadeInDown"
+                        role="alert">
                         <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert"
+                            aria-label="Close"></button>
                     </div>
                 @endif
                 @if (session()->has('error'))
-                    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 rounded-3" role="alert">
+                    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 rounded-4 p-3 animate__animated animate__shakeX"
+                        role="alert">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert"
+                            aria-label="Close"></button>
                     </div>
                 @endif
                 @if (session()->has('info'))
-                    <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm mb-4 rounded-3" role="alert">
+                    <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm mb-4 rounded-4 p-3 animate__animated animate__fadeIn"
+                        role="alert">
                         <i class="bi bi-info-circle-fill me-2"></i>{{ session('info') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert"
+                            aria-label="Close"></button>
                     </div>
                 @endif
             </div>
         </div>
 
         <div class="row g-4">
-            <!-- Cart Items Section -->
+            <!-- Left Side Core Content Elements -->
             <div class="col-lg-8">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="mb-0 fw-bold text-dark">Shopping Cart</h4>
-                    <span class="text-muted fw-medium">{{ count($this->cartItems) }} {{ count($this->cartItems) > 1 ? 'items' : 'item' }}</span>
+                <div class="d-flex justify-content-between align-items-center mb-4 animate__animated animate__fadeIn">
+                    <div>
+                        <h4 class="mb-1 fw-bold text-dark premium-heading">Shopping Cart</h4>
+                        <p class="text-muted small mb-0">Review your products before entering secure checkout system</p>
+                    </div>
+                    <span class="badge bg-white border text-dark px-3 py-2 rounded-pill fw-semibold shadow-sm"
+                        style="font-family: 'Outfit';">
+                        {{ count($this->cartItems) }} {{ count($this->cartItems) > 1 ? 'Items' : 'Item' }}
+                    </span>
                 </div>
 
-                <!-- Product Cards List -->
+                <!-- Product Loop Architecture -->
                 <div class="d-flex flex-column gap-3">
                     @forelse($this->cartItems as $id => $item)
-                        <div class="product-card p-3 shadow-sm border-0 bg-white rounded-3">
+                        <div class="cart-item-card p-3 animate__animated animate__fadeInUp">
                             <div class="row align-items-center g-3">
-                                <!-- Image -->
-                                <div class="col-3 col-md-2">
-                                    <img src="{{ !empty($item['image']) ? asset('storage/' . $item['image']) : 'https://placehold.co/100x100?text=No+Img' }}"
-                                         alt="{{ $item['name'] }}" class="product-image w-100 object-fit-cover rounded-3" style="height: 90px;">
-                                </div>
-
-                                <!-- Details -->
-                                <div class="col-9 col-md-4">
-                                    <h6 class="mb-1 fw-bold text-dark" style="font-size: 1rem;">{{ $item['name'] }}</h6>
-                                    <p class="text-muted mb-0 small">Price: ${{ number_format($item['price'], 2) }}</p>
-                                    @if(isset($item['discount']) && $item['discount'] > 0)
-                                        <span class="discount-badge d-inline-block mt-1">{{ $item['discount'] }}% OFF</span>
-                                    @endif
-                                </div>
-
-                                <!-- Quantity Controls -->
-                                <div class="col-6 col-md-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <button type="button" wire:click="updateQuantity('{{ $id }}', -1)" class="quantity-btn">-</button>
-                                        <input type="number" class="quantity-input fw-medium text-dark" value="{{ $item['quantity'] }}" readonly>
-                                        <button type="button" wire:click="updateQuantity('{{ $id }}', 1)" class="quantity-btn">+</button>
+                                <!-- Image Module Asset -->
+                                <div class="col-4 col-sm-3 col-md-2">
+                                    <div class="product-image-box d-flex align-items-center justify-content-center">
+                                        <img src="{{ !empty($item['image']) ? asset('storage/' . $item['image']) : 'https://placehold.co/100x100?text=No+Img' }}"
+                                            alt="{{ $item['name'] }}" class="w-100 h-100 object-fit-contain p-1">
                                     </div>
                                 </div>
 
-                                <!-- Subtotal per item -->
-                                <div class="col-4 col-md-2 text-md-end">
-                                    <span class="fw-bold text-dark fs-5">${{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                                <!-- Core Details Block -->
+                                <div class="col-8 col-sm-9 col-md-4">
+                                    <h6 class="mb-1 fw-bold text-dark text-truncate" style="font-size: 0.95rem;">
+                                        {{ $item['name'] }}</h6>
+                                    <p class="text-muted mb-1 small" style="font-family: 'Outfit';">Unit Price:
+                                        ${{ number_format($item['price'], 2) }}</p>
+                                    @if (isset($item['discount']) && $item['discount'] > 0)
+                                        <span
+                                            class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"
+                                            style="font-size: 0.65rem; font-weight: 700;">{{ $item['discount'] }}%
+                                            OFF</span>
+                                    @endif
                                 </div>
 
-                                <!-- Remove Action -->
+                                <!-- Incrementor Quantity Interface Controls -->
+                                <div class="col-6 col-md-3">
+                                    <div class="d-flex align-items-center bg-light p-1 rounded-3 d-inline-flex border">
+                                        <button type="button" wire:click="updateQuantity('{{ $id }}', -1)"
+                                            class="quantity-btn">-</button>
+                                        <input type="number" class="quantity-input text-dark"
+                                            value="{{ $item['quantity'] }}" readonly>
+                                        <button type="button" wire:click="updateQuantity('{{ $id }}', 1)"
+                                            class="quantity-btn">+</button>
+                                    </div>
+                                </div>
+
+                                <!-- Product Row Subtotal -->
+                                <div class="col-4 col-md-2 text-md-end">
+                                    <span
+                                        class="fw-bold text-dark summary-price-text fs-5">${{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                                </div>
+
+                                <!-- Garbage Action Controller -->
                                 <div class="col-2 col-md-1 text-end">
-                                    <i wire:click="removeItem('{{ $id }}')" class="bi bi-trash remove-btn fs-5" title="Remove item"></i>
+                                    <i wire:click="removeItem('{{ $id }}')"
+                                        class="bi bi-trash3 remove-btn fs-5" title="Remove item"></i>
                                 </div>
                             </div>
                         </div>
                     @empty
-                        <div class="alert alert-white text-center py-5 rounded-3 border-0 shadow-sm bg-white">
-                            <i class="bi bi-basket3 display-4 text-muted mb-3 opacity-50"></i>
-                            <p class="text-muted mb-0 fw-medium">Your shopping cart is empty.</p>
+                        <div class="premium-card text-center py-5 border-0 shadow-sm animate__animated animate__fadeIn">
+                            <i class="bi bi-basket3 display-3 text-muted mb-3 opacity-30 d-block"></i>
+                            <h5 class="fw-bold text-secondary mb-1">Your cart is empty</h5>
+                            <p class="text-muted small mb-0 px-4">Go back to shop to discover and select premium
+                                products.</p>
                         </div>
                     @endforelse
                 </div>
 
-                <!-- 💳 Payment Methods Section -->
-                @if(count($this->cartItems) > 0)
-                    <div class="card p-4 border-0 shadow-sm rounded-3 mt-4 bg-white">
-                        <h5 class="fw-bold mb-3 text-dark">
-                            <i class="bi bi-credit-card me-2 text-primary"></i>Select Payment Method
+                <!-- 💳 ផ្នែកជ្រើសរើសវិធីសាស្ត្រទូទាត់រត់តាម Admin (Dynamic Gateways Interface) -->
+                @if (count($this->cartItems) > 0)
+                    <div class="premium-card p-4 mt-4 animate__animated animate__fadeInUp">
+                        <h5 class="fw-bold mb-1 text-dark premium-heading">
+                            <i class="bi bi-shield-check me-2 text-primary"></i>Secure Payment Gateway
                         </h5>
+                        <p class="text-muted small mb-4">Please select your preferred secure transaction network option
+                        </p>
 
-                        <div class="row g-2">
-                            <!-- ABA Pay -->
-                            <div class="col-6 col-sm-3">
-                                <label class="w-100 m-0 cursor-pointer">
-                                    <input type="radio" wire:model="paymentMethod" value="aba" class="btn-check" name="payment_option">
-                                    <div class="btn btn-outline-light d-flex flex-column align-items-center justify-content-center p-3 rounded-3 border text-dark h-100 w-100 payment-card">
-                                        <span class="fw-bold text-uppercase text-info mb-1" style="font-size: 0.9rem; letter-spacing: 0.5px;">ABA Pay</span>
-                                        <small class="text-muted" style="font-size: 0.7rem;">Instant Pay</small>
+                        <div class="row g-2.5">
+                            @forelse($this->activePaymentMethods as $method)
+                                <div class="col-6 col-sm-4 col-md-3">
+                                    <label class="w-100 m-0">
+                                        <input type="radio" wire:model="paymentMethod" value="{{ $method->id }}"
+                                            class="btn-check" name="payment_option">
+                                        <div class="dynamic-payment-card">
+                                            <div class="payment-logo-container">
+                                                @if ($method->logo)
+                                                    <img src="{{ asset('storage/' . $method->logo) }}"
+                                                        alt="{{ $method->name }}"
+                                                        style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                                @else
+                                                    <span class="fw-bold text-dark font-monospace text-truncate"
+                                                        style="font-size: 0.85rem; font-family: 'Outfit'!important;">
+                                                        {{ $method->name }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <small
+                                                class="text-muted mt-1.5 font-monospace text-center d-block w-100 text-truncate"
+                                                style="font-size: 0.65rem; letter-spacing: -0.2px;">
+                                                {{ ucfirst(str_replace('_', ' ', $method->type)) }}
+                                            </small>
+                                        </div>
+                                    </label>
+                                </div>
+                            @empty
+                                <div class="col-12">
+                                    <div class="alert alert-warning border-0 small m-0 rounded-3">
+                                        <i class="bi bi-exclamation-triangle me-1"></i> No active payment gateway
+                                        methods configured by administrator.
                                     </div>
-                                </label>
-                            </div>
-
-                            <!-- Bakong -->
-                            <div class="col-6 col-sm-3">
-                                <label class="w-100 m-0 cursor-pointer">
-                                    <input type="radio" wire:model="paymentMethod" value="bakong" class="btn-check" name="payment_option">
-                                    <div class="btn btn-outline-light d-flex flex-column align-items-center justify-content-center p-3 rounded-3 border text-dark h-100 w-100 payment-card">
-                                        <span class="fw-bold text-uppercase text-danger mb-1" style="font-size: 0.9rem; letter-spacing: 0.5px;">Bakong</span>
-                                        <small class="text-muted" style="font-size: 0.7rem;">KHQR Code</small>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <!-- Credit Card -->
-                            <div class="col-6 col-sm-3">
-                                <label class="w-100 m-0 cursor-pointer">
-                                    <input type="radio" wire:model="paymentMethod" value="card" class="btn-check" name="payment_option">
-                                    <div class="btn btn-outline-light d-flex flex-column align-items-center justify-content-center p-3 rounded-3 border text-dark h-100 w-100 payment-card">
-                                        <span class="fw-bold text-uppercase text-primary mb-1" style="font-size: 0.9rem; letter-spacing: 0.5px;">Visa/Master</span>
-                                        <small class="text-muted" style="font-size: 0.7rem;">Credit/Debit</small>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <!-- Acleda -->
-                            <div class="col-6 col-sm-3">
-                                <label class="w-100 m-0 cursor-pointer">
-                                    <input type="radio" wire:model="paymentMethod" value="acleda" class="btn-check" name="payment_option">
-                                    <div class="btn btn-outline-light d-flex flex-column align-items-center justify-content-center p-3 rounded-3 border text-dark h-100 w-100 payment-card">
-                                        <span class="fw-bold text-uppercase mb-1" style="font-size: 0.9rem; color: #0d3b66; letter-spacing: 0.5px;">Acleda</span>
-                                        <small class="text-muted" style="font-size: 0.7rem;">ToanChet</small>
-                                    </div>
-                                </label>
-                            </div>
+                                </div>
+                            @endforelse
                         </div>
                     </div>
                 @endif
             </div>
 
-            <!-- Order Summary Section -->
+            <!-- Right Sidebar Panel Order Summary Box -->
             <div class="col-lg-4">
-                <div class="summary-card p-4 shadow-sm border-0 bg-white rounded-3 position-sticky" style="top: 20px;">
-                    <h5 class="mb-4 fw-bold text-dark">Order Summary</h5>
+                <div class="premium-card p-4 position-sticky animate__animated animate__fadeIn" style="top: 24px;">
+                    <h5 class="mb-4 fw-bold text-dark premium-heading">Order Summary</h5>
 
-                    <div class="d-flex justify-content-between mb-3">
+                    <div class="d-flex justify-content-between mb-3 small">
                         <span class="text-muted">Subtotal</span>
-                        <span class="fw-semibold text-dark">${{ number_format($this->subtotal, 2) }}</span>
+                        <span
+                            class="fw-semibold text-dark summary-price-text">${{ number_format($this->subtotal, 2) }}</span>
                     </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span class="text-muted">Discount</span>
-                        <span class="text-success fw-semibold">-${{ number_format($this->discount, 2) }}</span>
+                    <div class="d-flex justify-content-between mb-3 small">
+                        <span class="text-muted">Coupon Discount</span>
+                        <span
+                            class="text-success fw-semibold summary-price-text">-${{ number_format($this->discount, 2) }}</span>
                     </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span class="text-muted">Shipping</span>
-                        <span class="fw-semibold text-dark">${{ number_format($this->shipping, 2) }}</span>
-                    </div>
-                    <hr class="my-3" style="border-color: #e2e8f0;">
-                    <div class="d-flex justify-content-between mb-4 fs-5">
-                        <span class="fw-bold text-dark">Total</span>
-                        <span class="fw-bold text-danger">${{ number_format($this->total, 2) }}</span>
+                    <div class="d-flex justify-content-between mb-3 small">
+                        <span class="text-muted">Estimated Shipping</span>
+                        <span
+                            class="fw-semibold text-dark summary-price-text">${{ number_format($this->shipping, 2) }}</span>
                     </div>
 
-                    <!-- 🎫 ផ្នែក Promo Code Input Box (កែសម្រួលឱ្យមានប៊ូតុង Apply និងប៊ូតុងលុប) -->
+                    <hr class="my-3.5" style="border-color: #e2e8f0;">
+
+                    <div class="d-flex justify-content-between mb-4 align-items-center">
+                        <span class="fw-bold text-dark fs-6">Total Amount</span>
+                        <span
+                            class="fw-extrabold text-danger summary-price-text fs-4">${{ number_format($this->total, 2) }}</span>
+                    </div>
+
+                    <!-- Promo Voucher Ticket Input UI Component -->
                     <div class="mb-4">
-                        @if(!$appliedCoupon)
-                            <div class="input-group">
-                                <input type="text" wire:model="promoCode" class="form-control border-end-0 shadow-none" placeholder="Try 'DISCOUNT10' or 'QUICK5'" style="border-radius: 8px 0 0 8px; font-size: 0.95rem;">
-                                <button wire:click="applyPromo" class="btn btn-primary" type="button" style="border-radius: 0 8px 8px 0; font-size: 0.95rem;">Apply</button>
+                        @if (!$appliedCoupon)
+                            <div class="input-group bg-light p-1 rounded-3 border" style="overflow: hidden;">
+                                <input type="text" wire:model="promoCode"
+                                    class="form-control bg-transparent border-0 shadow-none py-2 small ps-2"
+                                    placeholder="Try 'DISCOUNT10'" style="font-size: 0.85rem;">
+                                <button wire:click="applyPromo" class="btn btn-dark px-3 fw-bold border-0 small"
+                                    type="button"
+                                    style="border-radius: 8px !important; font-size: 0.85rem;">Apply</button>
                             </div>
                         @else
-                            <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded-3 border border-dashed border-success">
+                            <div
+                                class="d-flex align-items-center justify-content-between p-2.5 rounded-3 border border-dashed border-success bg-success-subtle bg-opacity-10 animate__animated animate__pulse">
                                 <div class="small">
-                                    <span class="fw-bold text-success"><i class="bi bi-ticket-perforated-fill me-1"></i>{{ $appliedCoupon }}</span>
-                                    <span class="text-muted ms-1">(Applied)</span>
+                                    <span class="fw-bold text-success"><i
+                                            class="bi bi-ticket-perforated-fill me-1"></i>{{ $appliedCoupon }}</span>
+                                    <span class="text-muted small ms-1">(Active Voucher)</span>
                                 </div>
-                                <button type="button" wire:click="removePromo" class="btn btn-sm btn-link text-danger text-decoration-none fw-semibold p-0 pe-1">Remove</button>
+                                <button type="button" wire:click="removePromo"
+                                    class="btn btn-sm btn-link text-danger text-decoration-none fw-bold p-0 small">Remove</button>
                             </div>
                         @endif
                     </div>
 
-                    @if(count($this->cartItems) > 0)
-                        <button wire:click="proceedToCheckout" class="btn btn-primary checkout-btn w-100 mb-3 fw-bold py-2.5 rounded-3 text-white">
-                            Proceed to Checkout
+                    @if (count($this->cartItems) > 0)
+                        <button wire:click="proceedToCheckout"
+                            class="btn btn-primary checkout-btn-premium w-100 mb-3 fw-bold py-2.5 text-white d-flex align-items-center justify-content-center gap-2">
+                            <span>Proceed to Checkout</span><i class="bi bi-arrow-right-short fs-5"></i>
                         </button>
                     @else
-                        <button class="btn btn-secondary w-100 mb-3 fw-bold py-2.5 rounded-3 opacity-50" disabled>
+                        <button class="btn btn-secondary w-100 mb-3 fw-bold py-2.5 rounded-3 opacity-40" disabled
+                            style="border-radius: 14px !important;">
                             Cart is Empty
                         </button>
                     @endif
 
-                    <div class="d-flex justify-content-center gap-2 align-items-center">
-                        <i class="bi bi-shield-check text-success fs-5"></i>
-                        <small class="text-muted fw-medium">Secure checkout powered by Livewire</small>
+                    <div class="d-flex justify-content-center gap-2 align-items-center opacity-70">
+                        <i class="bi bi-patch-check text-success fs-6"></i>
+                        <small class="text-muted fw-semibold" style="font-size: 0.72rem;">Secure infrastructure
+                            powered by Livewire</small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-
-<!-- Custom CSS សម្រាប់លម្អបន្ថែមពីលើ Bootstrap -->
-<style>
-        .border-dashed { border-style: dashed !important; }
-
-    .product-card {
-        transition: transform 0.2s ease-in-out;
-    }
-    .product-card:hover {
-        transform: translateY(-2px);
-    }
-    .quantity-input {
-        width: 50px;
-        text-align: center;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        padding: 2px 0;
-        font-size: 0.95rem;
-    }
-    .quantity-btn {
-        width: 32px;
-        height: 32px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 6px;
-        background: #f1f5f9;
-        border: none;
-        font-weight: bold;
-        color: #475569;
-        transition: all 0.2s;
-    }
-    .quantity-btn:hover {
-        background: #e2e8f0;
-        color: #1e293b;
-    }
-    .remove-btn {
-        color: #ef4444;
-        cursor: pointer;
-        transition: color 0.2s;
-    }
-    .remove-btn:hover {
-        color: #b91c1c;
-    }
-    .discount-badge {
-        background: #dcfce7;
-        color: #15803d;
-        font-size: 0.75rem;
-        font-weight: 600;
-        padding: 2px 8px;
-        border-radius: 6px;
-    }
-    .cursor-pointer { cursor: pointer; }
-    .payment-card {
-        background-color: #fafafa;
-        border-color: #e2e8f0 !important;
-        transition: all 0.2s ease-in-out;
-    }
-    .payment-card:hover {
-        background-color: #f8fafc;
-        border-color: #cbd5e1 !important;
-        transform: translateY(-2px);
-    }
-    .btn-check:checked + .payment-card {
-        background-color: #f5f3ff !important;
-        border-color: #6366f1 !important;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-    }
-    .btn-check:checked + .payment-card span {
-        color: #6366f1 !important;
-    }
-    .checkout-btn {
-        background: linear-gradient(135deg, #6366f1, #4f46e5);
-        border: none;
-        transition: all 0.2s;
-    }
-    .checkout-btn:hover {
-        transform: translateY(-2px);
-        background: linear-gradient(135deg, #4f46e5, #4338ca);
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-    }
-</style>

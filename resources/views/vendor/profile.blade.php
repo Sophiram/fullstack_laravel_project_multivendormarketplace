@@ -70,6 +70,7 @@
                             <span class="badge rounded-pill bg-primary-subtle text-primary text-uppercase"
                                 style="font-size: 10px;">Vendor</span>
                         </div>
+
                     </div>
                 </div>
 
@@ -78,15 +79,35 @@
                     <div class="card shadow-sm border-0 p-4 rounded-4">
                         <h5 class="fw-bold text-dark mb-3">Vendor Information</h5>
                         <div class="row g-3">
+                            <!-- ឈ្មោះអ្នកប្រើ -->
                             <div class="col-12 col-md-6">
-                                <label class="form-label fw-semibold text-secondary small">Store/Vendor Name</label>
+                                <label class="form-label fw-semibold text-secondary small">Full Name</label>
                                 <input type="text" class="form-control rounded-3" name="name"
                                     value="{{ $vendor->name }}" required>
                             </div>
+
+                            <!-- អ៊ីមែល -->
                             <div class="col-12 col-md-6">
                                 <label class="form-label fw-semibold text-secondary small">Email Address</label>
                                 <input type="email" class="form-control rounded-3" name="email"
                                     value="{{ $vendor->email }}" required>
+                            </div>
+
+                            <!-- កម្រិត Commission (បង្ហាញតែប៉ុណ្ណោះ) -->
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold text-secondary small">Commission Rate Base on
+                                    Category</label>
+                                <div class="alert alert-info py-2 px-3 rounded-3 mb-0 small" style="font-size: 0.85rem;">
+                                    <i data-lucide="info" class="me-1"
+                                        style="width: 14px; height: 14px; vertical-align: middle;"></i>
+                                    Applied automatically during checkout based on product categories.
+                                </div>
+                            </div>
+
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold text-secondary small">Bank Account Information</label>
+                                <textarea name="bank_account_info" class="form-control rounded-3" rows="3">{{ old('bank_account_info', $vendor->vendor->bank_account_info ?? '') }}</textarea>
                             </div>
                         </div>
                         <div class="mt-3">
@@ -105,6 +126,8 @@
                             </div>
                         </div>
 
+
+
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary px-4 py-2 rounded-3 fw-semibold w-100 w-md-auto">
                                 <i data-lucide="save" style="width: 16px; height: 16px;" class="me-2"></i> Save Changes
@@ -114,6 +137,8 @@
                 </div>
             </div>
         </form>
+
+
     </div>
 
     <script>

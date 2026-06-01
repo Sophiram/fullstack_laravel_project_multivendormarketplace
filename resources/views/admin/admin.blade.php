@@ -3,19 +3,23 @@
 @section('admin_page_title', 'Dashboard - Admin Panel')
 
 @section('admin_layout')
-    <div class="container-fluid px-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="container-fluid px-4 py-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
             <div>
-                <h3 class="fw-bold text-dark mb-0">Dashboard Overview</h3>
-                <p class="text-muted small">Welcome back, {{ Auth::user()->name }}!</p>
+                <h4 class="fw-bold text-dark mb-1">Dashboard Overview</h4>
+                <p class="text-muted small mb-0">Welcome back, <span
+                        class="fw-semibold text-dark">{{ Auth::user()->name }}</span>! Here is your system performance
+                    pipeline.</p>
             </div>
-            <a href="{{ route('admin.export.report') }}" class="btn btn-primary rounded-pill shadow-sm">
-                <i data-lucide="download" style="width: 18px;"></i>
-                <span class="d-none d-md-inline ms-2">Export Report</span>
-            </a>
+            <div>
+                <a href="{{ route('admin.export.report') }}"
+                    class="btn btn-primary btn-sm rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-sm w-100">
+                    <i data-lucide="download" style="width: 16px; height: 16px;"></i> Export Operational Report
+                </a>
+            </div>
         </div>
 
-        <div class="row">
+        <div class="row g-3.5 mb-4">
             @php
                 $metrics = [
                     [
@@ -50,17 +54,19 @@
             @endphp
 
             @foreach ($metrics as $metric)
-                <div class="col-xl-3 col-md-6">
-                    <div class="card border-0 shadow-sm mb-4 p-4 rounded-4 metric-card"
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm p-4 rounded-4 metric-card h-100"
                         style="background-color: {{ $metric['bg'] }};">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <p class="text-muted text-uppercase fw-bold mb-1"
-                                    style="font-size: 0.7rem; letter-spacing: 0.5px;">{{ $metric['title'] }}</p>
-                                <h2 class="fw-bold mb-0" style="color: {{ $metric['text'] }};">
-                                    {{ number_format($metric['value']) }}</h2>
+                                <span class="text-muted text-uppercase fw-bold d-block mb-1"
+                                    style="font-size: 0.725rem; letter-spacing: 0.05em;">{{ $metric['title'] }}</span>
+                                <h3 class="fw-bold mb-0" style="color: {{ $metric['text'] }}; font-size: 1.75rem;">
+                                    {{ number_format($metric['value']) }}
+                                </h3>
                             </div>
-                            <div class="p-3 bg-white rounded-circle shadow-sm">
+                            <div
+                                class="p-3 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center">
                                 <i data-lucide="{{ $metric['icon'] }}"
                                     style="color: {{ $metric['text'] }}; width: 22px; height: 22px;"></i>
                             </div>
@@ -70,113 +76,104 @@
             @endforeach
         </div>
 
-        <div class="row">
+        <div class="row mb-4">
             <div class="col-12">
-                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-                    <h5 class="fw-bold mb-4">Sales Performance</h5>
-                    <div style="height: 350px;">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                    <h5 class="fw-bold text-dark mb-4" style="font-size: 1.05rem;">Sales Performance Matrix</h5>
+                    <div class="chart-container" style="position: relative; height: 350px; width: 100%;">
                         <canvas id="salesChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white border-0 pt-4 px-4">
-                <h5 class="fw-bold mb-0">Recent Orders</h5>
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+            <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+                <h5 class="fw-bold text-dark mb-0" style="font-size: 1.05rem;">Recent Platform Orders</h5>
             </div>
-            <div class="table-responsive p-4">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="text-muted small">
-                        <tr>
-                            <th>CUSTOMER</th>
-                            <th>ORDER ID</th>
-                            <th>TOTAL</th>
-                            <th class="text-end">STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($recentOrders as $order)
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.875rem;">
+                        <thead class="table-light text-uppercase fw-bold"
+                            style="font-size: 0.75rem; letter-spacing: 0.05em;">
                             <tr>
-                                <td class="py-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
-                                            style="width: 40px; height: 40px; font-weight: 700; color: #64748b;">
-                                            {{ strtoupper(substr($order->user->name, 0, 2)) }}
-                                        </div>
-                                        <span class="fw-semibold">{{ $order->user->name }}</span>
-                                    </div>
-                                </td>
-                                <td class="text-secondary">#{{ $order->id }}</td>
-                                <td class="fw-bold">${{ number_format((float) $order->total_amount, 2) }}</td>
-                                <td class="text-end">
-                                    <span
-                                        class="badge {{ $order->status == 'complete' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning' }} rounded-pill px-3 py-2">
-                                        {{ ucfirst($order->status) }}
-                                    </span>
-                                </td>
+                                <th class="ps-4 py-3 text-muted">Customer Node</th>
+                                <th class="py-3 text-muted">Order ID Reference</th>
+                                <th class="py-3 text-muted">Total Gross Amount</th>
+                                <th class="pe-4 py-3 text-end text-muted">Execution Status</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse ($recentOrders as $order)
+                                <tr>
+                                    <td class="ps-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar bg-light rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold small"
+                                                style="width: 36px; height: 36px; color: #64748b; shrink: 0;">
+                                                {{ strtoupper(substr($order->user->name, 0, 2)) }}
+                                            </div>
+                                            <span class="fw-semibold text-dark">{{ $order->user->name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-secondary font-monospace">#{{ $order->id }}</td>
+                                    <td class="fw-bold text-dark">${{ number_format((float) $order->total_amount, 2) }}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <span
+                                            class="badge {{ $order->status == 'complete' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning' }} rounded-pill px-3 py-1.5 fw-medium text-uppercase"
+                                            style="font-size: 0.725rem;">
+                                            {{ $order->status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted small fw-medium">
+                                        No recent platform transaction logs detected inside system buffers.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <style>
         .metric-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
         }
 
         .metric-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08) !important;
         }
 
-        /* បន្ថែមពីលើអ្វីដែលអ្នកមាន */
         @media (max-width: 768px) {
             .container-fluid {
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
+                padding-left: 0.75rem !important;
+                padding-right: 0.75rem !important;
             }
 
-            h3 {
-                font-size: 1.25rem !important;
-            }
-
-            /* កាត់បន្ថយគម្លាតនៅលើទូរសព្ទ */
-            .card {
-                margin-bottom: 1rem !important;
-            }
-
-            /* ធ្វើឱ្យប៊ូតុងតូចជាងមុនបន្តិចលើទូរសព្ទ */
-            .btn {
-                padding: 0.5rem 1rem !important;
-                font-size: 0.85rem !important;
-            }
-
-            /* ធានាថា Chart មិនបែក Layout */
-            #salesChart {
-                width: 100% !important;
-                height: 100% !important;
-            }
-
-            /* តុបតែងតារាងឱ្យស្អាតលើ Mobile */
             .table td,
             .table th {
                 white-space: nowrap;
-                /* ការពារកុំឱ្យអក្សរចុះបន្ទាត់ផ្តេសផ្តាស */
-                padding: 1rem 0.75rem !important;
+                padding: 0.875rem 0.75rem !important;
             }
         }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Re-initialize Lucide icons for the content
-            lucide.createIcons();
+            // Render Structural Vector Graphics Icons Engine
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
 
+            // Chart Initialization Sequence Configuration
             const ctx = document.getElementById('salesChart').getContext('2d');
             new Chart(ctx, {
                 type: 'line',
@@ -185,10 +182,12 @@
                     datasets: [{
                         data: {!! $values !!},
                         borderColor: '#4338ca',
-                        backgroundColor: 'rgba(67, 56, 202, 0.1)',
-                        borderWidth: 3,
+                        backgroundColor: 'rgba(67, 56, 202, 0.04)',
+                        borderWidth: 2.5,
                         fill: true,
-                        tension: 0.4
+                        tension: 0.38,
+                        pointBackgroundColor: '#4338ca',
+                        pointHoverRadius: 6
                     }]
                 },
                 options: {
@@ -204,11 +203,23 @@
                             beginAtZero: true,
                             grid: {
                                 color: '#f1f5f9'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: {
+                                    size: 11
+                                }
                             }
                         },
                         x: {
                             grid: {
                                 display: false
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: {
+                                    size: 11
+                                }
                             }
                         }
                     }

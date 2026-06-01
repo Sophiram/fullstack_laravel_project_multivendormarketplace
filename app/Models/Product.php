@@ -55,8 +55,14 @@ class Product extends Model
     }
 
     // នៅក្នុង App\Models\Product.php
-public function primaryImage() {
-    return $this->hasOne(\App\Models\ProductImage::class, 'product_id', 'id')
-                ->where('is_primary', 1);
-}
+    public function primaryImage() {
+        return $this->hasOne(\App\Models\ProductImage::class, 'product_id', 'id')
+                    ->where('is_primary', 1);
+    }
+
+    public function productReviews()
+    {
+        // កំណត់ទៅកាន់ Model នៃតារាង product_reviews
+        return $this->hasMany(ProductReview::class, 'product_id');
+    }
 }

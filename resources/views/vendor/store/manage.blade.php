@@ -16,15 +16,7 @@
                         You</h5>
                 </div>
 
-                @if (session('success'))
-                    <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-3 m-3 mb-0">
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-                            <div>{{ session('success') }}</div>
-                        </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
+               
 
                 @if ($errors->any())
                     <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 m-3 mb-0">
@@ -44,10 +36,13 @@
                                 style="font-size: 12px; font-weight: 700;">
                                 <tr>
                                     <th class="ps-4 py-3" style="width: 60px;">#</th>
+                                    <th class="py-3 d-none d-lg-table-cell">Logo</th>
                                     <th class="py-3">Store Name</th>
                                     <!-- បន្ថែម d-none d-md-table-cell ត្រង់នេះ -->
                                     <th class="py-3 d-none d-md-table-cell">Slug</th>
                                     <th class="py-3 d-none d-md-table-cell">Description</th>
+                                    <!-- ក្នុង <thead -->
+                                    <th class="py-3 d-none d-lg-table-cell">Contact</th>
                                     <th class="py-3 text-end pe-4" style="width: 140px;">Action</th>
                                 </tr>
                             </thead>
@@ -56,6 +51,14 @@
                                     <tr class="border-bottom">
                                         <td class="ps-4 fw-bold text-secondary">#{{ $store->id }}</td>
 
+                                        <td class="d-none d-lg-table-cell">
+                                            @if ($store->logo)
+                                                <img src="{{ asset('storage/' . $store->logo) }}" width="50"
+                                                    class="rounded">
+                                            @else
+                                                <span class="text-muted small">No Logo</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             <span class="fw-bold text-dark store-name-text">{{ $store->store_name }}</span>
                                         </td>
@@ -75,6 +78,15 @@
                                                 style="max-width: 300px;">
                                                 {{ $store->details }}
                                             </small>
+                                        </td>
+                                        <td class="d-none d-lg-table-cell" style="font-size: 12px;">
+                                            <!-- បន្ថែម class ទាំងនេះចូល -->
+                                            <div><i class="bi bi-envelope"></i> <span
+                                                    class="store-email-text">{{ $store->store_email ?? '' }}</span></div>
+                                            <div><i class="bi bi-telephone"></i> <span
+                                                    class="store-phone-text">{{ $store->store_phone ?? '' }}</span></div>
+                                            <span class="store-address-text"
+                                                style="display:none;">{{ $store->address ?? '' }}</span>
                                         </td>
 
                                         <td class="text-end pe-4">
@@ -108,6 +120,7 @@
         </div>
     </div>
 
+    {{-- Edit Modal --}}
     <div class="modal fade" id="editStoreModal" tabindex="-1" aria-labelledby="editStoreModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg rounded-3">
@@ -118,8 +131,7 @@
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
-                <form id="edit-store-form" method="POST">
-                    @csrf
+                <form id="edit-store-form" method="POST" enctype="multipart/form-data"> @csrf
                     @method('PUT')
 
                     <div class="modal-body p-4">
@@ -141,6 +153,25 @@
                                 <label class="form-label fw-bold text-secondary small text-uppercase">Store Details /
                                     Description</label>
                                 <textarea name="details" id="modal_store_details" class="form-control shadow-none py-2" rows="4"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">Email</label>
+                                <input type="email" name="store_email" id="modal_store_email"
+                                    class="form-control shadow-none py-2">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">Phone</label>
+                                <input type="text" name="store_phone" id="modal_store_phone"
+                                    class="form-control shadow-none py-2">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">Address</label>
+                                <input type="text" name="address" id="modal_store_address"
+                                    class="form-control shadow-none py-2">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">Update Logo</label>
+                                <input type="file" name="logo" class="form-control shadow-none py-2">
                             </div>
                         </div>
                     </div>
@@ -210,6 +241,7 @@
             const modalStoreName = document.getElementById('modal_store_name');
             const modalStoreSlug = document.getElementById('modal_store_slug');
 
+
             document.querySelectorAll('.open-edit-store-modal').forEach(button => {
                 button.addEventListener('click', function() {
                     const storeId = this.getAttribute('data-id');
@@ -220,6 +252,10 @@
                     const slug = row.querySelector('.store-slug-text').getAttribute('data-slug');
                     const details = row.querySelector('.store-details-text').textContent.trim();
 
+                    const email = row.querySelector('.store-email-text')?.textContent.trim() || '';
+                    const phone = row.querySelector('.store-phone-text')?.textContent.trim() || '';
+                    const address = row.querySelector('.store-address-text')?.textContent.trim() ||
+                        '';
                     // កំណត់ URL ទៅឱ្យ Form Action
                     editStoreForm.action = `/vendor/store/update/${storeId}`;
 
@@ -228,6 +264,10 @@
                     modalStoreSlug.value = slug;
                     document.getElementById('modal_store_details').value = details;
 
+                    // ចាក់ទិន្នន័យចូល Input ក្នុង Modal:
+                    document.getElementById('modal_store_email').value = email;
+                    document.getElementById('modal_store_phone').value = phone;
+                    document.getElementById('modal_store_address').value = address;
                     // បើកផ្ទាំង Pop-up Modal
                     editStoreModal.show();
                 });

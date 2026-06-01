@@ -195,8 +195,8 @@
                         <i data-lucide="users" style="width: 18px; height: 18px;"></i> Affiliate
                     </a>
                 </li>
-                <li class="sidebar-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
-                    <a class="sidebar-link" href="{{ route('profile.edit') }}">
+                <li class="sidebar-item {{ request()->routeIs('user.profile') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('user.profile') }}">
                         <i data-lucide="user-circle" style="width: 18px; height: 18px;"></i> My Profile
                     </a>
                 </li>
@@ -241,7 +241,7 @@
                         <ul class="dropdown-menu dropdown-menu-end border-0 mt-2">
                             <li>
                                 <a class="dropdown-item d-flex align-items-center gap-2 text-secondary"
-                                    href="{{ route('profile.edit') }}">
+                                    href="{{ route('user.profile') }}">
                                     <i data-lucide="settings" style="width: 16px;"></i> Profile Settings
                                 </a>
                             </li>

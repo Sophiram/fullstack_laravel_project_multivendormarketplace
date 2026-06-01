@@ -44,22 +44,22 @@ class UserController extends Controller
         }
 
         public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'role' => 'required',
-            'password' => 'required|min:6',
-        ]);
+        {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users',
+                'role' => 'required',
+                'password' => 'required|min:6',
+            ]);
 
-        \App\Models\User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'role' => $request->role,
-            'password' => bcrypt($request->password),
-            'status' => 'active', // កំណត់លំនាំដើម
-        ]);
+            \App\Models\User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'role' => $request->role,
+                'password' => bcrypt($request->password),
+                'status' => 'active', // កំណត់លំនាំដើម
+            ]);
 
-        return redirect()->back()->with('success', 'User added successfully!');
-    }
+            return redirect()->back()->with('success', 'User added successfully!');
+        }
 }

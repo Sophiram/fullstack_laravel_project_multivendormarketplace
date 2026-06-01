@@ -46,16 +46,13 @@
             background: #fff;
         }
 
-        /* 🎯 បន្ថែមសម្រាប់កែសម្រួលពណ៌អក្សរ និង Icon ក្នុង Sidebar ឱ្យភ្លឺច្បាស់ងាយស្រួលមើល */
         .sidebar-nav .sidebar-header {
             color: #ced4da !important;
-            /* ធ្វើឱ្យអក្សរក្បាលរង (Main, Store, Settings...) ភ្លឺជាងមុន */
             font-weight: 600;
         }
 
         .sidebar-nav .sidebar-link {
             color: #e9ecef !important;
-            /* ប្តូរពណ៌អក្សរធម្មតានៃ Menu ឱ្យភ្លឺច្បាស់ងាយមើល */
             background: transparent;
             transition: all 0.2s ease;
         }
@@ -63,41 +60,29 @@
         .sidebar-nav .sidebar-link i,
         .sidebar-nav .sidebar-link svg {
             color: #adb5bd !important;
-            /* ធ្វើឱ្យ Icon ភ្លឺច្បាស់ដូចគ្នា */
         }
 
-        /* ពេលយក Mouse ទៅដាក់ពីលើ (Hover) */
         .sidebar-nav .sidebar-link:hover {
             color: #ffffff !important;
             background: rgba(255, 255, 255, 0.05) !important;
-            /* បន្ថែមផ្ទៃ Background ស្រាលពេល Hover */
         }
 
         .sidebar-nav .sidebar-link:hover i,
         .sidebar-nav .sidebar-link:hover svg {
             color: #ffffff !important;
-            /* Icon ភ្លឺពណ៌សពេល Hover */
         }
 
-        /* សម្រាប់ Menu ណាដែលកំពុងដំណើរការ (Active) */
         .sidebar-item.active .sidebar-link {
             color: #ffffff !important;
             background: rgba(255, 255, 255, 0.1) !important;
-            /* បញ្ជាក់ពីការ Active ឱ្យច្បាស់ */
             border-left: 3px solid #3b82f6;
-            /* បន្ថែមបន្ទាត់ពណ៌ខៀវឆ្នូតខាងឆ្វេងដើម្បីឱ្យកាន់តែលេចធ្លោ */
         }
 
         .sidebar-item.active .sidebar-link i,
         .sidebar-item.active .sidebar-link svg {
             color: #3b82f6 !important;
-            /* Icon ប្តូរជាពណ៌ខៀវពេល Active */
         }
 
-        /* --------------------------------------------------------
-           📱 កែប្រែតែលើអេក្រង់តូចប៉ុណ្ណោះ (Mobile Styles)
-           💻 អេក្រង់ធំរក្សាទុកសភាពដើមរបស់ AdminKit ១០០%
-        ----------------------------------------------------------- */
         @media (max-width: 991.98px) {
             .sidebar {
                 position: fixed !important;
@@ -106,16 +91,13 @@
                 left: 0;
                 z-index: 1060;
                 margin-left: -260px !important;
-                /* លាក់ខ្លួនទៅខាងឆ្វេង */
                 transition: margin-left 0.3s ease-in-out;
             }
 
-            /* បង្ហាញ Sidebar នៅពេលចុច Toggle */
             .sidebar.show-mobile {
                 margin-left: 0 !important;
             }
 
-            /* ផ្ទៃងងឹតខាងក្រោយ (Overlay Backdrop) */
             .sidebar-overlay {
                 display: none;
                 position: fixed;
@@ -125,14 +107,12 @@
                 height: 100vh;
                 background: rgba(0, 0, 0, 0.4);
                 z-index: 1050;
-                /* នៅពីក្រោម Sidebar តែនៅលើ Content */
             }
 
             .sidebar-overlay.show {
                 display: block;
             }
 
-            /* ការពារកុំឱ្យ Content រួញខូចទម្រង់លើ Mobile */
             .main {
                 width: 100% !important;
                 min-width: 100% !important;
@@ -218,7 +198,17 @@
                         </a>
                     </li>
 
-                    <li class="sidebar-header">Settings</li>
+                    <!-- 🌟 ផ្នែកគ្រប់គ្រងហិរញ្ញវត្ថុ និងគណនី (Manage Section) -->
+                    <li class="sidebar-header">Manage</li>
+
+                    <!-- 💰 បញ្ចូល Menu ដកប្រាក់ (Payout & Earnings) ត្រង់នេះ -->
+                    <li class="sidebar-item {{ request()->routeIs('vendor.payout.*') ? 'active' : '' }}">
+                        <a class="sidebar-link" href="{{ route('vendor.payout.index') }}">
+                            <i class="align-middle" data-feather="credit-card"></i>
+                            <span class="align-middle">Payout & Earnings</span>
+                        </a>
+                    </li>
+
                     <li class="sidebar-item {{ request()->routeIs('vendor.settings') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('vendor.settings') }}">
                             <i class="align-middle" data-feather="settings"></i>
@@ -273,11 +263,9 @@
                         <li class="nav-item dropdown ms-2">
                             <a class="nav-link dropdown-toggle text-decoration-none" href="#"
                                 data-bs-toggle="dropdown">
-                                <!-- ពិនិត្យមើលរូបភាពពី storage ប្រសិនបើគ្មានទេ ប្រើ UI Avatars -->
                                 <img src="{{ auth()->user()->image ? asset('storage/' . auth()->user()->image) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=4f46e5&color=fff&bold=true' }}"
                                     class="avatar img-fluid rounded-circle me-1" alt="{{ auth()->user()->name }}"
                                     style="width: 32px; height: 32px; object-fit: cover;" />
-
                                 <span
                                     class="text-dark small fw-semibold d-none d-sm-inline-block">{{ auth()->user()->name }}</span>
                             </a>
@@ -354,9 +342,7 @@
 
             if (toggleBtn && sidebar) {
                 toggleBtn.addEventListener('click', function(e) {
-                    // ពិនិត្យមើលទំហំអេក្រង់
                     if (window.innerWidth < 992) {
-                        // 📱 សម្រាប់អេក្រង់តូច (Mobile)៖ បិទ/បើក Sidebar តាមរយៈ Class របស់យើង
                         e.preventDefault();
                         e.stopPropagation();
 
@@ -368,13 +354,10 @@
                         } else {
                             overlay.classList.remove('show');
                         }
-                    } else {
-                        // 💻 សម្រាប់អេក្រង់ធំ (Desktop)៖ ទុកឱ្យកូដដើមរបស់ AdminKit នៅក្នុង app.js ធ្វើការដោយស្វ័យប្រវត្ត (យើងមិនបាច់អន្តរាគមន៍ទេ)
                     }
                 });
             }
 
-            // ចុចលើ Overlay ផ្ទៃខ្មៅដើម្បីបិទ Sidebar លើ Mobile
             if (overlay) {
                 overlay.addEventListener('click', function() {
                     sidebar.classList.remove('show-mobile');
@@ -382,7 +365,6 @@
                 });
             }
 
-            // បោសសម្អាត Class ពេលអ្នកប្រើពង្រីកអេក្រង់ត្រឡប់ទៅ Desktop វិញ
             window.addEventListener('resize', function() {
                 if (window.innerWidth >= 992) {
                     if (sidebar) sidebar.classList.remove('show-mobile');
@@ -390,6 +372,35 @@
                 }
             });
         });
+
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: "{{ session('success') }}",
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                position: 'center',
+                customClass: {
+                    popup: 'rounded-4 shadow-lg'
+                }
+            });
+        @endif
+
+        @if (session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: "{{ session('error') }}",
+                showConfirmButton: true,
+                confirmButtonColor: '#3b82f6',
+                position: 'center',
+                customClass: {
+                    popup: 'rounded-4 shadow-lg'
+                }
+            });
+        @endif
     </script>
     @livewireScripts
 </body>

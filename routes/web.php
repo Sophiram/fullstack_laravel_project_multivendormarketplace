@@ -21,12 +21,15 @@ use Illuminate\Support\Facades\Route;
 use App\Models\AttributeValue;
 use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\CartManagementController;
+use App\Http\Controllers\Admin\CommissionController;
 use App\Http\Controllers\Admin\OrderManagementController;
 use App\Http\Controllers\Admin\PaymentMethodController;
+use App\Http\Controllers\Admin\PaymentRequestController as AdminPaymentRequestController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\ReviewManagementController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VendorController;
+use App\Http\Controllers\VendorPayoutController;
 use App\Models\SubCategory;
 use Livewire\Volt\Volt;
 
@@ -44,10 +47,23 @@ Route::get('/api/categories/{categoryId}/subcategories', function ($categoryId) 
 });
 
 
+Route::post('/product/review', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store')->middleware('auth');
+
 
 Route::controller(HomePageController::class)->group(function () {
     Route::get('/', 'index')->name('home');
 
+    Route::get('/discounts',  'showDiscounts')->name('home.discounts');
+
+    // Route សម្រាប់បង្ហាញបញ្ជី Gift Collections ទាំងអស់
+    Route::get('/gift-collections',  'showGiftCollections')->name('gift.index');
+
+// Route សម្រាប់បង្ហាញព័ត៌មានលម្អិតនៃ Gift Box នីមួយៗតាមអត្តសញ្ញាណ ID
+    Route::get('/gift-collection/{id}',  'showGiftDetail')->name('gift.show');
+
+    Route::get('/stores',  'showStores')->name('home.stores');
+
+    Route::get('/stores/{slug}', 'storeDetails')->name('home.store.details');
     // Route::get('/category/{category_name}', 'showCategoryProducts')->name('productby.category');
     // Route::get('/products/{id}', 'productdetails')->name('product.details');
 });
@@ -80,9 +96,17 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
 
     Route::get('/admin/export-report', [AdminMainController::class, 'exportReport'])->name('admin.export.report');
 
+    Route::get('/admin/manage/profile',  [AdminMainController::class, 'manage_profile'])->name('admin.manage.profile');
+    Route::put('/admin/profile/update', [AdminMainController::class, 'update_profile'])->name('admin.profile.update');
+
     // Route::get('/admin/payment/add', [PaymentMethodController::class, 'add'])->name('admin.payment.add');
 
     // Route::post('/admin/payment/store', [PaymentMethodController::class, 'store'])->name('admin.payment.store');
+
+
+    Route::get('/admin/payouts', [AdminPaymentRequestController::class, 'index'])->name('admin.payouts');
+    Route::post('/admin/payouts/{id}/approve', [AdminPaymentRequestController::class, 'approve'])->name('admin.payouts.approve');
+    Route::post('/admin/payouts/{id}/reject', [AdminPaymentRequestController::class, 'reject'])->name('admin.payouts.reject'); // បន្ថែមត្រង់នេះ
 
     Route::prefix('admin/payment')->name('admin.payment.')->group(function () {
         Route::controller(PaymentMethodController::class)->group(function () {
@@ -96,15 +120,16 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
     });
     Route::prefix('admin')->group(function () {
 
+            Route::get('/manage/commission', [CommissionController::class, 'index'])->name('admin.manage.commission');
 
             Route::controller(DiscountController::class)->group(function () {
-                    Route::get('/admin/discount/create', 'create')->name('admin.discount.create'); // បង្កើត function create() ក្នុង Controller
-                    Route::post('/admin/discount/store', 'store')->name('admin.discount.store');
-                    Route::get('/admin/discount/manage', 'index')->name('admin.discount.manage'); // នេះគឺជាកន្លែងដែលអ្នកហៅទំព័រ manage
+                    Route::get('/discount/create', 'create')->name('admin.discount.create'); // បង្កើត function create() ក្នុង Controller
+                    Route::post('/discount/store', 'store')->name('admin.discount.store');
+                    Route::get('/discount/manage', 'index')->name('admin.discount.manage'); // នេះគឺជាកន្លែងដែលអ្នកហៅទំព័រ manage
 
-                    Route::get('/admin/discount/edit/{id}', 'edit')->name('admin.discount.edit');
-                    Route::put('/admin/discount/update/{id}', 'update')->name('admin.discount.update');
-                    Route::delete('/admin/discount/destroy/{id}', 'destroy')->name('admin.discount.destroy');
+                    Route::get('/discount/edit/{id}', 'edit')->name('admin.discount.edit');
+                    Route::put('/discount/update/{id}', 'update')->name('admin.discount.update');
+                    Route::delete('/discount/destroy/{id}', 'destroy')->name('admin.discount.destroy');
                 });
 
 
@@ -123,15 +148,17 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
 
         Route::controller(UserController::class)->group(function () {
            Route::get('/manage/users', 'manage_user')->name('admin.manage.users');
-            Route::patch('/admin/users/{user}/toggle-status', 'toggleStatus')->name('admin.users.toggleStatus');
-            Route::post('/admin/users/store',  'store')->name('admin.users.store');
+            Route::patch('/users/{user}/toggle-status', 'toggleStatus')->name('admin.users.toggleStatus');
+            Route::post('/users/store',  'store')->name('admin.users.store');
         });
 
 
         Route::controller(VendorController::class)->group(function () {
-           Route::get('/manage/stores', 'index')->name('admin.manage.store');
-        //    Route::get('/vendors', 'index')->name('admin.vendors.index');
-            Route::get('/vendors/{id}/edit', 'edit')->name('admin.manage.vendors.edit');
+           Route::get('/manage/stores', 'manage_store')->name('admin.manage.stores');
+            Route::put('/manage/stores/{id}', 'updateStore')->name('admin.manage.stores.update');
+
+           Route::get('/manage/vendors', 'manage_vendor')->name('admin.manage.vendors');
+            Route::put('/manage/vendors/{id}', [VendorController::class, 'update'])->name('admin.manage.vendors.update');
         });
         Route::controller(OrderManagementController::class)->group(function () {
 
@@ -147,7 +174,7 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
 
             Route::put('/order/update-payment/{id}', 'updatePaymentStatus')->name('admin.order.payment.update');
 
-            Route::get('/admin/order/export', [OrderManagementController::class, 'export'])->name('admin.order.export');
+            Route::get('/order/export', [OrderManagementController::class, 'export'])->name('admin.order.export');
         });
 
 
@@ -169,6 +196,7 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
             Route::get('/product/edit/{id}', 'edit')->name('product.edit');
              Route::put('/product/update/{id}', 'update')->name('product.update');
              Route::delete('/product/destroy/{id}', 'destroy')->name('product.destroy');
+
            Route::get('/product/review/manage', 'review_manage')->name('product.review.manage');
         });
 
@@ -200,9 +228,9 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
 
         Route::controller(ReviewManagementController::class)->group(function () {
 
-            Route::get('/admin/product/review/manage', 'manageReview')->name('admin.reviews.manage');
-            Route::put('/admin/reviews/{id}', 'update')->name('admin.reviews.update');
-            Route::delete('/admin/reviews/reject/{id}', 'reject')->name('admin.review.reject');
+            Route::get('/product/review/manage', 'manageReview')->name('admin.reviews.manage');
+            Route::put('/reviews/{id}', 'update')->name('admin.reviews.update');
+            Route::delete('/reviews/reject/{id}', 'reject')->name('admin.review.reject');
         });
 
         Route::controller(MasterCategoryController::class)->group(function () {
@@ -246,13 +274,16 @@ Route::middleware(['auth', 'verified', 'rolemanager:vendor', 'approved.vendor'])
 
     Route::get('/order/history', [\App\Http\Controllers\OrderController::class, 'vendorIndex'])->name('vendor.orders.history');
     // បន្ថែម Route នេះទៅក្នុងក្រុមរបស់ Vendor (prefix 'vendor')
-    Route::get('/order/{id}', [\App\Http\Controllers\OrderController::class, 'show'])->name('order.show');
+    Route::get('/order/show/{id}', [OrderController::class, 'vendorShowOrder'])->name('vendor.ordershow');
+    Route::get('/products/{id}', [ProductController::class, 'show'])->name('vendor.products.show');
+    Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel'])->name('vendor.order.cancel');
+    // Route::get('/order/export', [OrderController::class, 'export'])->name('order.export');
 
+    Route::get('/payout', [VendorPayoutController::class, 'index'])->name('vendor.payout.index');
+    Route::post('/payout/request', [VendorPayoutController::class, 'requestPayout'])->name('vendor.payout.request');
         Route::controller(VendorMainController::class)->group(function () {
 
             Route::get('/dashboard', 'index')->name('vendor');
-            // Route::get('/order/history', 'orderhistory')->name('vendor.order.history');
-            // Route::get('order/history', [OrderController::class, 'vendorIndex'])->name('vendor.orders.history');
             Route::get('/profile', 'profile')->name('vendor.profile');
             Route::get('/settings', 'settings')->name('vendor.settings');
             Route::patch('/profile', 'update')->name('vendor.profile.update');
@@ -286,7 +317,7 @@ Route::middleware(['auth', 'verified', 'rolemanager:vendor', 'approved.vendor'])
 
             // Route::get('/attribute/{id}', 'show')->name('vendor.show.attribute');
             Route::put('/attribute/update/{id}', 'update')->name('vendor.update.attribute');
-            Route::delete('/vendor/attribute/delete/{id}', 'delete')->name('vendor.delete.attribute');
+            Route::delete('//attribute/delete/{id}', 'delete')->name('vendor.delete.attribute');
         });
     });
 });
@@ -298,17 +329,17 @@ Route::middleware(['auth', 'verified', 'rolemanager:user'])->group(function () {
         Route::controller(UserMainController::class)->group(function () {
             Route::get('/dashboard', 'index')->name('dashboard');
             Route::get('/order/history', 'history')->name('user.history');
+            Route::get('/order/show/{id}', [OrderController::class, 'show'])->name('user.ordershow');
+
             Route::get('/settings/payment', 'payment')->name('user.payment');
             Route::get('/affiliate', 'affiliate')->name('user.affiliate');
-        });
 
+             Route::get('/profile',  'profile')->name('user.profile');
+            Route::patch('/profile', 'update')->name('user.profile.update');
+             Route::delete('/profile',  'destroy')->name('user.profile.destroy');
+        });
     });
 });
-
-// Route::middleware(['auth'])->group(function () {
-//     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
-//     Route::patch('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
-// });
 
 
 Route::middleware('auth')->group(function () {
@@ -316,5 +347,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Route::middleware(['auth', 'verified'])->group(function () {
+//     Route::get('/dashboard', [UserController::class, 'UserDashboard'])->name('dashboard');
+//     Route::get('/profile', [UserController::class, 'UserProfile'])->name('user.profile');
+// });
+
 
 require __DIR__.'/auth.php';

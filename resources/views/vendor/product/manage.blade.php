@@ -145,7 +145,7 @@
                                             <span class="text-secondary fw-medium project-tax-rate"
                                                 data-tax="{{ $product->tax_rate }}">{{ $product->tax_rate ?? 0 }}%</span>
                                         </td>
-                                        <!-- កន្លែងបង្ហាញ Attribute ក្នុងតារាង -->
+
                                         <!-- ក្នុង Tbody នៃ Manage Product -->
                                         <td class="project-attributes"
                                             data-attributes='{{ json_encode(
@@ -157,11 +157,15 @@
                                                     ],
                                                 ),
                                             ) }}'>
-                                            @foreach ($product->attributes as $attr)
-                                                <span
-                                                    class="badge bg-light text-dark border">{{ $attr->attribute->name ?? '' }}:
-                                                    {{ $attr->attributeValue->value ?? '' }}</span>
-                                            @endforeach
+                                            <div class="d-flex flex-wrap gap-1">
+                                                @foreach ($product->attributes as $attr)
+                                                    <span class="badge bg-light text-dark border px-2 py-1"
+                                                        style="font-size: 11px;">
+                                                        {{ $attr->attribute->name ?? '' }}:
+                                                        {{ $attr->attributeValue->value ?? '' }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
                                         </td>
 
                                         <!-- Action Buttons Group -->

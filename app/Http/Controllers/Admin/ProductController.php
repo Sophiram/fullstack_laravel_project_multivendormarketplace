@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -57,6 +58,25 @@ public function update(Request $request, $id) {
 
     return redirect()->route('product.manage')->with('success', 'Product updated successfully!');
 }
+    public function destroy($id)
+    {
+        // ១. ស្វែងរកផលិតផលតាមរយៈ ID
+        $product = Product::findOrFail($id);
+        // ២. (បន្ថែម) បើមានរូបភាពផលិតផល គួរលុបវាចេញពី Storage ផងដែរ
+        if ($product->images) {
+            foreach ($product->images as $image) {
+                if (file_exists(storage_path('app/public/' . $image->image_path))) {
+                    unlink(storage_path('app/public/' . $image->image_path));
+                }
+                $image->delete(); // លុបពី table product_images
+            }
+        }
 
+        // ៣. លុបផលិតផលចេញពី Database
+        $product->delete();
+
+        // ៤. Redirect ត្រឡប់ទៅទំព័រដើមវិញ ជាមួយសារជូនដំណឹង
+        return redirect()->back()->with('success', 'Product deleted successfully!');
+    }
 
 }

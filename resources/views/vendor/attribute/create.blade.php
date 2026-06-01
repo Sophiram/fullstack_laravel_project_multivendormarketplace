@@ -83,20 +83,20 @@
                                 </button>
                             </div>
 
-                            <div class="mb-3">
+                            {{-- <div class="mb-3">
                                 <label class="form-label">Select Attribute</label>
                                 <select name="attribute_id" class="form-select">
                                     @foreach (\App\Models\Attribute::all() as $attr)
                                         <option value="{{ $attr->id }}">{{ $attr->name }}</option>
                                     @endforeach
                                 </select>
-                            </div>
+                            </div> --}}
 
                             <div class="mb-3">
                                 <label class="form-label">Additional Price</label>
                                 <input type="number" name="additional_price" class="form-control" placeholder="0.00">
                             </div>
-                            
+
 
                             <div id="values-container" class="bg-light p-3 rounded-3 border border-dashed border-slate-300">
                                 <div class="d-flex gap-2 mb-2 value-row align-items-center">

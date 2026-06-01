@@ -51,7 +51,14 @@ class ProductController extends Controller
     public function show($id)
 {
     // បន្ថែម 'attributes.attribute', 'attributes.attributeValue' ចូលទៅក្នុង with()
-    $product = Product::with(['category', 'store', 'images', 'vendor', 'attributes.attribute', 'attributes.attributeValue'])
+    $product = Product::with([
+        'category',
+        'store',
+        'images',
+        // 'vendor',
+        'vendor.stores', // <-- កែប្រែ និងបន្ថែមត្រង់ចំណុចនេះ
+        'attributes.attribute',
+        'attributes.attributeValue'])
         ->withAvg('reviews', 'rating')
         ->findOrFail($id);
 

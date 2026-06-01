@@ -27,16 +27,6 @@
                                 <span
                                     class="badge hero-promo-badge mb-3 animate__animated animate__flash animate__infinite animate__slower">Limited
                                     Offer</span>
-                                {{-- <h1 class="fw-extrabold text-white mb-2 line-height-1 hero-discount-text">
-                                    {{ number_format($homepagesetting->discount_percent, 0) }}% <span
-                                        class="fs-2 fw-bold text-warning">OFF</span>
-                                </h1>
-                                <h3 class="fw-bold text-white mb-3 hero-title-text">
-                                    {{ $homepagesetting->discount_heading }}
-                                </h3>
-                                <p class="small mb-4 hero-desc-text text-white-50">
-                                    {{ $homepagesetting->discount_subheading }}
-                                </p> --}}
 
                                 @if ($homepagesetting)
                                     <h1 class="fw-extrabold text-white mb-2 line-height-1 hero-discount-text">
@@ -50,7 +40,6 @@
                                         {{ $homepagesetting->discount_subheading ?? 'Best quality products for you.' }}
                                     </p>
                                 @else
-                                    {{-- បង្ហាញអ្វីដែលសាមញ្ញប្រសិនបើគ្មានទិន្នន័យ --}}
                                     <h1 class="fw-extrabold text-white mb-2">Welcome!</h1>
                                 @endif
 
@@ -97,7 +86,6 @@
                                     {{ isset($homepagesetting->featuredProduct1) ? '$' . number_format($homepagesetting->featuredProduct1->regular_price, 2) : 'Bean Bag Chair' }}
                                 </p>
 
-                                {{-- ✨ កែប្រែត្រង់នេះ៖ ប្តូរ Link ឱ្យរត់ទៅកាន់ Product Details របស់ Featured Product 1 --}}
                                 @if (isset($homepagesetting->featuredProduct1))
                                     <a href="{{ route('product.details', ['productId' => $homepagesetting->featuredProduct1->id]) }}"
                                         class="small text-white fw-bold text-decoration-none side-card-link d-inline-flex align-items-center gap-1">
@@ -135,7 +123,6 @@
                                     {{ isset($homepagesetting->featuredProduct2) ? '$' . number_format($homepagesetting->featuredProduct2->regular_price, 2) : 'Glasses' }}
                                 </p>
 
-                                {{-- ✨ កែប្រែត្រង់នេះ៖ ប្តូរ Link ឱ្យរត់ទៅកាន់ Product Details របស់ Featured Product 2 --}}
                                 @if (isset($homepagesetting->featuredProduct2))
                                     <a href="{{ route('product.details', ['productId' => $homepagesetting->featuredProduct2->id]) }}"
                                         class="small text-white fw-bold text-decoration-none side-card-link d-inline-flex align-items-center gap-1">

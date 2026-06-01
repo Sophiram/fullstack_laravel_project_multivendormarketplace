@@ -3,41 +3,57 @@
 @section('admin_page_title', 'Settings - Admin Panel')
 
 @section('admin_layout')
-    <div class="container-fluid px-4 py-2">
+    <div class="container-fluid px-4 py-3">
         <div class="mb-4">
-            <h3 class="fw-bold text-slate-800 mb-1">Home Page Settings</h3>
-            <p class="text-muted small">Configure your home page layout, featured promotions, and special offers.</p>
+            <h4 class="fw-bold text-dark mb-1">Home Page Settings</h4>
+            <p class="text-muted small">Configure your storefront homepage layout grid, promotional highlights, and marketing
+                campaigns.</p>
         </div>
 
         <div class="row justify-content-center">
             <div class="col-12 col-lg-8">
-                <div class="card border-0 shadow-sm rounded-4 p-3">
-                    <div class="card-body">
-                        {{-- Alerts --}}
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                    <div class="card-header bg-white py-3 border-bottom border-light px-4">
+                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.05rem;">Marketing & Campaign Layout</h5>
+                    </div>
+
+                    <div class="card-body p-4">
+                        {{-- Validation Errors Pipeline Logs --}}
                         @if ($errors->any())
-                            <div class="alert alert-danger border-0 rounded-3 mb-3 small">
-                                <ul class="mb-0 ps-3">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
+                            <div
+                                class="alert alert-danger border-0 shadow-sm rounded-3 p-3 mb-3 d-flex align-items-start gap-2">
+                                <span class="text-danger mt-0.5 d-inline-flex">
+                                    <i data-lucide="alert-octagon" style="width: 16px; height: 16px;"></i>
+                                </span>
+                                <div class="small fw-semibold">
+                                    <ul class="mb-0 ps-2">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
                             </div>
                         @endif
 
+                        {{-- Operation Success Feedback Alert --}}
                         @if (session('success'))
-                            <div class="alert alert-success border-0 rounded-3 mb-3 small d-flex align-items-center">
-                                <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
+                            <div class="alert alert-success border-0 shadow-sm rounded-3 p-3 mb-3 d-flex align-items-center gap-2 small fw-semibold"
+                                role="alert">
+                                <i data-lucide="check-circle" class="text-success" style="width: 16px; height: 16px;"></i>
+                                <span class="text-dark">{!! session('success') !!}</span>
                             </div>
                         @endif
 
-                        <form action="{{ route('admin.homepagesetting.update', $homepagesetting->id) }}" method="POST">
+                        <form action="{{ route('admin.homepagesetting.update', $homepagesetting->id) }}" method="POST"
+                            class="m-0">
                             @csrf
                             @method('PUT')
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-secondary">Discounted Product</label>
-                                    <select name="discounted_product_id" class="form-select select2 rounded-3 py-2">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-dark fw-bold small mb-1.5">Flash Discount Product</label>
+                                    <select name="discounted_product_id"
+                                        class="form-select select2 bg-light border-0 py-2 small">
                                         @foreach ($products as $product)
                                             <option value="{{ $product->id }}"
                                                 {{ $homepagesetting->discounted_product_id == $product->id ? 'selected' : '' }}>
@@ -46,32 +62,41 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-secondary">Discount Percentage (%)</label>
+                                <div class="col-md-6">
+                                    <label class="form-label text-dark fw-bold small mb-1.5">Discount Proportion (%)</label>
                                     <input type="number" name="discount_percent"
-                                        value="{{ $homepagesetting->discount_percent }}" class="form-control rounded-3 py-2"
-                                        placeholder="e.g. 20">
+                                        value="{{ $homepagesetting->discount_percent }}"
+                                        class="form-control bg-light border-0 py-2 small" placeholder="e.g., 20"
+                                        min="0" max="100">
                                 </div>
                             </div>
 
+                            <hr class="my-3.5 opacity-25">
+
                             <div class="mb-3">
-                                <label class="form-label small fw-bold text-secondary">Discount Heading</label>
+                                <label class="form-label text-dark fw-bold small mb-1.5">Campaign Header Label</label>
                                 <input type="text" name="discount_heading"
-                                    value="{{ $homepagesetting->discount_heading }}" class="form-control rounded-3 py-2"
-                                    placeholder="Summer Sale 2026">
+                                    value="{{ $homepagesetting->discount_heading }}"
+                                    class="form-control bg-light border-0 py-2 small"
+                                    placeholder="e.g., Seasonal Summer Sale 2026">
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label small fw-bold text-secondary">Discount Sub Text</label>
+                                <label class="form-label text-dark fw-bold small mb-1.5">Sub-text Description Label</label>
                                 <input type="text" name="discount_subheading"
-                                    value="{{ $homepagesetting->discount_subheading }}" class="form-control rounded-3 py-2"
-                                    placeholder="Up to 50% off on all items">
+                                    value="{{ $homepagesetting->discount_subheading }}"
+                                    class="form-control bg-light border-0 py-2 small"
+                                    placeholder="e.g., Enjoy massive discount tiers up to 50% off on all catalog collections.">
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-secondary">Featured Product 1</label>
-                                    <select name="featured_product_1_id" class="form-select select2 rounded-3 py-2">
+                            <hr class="my-3.5 opacity-25">
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label text-dark fw-bold small mb-1.5">Featured Product Showcase
+                                        1</label>
+                                    <select name="featured_product_1_id"
+                                        class="form-select select2 bg-light border-0 py-2 small">
                                         @foreach ($products as $product)
                                             <option value="{{ $product->id }}"
                                                 {{ $homepagesetting->featured_product_1_id == $product->id ? 'selected' : '' }}>
@@ -80,9 +105,11 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-secondary">Featured Product 2</label>
-                                    <select name="featured_product_2_id" class="form-select select2 rounded-3 py-2">
+                                <div class="col-md-6">
+                                    <label class="form-label text-dark fw-bold small mb-1.5">Featured Product Showcase
+                                        2</label>
+                                    <select name="featured_product_2_id"
+                                        class="form-select select2 bg-light border-0 py-2 small">
                                         @foreach ($products as $product)
                                             <option value="{{ $product->id }}"
                                                 {{ $homepagesetting->featured_product_2_id == $product->id ? 'selected' : '' }}>
@@ -93,9 +120,10 @@
                                 </div>
                             </div>
 
-                            <div class="d-grid mt-4">
-                                <button type="submit" class="btn btn-primary rounded-3 py-2 fw-bold">
-                                    <i class="fa-solid fa-floppy-disk me-1"></i> Update Settings
+                            <div class="d-grid pt-2 border-top border-light">
+                                <button type="submit"
+                                    class="btn btn-primary rounded-3 py-2 small fw-semibold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-sm">
+                                    <i data-lucide="save" style="width: 15px; height: 15px;"></i> Update Layout Settings
                                 </button>
                             </div>
                         </form>
@@ -104,4 +132,14 @@
             </div>
         </div>
     </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Render Structural Vector Graphics Icons Engine
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
 @endsection

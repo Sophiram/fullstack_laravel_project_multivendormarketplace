@@ -36,7 +36,8 @@
                                     <th class="ps-4 py-3" style="width: 120px;">Order ID</th>
                                     <th class="py-3">Customer</th>
                                     <th class="py-3">Store Name</th>
-                                    <th class="py-3">Total Amount</th>
+                                    <th class="py-3">Your Sales</th>
+                                    <th class="py-3">Net Earnings (-Comm.)</th>
                                     <th class="py-3">Status</th>
                                     <th class="py-3">Date Ordered</th>
                                     <th class="pe-4 py-3 text-end" style="width: 140px;">Action</th>
@@ -44,6 +45,13 @@
                             </thead>
                             <tbody class="small text-dark">
                                 @forelse ($orders as $order)
+                                    @php
+                                        // 🟢 គណនាទឹកប្រាក់លក់សរុប និង ចំណូលសុទ្ធរបស់ Vendor ម្នាក់នេះក្នុង Order នេះ
+                                        $vendorSales = $order->items->sum(function ($item) {
+                                            return $item->price * $item->quantity;
+                                        });
+                                        $vendorNet = $order->items->sum('vendor_net_amount');
+                                    @endphp
                                     <tr>
                                         <td class="ps-4 fw-bold text-primary">#{{ $order->order_number }}</td>
 
@@ -54,22 +62,40 @@
                                         </td>
 
                                         <td>
-                                            @if ($order->items->first() && $order->items->first()->product && $order->items->first()->product->store)
-                                                <span class="badge bg-light text-dark border fw-medium px-2 py-1">
-                                                    {{ $order->items->first()->product->store->store_name }}
-                                                </span>
-                                            @else
-                                                <span
-                                                    class="badge bg-light text-muted border fw-medium px-2 py-1">N/A</span>
-                                            @endif
+                                            @php
+                                                // ទាញយកឈ្មោះហាងទាំងអស់របស់ Vendor នេះដែលមាននៅក្នុង Order នេះ
+                                                $stores = $order->items
+                                                    ->map(function ($item) {
+                                                        return $item->product->store->store_name ?? null;
+                                                    })
+                                                    ->filter()
+                                                    ->unique();
+                                            @endphp
+
+                                            <!-- 🟢 បន្ថែម d-flex flex-wrap និង gap-1 ដើម្បីឱ្យវាហូរតាមជួរអេក្រង់ដោយស្វ័យប្រវត្តិ និងមានគម្លាតស្អាត -->
+                                            <div class="d-flex flex-wrap gap-1"
+                                                style="max-width: 200px; white-space: normal;">
+                                                @forelse($stores as $storeName)
+                                                    <span class="badge bg-light text-dark border fw-medium px-2 py-1">
+                                                        {{ $storeName }}
+                                                    </span>
+                                                @empty
+                                                    <span
+                                                        class="badge bg-light text-muted border fw-medium px-2 py-1">N/A</span>
+                                                @endforelse
+                                            </div>
                                         </td>
 
-                                        <td class="fw-bold text-success">${{ number_format($order->total_amount, 2) }}</td>
+                                        <!-- 🟢 បង្ហាញតម្លៃលក់សរុបជារបស់ Vendor នេះ -->
+                                        <td class="fw-bold text-secondary">${{ number_format($vendorSales, 2) }}</td>
+
+                                        <!-- 🟢 បង្ហាញទឹកប្រាក់សុទ្ធដែលទទួលបាន (ក្រោយកាត់ % ក្រុមហ៊ុនរួច) -->
+                                        <td class="fw-bold text-success">${{ number_format($vendorNet, 2) }}</td>
 
                                         <td>
-                                            @if ($order->status == 'delivered')
+                                            @if ($order->status == 'completed')
                                                 <span
-                                                    class="badge bg-soft-success text-success border border-success-subtle px-2 py-1 rounded-pill">Delivered</span>
+                                                    class="badge bg-soft-success text-success border border-success-subtle px-2 py-1 rounded-pill">Completed</span>
                                             @elseif($order->status == 'pending')
                                                 <span
                                                     class="badge bg-soft-warning text-warning border border-warning-subtle px-2 py-1 rounded-pill">Pending</span>
@@ -89,17 +115,21 @@
                                             {{ $order->created_at ? $order->created_at->format('M d, Y') : 'N/A' }}
                                         </td>
 
+                                        <!-- 🟢 កែប្រែដោយបន្ថែម d-flex justify-content-end លើយុថ្កា (A tag) ឬ TD -->
                                         <td class="pe-4 text-end">
-                                            <a href="{{ route('order.show', $order->id) }}"
-                                                class="btn btn-sm btn-light border shadow-none" title="View Details">
-                                                <i class="align-middle text-secondary" data-feather="eye"
-                                                    style="width: 15px; height: 15px;"></i>
-                                            </a>
+                                            <div class="d-flex justify-content-end">
+                                                <a href="{{ route('vendor.ordershow', $order->id) }}"
+                                                    class="btn btn-sm btn-light border shadow-none d-inline-flex align-items-center justify-content-center"
+                                                    title="View Details" style="width: 32px; height: 32px; padding: 0;">
+                                                    <i class="align-middle text-secondary" data-feather="eye"
+                                                        style="width: 15px; height: 15px;"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center py-5 text-muted">
+                                        <td colspan="8" class="text-center py-5 text-muted">
                                             <i class="align-middle d-block mb-2 fs-3 text-secondary"
                                                 data-feather="inbox"></i>
                                             No orders found yet.
@@ -130,52 +160,52 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <style>
-            .bg-soft-success {
-                background-color: #e8f5e9 !important;
-            }
+    <style>
+        .bg-soft-success {
+            background-color: #e8f5e9 !important;
+        }
 
-            .bg-soft-warning {
-                background-color: #fff3e0 !important;
-            }
+        .bg-soft-warning {
+            background-color: #fff3e0 !important;
+        }
 
-            .bg-soft-info {
-                background-color: #e0f7fa !important;
-            }
+        .bg-soft-info {
+            background-color: #e0f7fa !important;
+        }
 
-            .bg-soft-primary {
-                background-color: #e3f2fd !important;
-            }
+        .bg-soft-primary {
+            background-color: #e3f2fd !important;
+        }
 
-            .bg-soft-danger {
-                background-color: #ffebee !important;
-            }
+        .bg-soft-danger {
+            background-color: #ffebee !important;
+        }
 
-            .text-success {
-                color: #2e7d32 !important;
-            }
+        .text-success {
+            color: #2e7d32 !important;
+        }
 
-            .text-warning {
-                color: #ef6c00 !important;
-            }
+        .text-warning {
+            color: #ef6c00 !important;
+        }
 
-            .text-info {
-                color: #00838f !important;
-            }
+        .text-info {
+            color: #00838f !important;
+        }
 
-            .text-primary {
-                color: #0d47a1 !important;
-            }
+        .text-primary {
+            color: #0d47a1 !important;
+        }
 
-            .text-danger {
-                color: #c62828 !important;
-            }
+        .text-danger {
+            color: #c62828 !important;
+        }
 
-            /* បន្ថែមស្ទីលបន្តិចបន្តួចទៅលើ Pagination របស់ Bootstrap ដើម្បីកុំឱ្យវាធំពេក */
-            .pagination {
-                margin-bottom: 0;
-                font-size: 13px;
-            }
-        </style>
-    @endsection
+        .pagination {
+            margin-bottom: 0;
+            font-size: 13px;
+        }
+    </style>
+@endsection

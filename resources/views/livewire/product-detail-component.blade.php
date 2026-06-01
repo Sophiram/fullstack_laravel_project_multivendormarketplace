@@ -7,22 +7,24 @@ new class extends Component {
     public $product;
     public $quantity = 1;
     public $isInWishlist = false;
-
-    // 🎯 បន្ថែម Property សម្រាប់ចាប់យក Attribute ដែលអតិថិជនជ្រើសរើស
     public $selectedAttributes = [];
 
     public function mount(int $productId): void
     {
-        // ទាញយកទិន្នន័យ (ត្រូវប្រាកដថាបាន Eager Load គ្រប់ Relation)
-        $this->product = Product::with(['images', 'vendor', 'category', 'attributes.attribute', 'attributes.attributeValue'])->findOrFail($productId);
+        // 💡 កែសម្រួលចំណុច reviews.user ទៅជា productReviews.user ឱ្យត្រូវតាមឈ្មោះ Relationship
+        $this->product = Product::with([
+            'images',
+            'vendor.stores',
+            'category',
+            'attributes.attribute',
+            'attributes.attributeValue',
+            'productReviews.user', // <-- 💡 កែប្រែត្រង់នេះ
+        ])->findOrFail($productId);
 
-        // កំណត់តម្លៃ Default
         if ($this->product->attributes) {
             $grouped = $this->product->attributes->groupBy('attribute_id');
             foreach ($grouped as $attrId => $group) {
-                // យកឈ្មោះ Attribute តាមរយៈ Relation
                 $attrName = $group->first()->attribute->name;
-                // យកតម្លៃដំបូងដាក់ជា Default
                 $this->selectedAttributes[$attrName] = $group->first()->attributeValue->value;
             }
         }
@@ -31,7 +33,6 @@ new class extends Component {
         $this->isInWishlist = isset($wishlist[$productId]);
     }
 
-    // 🎯 មុខងារផ្លាស់ប្តូរតម្លៃ Attribute ពេលអតិថិជនចុចជ្រើសរើស (ឧទាហរណ៍៖ ដូរពណ៌ ឬទំហំ)
     public function selectAttributeValue($attributeName, $valueName): void
     {
         $this->selectedAttributes[$attributeName] = $valueName;
@@ -61,11 +62,10 @@ new class extends Component {
             return;
         }
 
-        // 🔗 បញ្ជូនទិន្នន័យproductId, បរិមាណ ព្រមទាំង Attributes ដែលបានជ្រើសរើសទៅកាន់កន្ត្រកទំនិញ
         $this->dispatch('addToCartFromAnywhere', [
             'productId' => $productId,
             'quantity' => intval($this->quantity),
-            'attributes' => $this->selectedAttributes, // ➕ បន្ថែមការបញ្ជូន Attributes ទៅ Cart
+            'attributes' => $this->selectedAttributes,
         ]);
 
         $this->dispatch('notify', [
@@ -80,7 +80,6 @@ new class extends Component {
     public function addToWishlist(): void
     {
         $productId = $this->product->id;
-
         $this->dispatch('addToWishlistFromAnywhere', [
             'productId' => $productId,
         ]);
@@ -96,56 +95,67 @@ new class extends Component {
 }; ?>
 
 <div class="container my-5 product-details-wrapper">
+    <!-- Google Fonts Links -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Kantumruuy+Pro:wght@400;500;600;700&display=swap"
         rel="stylesheet">
 
     <style>
+        /* Global & Typography Consistency */
         .product-details-wrapper {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Plus Jakarta Sans', 'Kantumruuy Pro', sans-serif;
+            color: #334155;
         }
 
+        .product-title,
+        .price-text,
+        .fw-bold,
+        h1,
+        h4,
+        h5 {
+            font-family: 'Outfit', 'Kantumruuy Pro', sans-serif;
+        }
+
+        /* Image Section */
         .main-image-card {
-            background: #f8fafc;
-            border: 1px solid #f1f5f9;
-            border-radius: 24px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
             position: relative;
+            overflow: hidden;
         }
 
         .main-image-container {
-            height: 440px;
+            height: 420px;
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: #f8fafc;
+            border-radius: 12px;
             overflow: hidden;
         }
 
         .main-image-container img {
-            max-height: 100%;
+            max-height: 90%;
             object-fit: contain;
-            transition: transform 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .main-image-container img:hover {
-            transform: scale(1.03);
+            transform: scale(1.05);
         }
 
         .thumb-img-box {
-            width: 76px;
-            height: 76px;
-            padding: 6px;
+            width: 70px;
+            height: 70px;
+            padding: 4px;
             border: 2px solid #e2e8f0;
-            border-radius: 14px;
+            border-radius: 10px;
             cursor: pointer;
             background-color: #fff;
             transition: all 0.2s ease;
-            flex-shrink: 0;
-        }
-
-        .thumb-img-box:hover {
-            border-color: #cbd5e1;
         }
 
         .thumb-img-box.active {
@@ -153,13 +163,13 @@ new class extends Component {
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
         }
 
+        /* Buttons & Actions Consistency */
         .floating-wishlist-btn {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            top: 20px;
+            right: 20px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 50%;
             width: 44px;
             height: 44px;
@@ -167,25 +177,30 @@ new class extends Component {
             align-items: center;
             justify-content: center;
             z-index: 10;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             transition: all 0.2s ease;
         }
 
+        .floating-wishlist-btn:hover {
+            transform: scale(1.05);
+            border-color: #cbd5e1;
+        }
+
         .product-title {
-            font-family: 'Outfit', sans-serif;
             color: #0f172a;
+            font-weight: 700;
             letter-spacing: -0.5px;
         }
 
         .price-text {
-            font-family: 'Outfit', sans-serif;
             font-weight: 800;
+            color: #4f46e5;
         }
 
         .stepper-group {
-            border: 1px solid #cbd5e1;
+            border: 1px solid #e2e8f0;
             background-color: #f8fafc;
             border-radius: 12px;
-            overflow: hidden;
             width: 130px;
             height: 48px;
         }
@@ -193,9 +208,13 @@ new class extends Component {
         .btn-stepper-action {
             border: none;
             background: transparent;
-            color: #475569;
+            color: #64748b;
             width: 40px;
-            transition: all 0.15s;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
 
         .btn-stepper-action:hover:not(:disabled) {
@@ -208,7 +227,7 @@ new class extends Component {
             background: transparent !important;
             box-shadow: none !important;
             font-weight: 700;
-            color: #1e293b;
+            color: #0f172a;
         }
 
         .btn-premium-cart {
@@ -217,16 +236,59 @@ new class extends Component {
             border: none !important;
             border-radius: 12px !important;
             height: 48px;
-            font-weight: 700;
-            letter-spacing: 0.3px;
+            font-weight: 600;
             transition: all 0.2s ease !important;
         }
 
         .btn-premium-cart:hover:not(:disabled) {
             background: linear-gradient(135deg, #4338ca, #2e2685) !important;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
         }
 
+        /* Form Controls Consistency */
+        .form-select-custom,
+        .form-control-custom {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            padding: 10px 14px;
+            background-color: #ffffff;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+
+        .form-select-custom:focus,
+        .form-control-custom:focus {
+            border-color: #4f46e5 !important;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
+            outline: none;
+        }
+
+        /* Attributes */
+        .attribute-badge {
+            padding: 8px 18px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .attribute-badge:hover {
+            border-color: #94a3b8;
+            background: #f8fafc;
+        }
+
+        .attribute-badge.active {
+            border-color: #4f46e5;
+            background: #eeebff;
+            color: #4f46e5;
+            box-shadow: 0 0 0 1px #4f46e5;
+        }
+
+        /* Vendor Profile Box */
         .vendor-profile-box {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -234,65 +296,41 @@ new class extends Component {
         }
 
         .vendor-avatar-circle {
-            width: 46px;
-            height: 46px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
             color: #ffffff;
             font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.15);
-        }
-
-        /* 🎨 បន្ថែមស្ទីលសម្រាប់ប៊ូតុងជ្រើសរើស Attribute */
-        .attribute-badge {
-            padding: 8px 16px;
-            border: 2px solid #e2e8f0;
-            background: #ffffff;
-            color: #334155;
             border-radius: 10px;
-            font-size: 0.88rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .attribute-badge:hover {
-            border-color: #cbd5e1;
-            background: #f8fafc;
-        }
-
-        .attribute-badge.active {
-            border-color: #4f46e5;
-            background: #f5f3ff;
-            color: #4f46e5;
         }
 
         @media (max-width: 575.98px) {
             .main-image-container {
-                height: 320px;
+                height: 300px;
             }
         }
     </style>
 
     {{-- Back Button --}}
     <div class="mb-4">
-        <a href="{{ url()->previous() }}" class="btn rounded-3 px-3 py-2 fw-medium border-0"
-            style="background-color: #eef2ff; color: #4f46e5; transition: all 0.3s ease;"
-            onmouseover="this.style.backgroundColor='#4f46e5'; this.style.color='#ffffff';"
-            onmouseout="this.style.backgroundColor='#eef2ff'; this.style.color='#4f46e5';">
-            <i class="fa-solid fa-chevron-left me-1"></i> Back
+        <a href="{{ url()->previous() }}" class="btn px-3 py-2 fw-semibold border-0 shadow-sm"
+            style="background-color: #f1f5f9; color: #475569; border-radius: 10px; transition: all 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#e2e8f0'; this.style.color='#0f172a';"
+            onmouseout="this.style.backgroundColor='#f1f5f9'; this.style.color='#475569';">
+            <i class="fa-solid fa-arrow-left-long me-2"></i> Back
         </a>
     </div>
 
     <div class="row g-4 lg:g-5">
         {{-- 📸 Left: Product Image Gallery --}}
         <div class="col-md-6">
-            <div class="card border-0 main-image-card p-3 shadow-sm">
+            <div class="card main-image-card p-3 shadow-sm">
+                <!-- Floating Wishlist Button -->
                 <button type="button" wire:click.stop="addToWishlist" wire:loading.attr="disabled"
-                    class="btn p-0 floating-wishlist-btn shadow-sm">
+                    class="btn p-0 floating-wishlist-btn">
                     <span wire:loading wire:target="addToWishlist"
                         class="spinner-border spinner-border-sm text-primary"></span>
                     <span wire:loading.remove wire:target="addToWishlist">
@@ -304,7 +342,8 @@ new class extends Component {
                     </span>
                 </button>
 
-                <div class="main-image-container p-2 mb-2 rounded-4">
+                <!-- Main Image Display -->
+                <div class="main-image-container p-2 mb-3">
                     @if ($product->images && $product->images->count() > 0)
                         <img src="{{ asset('storage/' . $product->images->first()->image_path) }}" id="mainProductImg"
                             class="img-fluid" alt="{{ $product->product_name }}">
@@ -314,13 +353,14 @@ new class extends Component {
                     @endif
                 </div>
 
-                <div class="d-flex gap-2 justify-content-center overflow-auto py-2 px-1">
+                <!-- Thumbnail Carousel/List -->
+                <div class="d-flex gap-2 justify-content-center overflow-auto py-1">
                     @if ($product->images)
                         @foreach ($product->images as $index => $image)
                             <div wire:key="thumb-{{ $image->id }}"
                                 class="thumb-img-box {{ $index === 0 ? 'active' : '' }}" onclick="changeImage(this)">
                                 <img src="{{ asset('storage/' . $image->image_path) }}"
-                                    class="w-100 h-100 object-fit-contain rounded">
+                                    class="w-100 h-100 object-fit-contain rounded-2">
                             </div>
                         @endforeach
                     @endif
@@ -330,25 +370,23 @@ new class extends Component {
 
         {{-- 📝 Right: Product Info Sidebar --}}
         <div class="col-md-6 text-start d-flex flex-column justify-content-between">
-            <div class="product-info-sidebar p-1">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-2 text-uppercase font-monospace tracking-wider"
-                        style="font-size: 0.75rem;">
-                        <li class="breadcrumb-item"><a href="#"
-                                class="text-decoration-none text-muted fw-bold">{{ $product->category->category_name ?? 'Category' }}</a>
-                        </li>
-                        <li class="breadcrumb-item active text-primary fw-bold" aria-current="page">Details</li>
-                    </ol>
+            <div class="product-info-sidebar px-md-2">
+
+                <!-- Category Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mb-2">
+                    <span class="text-uppercase tracking-wider fw-bold text-primary" style="font-size: 0.75rem;">
+                        {{ $product->category->category_name ?? 'Category' }}
+                    </span>
                 </nav>
 
-                <h1 class="fw-extrabold mb-2 product-title text-slate-900"
-                    style="font-size: 1.85rem; line-height: 1.25;">
+                <!-- Product Title -->
+                <h1 class="product-title text-slate-900 mb-2" style="font-size: 1.85rem; line-height: 1.3;">
                     {{ $product->product_name }}
                 </h1>
 
-                <div class="d-flex align-items-center gap-3 mb-3" style="font-size: 0.9rem;">
-                    <span class="text-muted fw-medium">SKU: <strong
-                            class="text-dark">{{ $product->sku ?? 'N/A' }}</strong></span>
+                <!-- SKU and Stock Badges -->
+                <div class="d-flex align-items-center gap-3 mb-4" style="font-size: 0.875rem;">
+                    <span class="text-muted">SKU: <strong class="text-dark">{{ $product->sku ?? 'N/A' }}</strong></span>
                     <span style="width: 1px; height: 14px; background-color: #cbd5e1;"></span>
                     @if (($product->stock_quantity ?? 0) > 0)
                         <span
@@ -361,58 +399,39 @@ new class extends Component {
                     @endif
                 </div>
 
-                <hr class="text-muted opacity-25 my-3">
-
-                <div class="my-3 py-1">
-                    <div class="d-flex align-items-baseline gap-3">
+                <!-- Pricing Display -->
+                <div class="mb-4 bg-light p-3 rounded-3 d-flex align-items-baseline gap-3">
+                    <span
+                        class="h2 mb-0 price-text">${{ number_format($product->discounted_price ?? $product->regular_price, 2) }}</span>
+                    @if (isset($product->discounted_price) && $product->discounted_price < $product->regular_price)
                         <span
-                            class="h1 mb-0 text-danger price-text">${{ number_format($product->discounted_price ?? $product->regular_price, 2) }}</span>
-                        @if (isset($product->discounted_price) && $product->discounted_price < $product->regular_price)
-                            <span
-                                class="text-muted text-decoration-line-through fs-5 fw-medium">${{ number_format($product->regular_price, 2) }}</span>
-                            <span
-                                class="badge bg-danger rounded-2 px-2.5 py-1 text-uppercase tracking-wider shadow-sm fw-bold"
-                                style="font-size: 0.75rem;">Sale</span>
-                        @endif
-                    </div>
+                            class="text-muted text-decoration-line-through fs-5 fw-medium">${{ number_format($product->regular_price, 2) }}</span>
+                        <span
+                            class="badge bg-danger rounded-2 px-2.5 py-1 text-uppercase tracking-wider shadow-sm fw-bold"
+                            style="font-size: 0.72rem;">Sale</span>
+                    @endif
                 </div>
 
-                {{-- <div style="background: #eee; padding: 20px;">
-                    <strong>Debug info:</strong>
-                    <p>Product ID: {{ $product->id }}</p>
-                    <p>Attribute count: {{ $product->attributes->count() }}</p>
-
-                    @foreach ($product->attributes as $attr)
-                        <p>Attribute ID: {{ $attr->attribute_id }} |
-                            Attribute Name: {{ $attr->attribute ? $attr->attribute->name : 'Missing Name' }} |
-                            Value: {{ $attr->attributeValue ? $attr->attributeValue->value : 'Missing Value' }}
-                        </p>
-                    @endforeach
-                </div> --}}
-
-                <p class="text-secondary mb-4 lh-lg" style="font-size: 0.95rem;">
+                <!-- Product Description -->
+                <p class="text-secondary mb-4 lh-lg" style="font-size: 0.925rem;">
                     {{ $product->description ?? 'No description available for this product.' }}
                 </p>
 
-                <hr class="text-muted opacity-25 my-3">
+                <hr class="text-muted opacity-25 my-4">
 
-                {{-- 🎯 ផ្នែកថ្មី៖ បង្ហាញការជ្រើសរើស Product Attributes (Dynamic) --}}
+                {{-- 🎯 Attributes Selection Section --}}
                 @if ($product->attributes && $product->attributes->count() > 0)
-                    <div class="product-attributes-section my-4">
+                    <div class="product-attributes-section mb-4">
                         @foreach ($product->attributes->groupBy('attribute_id') as $attrId => $group)
-                            @php
-                                $attributeName = $group->first()->attribute->name ?? 'Attribute';
-                            @endphp
+                            @php $attributeName = $group->first()->attribute->name ?? 'Attribute'; @endphp
                             <div class="mb-3" wire:key="attr-{{ $attrId }}">
-                                <span class="d-block text-secondary small fw-bold text-uppercase mb-2"
-                                    style="letter-spacing: 0.5px;">
+                                <span class="d-block text-dark small fw-bold text-uppercase mb-2"
+                                    style="letter-spacing: 0.5px; font-size: 0.75rem;">
                                     Select {{ $attributeName }}:
                                 </span>
                                 <div class="d-flex flex-wrap gap-2">
                                     @foreach ($group as $item)
-                                        @php
-                                            $valueName = $item->attributeValue->value ?? 'N/A';
-                                        @endphp
+                                        @php $valueName = $item->attributeValue->value ?? 'N/A'; @endphp
                                         <button type="button"
                                             wire:click="selectAttributeValue('{{ $attributeName }}', '{{ $valueName }}')"
                                             class="btn attribute-badge {{ ($selectedAttributes[$attributeName] ?? '') === $valueName ? 'active' : '' }}">
@@ -423,26 +442,26 @@ new class extends Component {
                             </div>
                         @endforeach
                     </div>
-                    <hr class="text-muted opacity-25 my-3">
+                    <hr class="text-muted opacity-25 my-4">
                 @endif
 
                 {{-- Interactive Actions Button Section --}}
-                <div class="d-flex flex-column flex-sm-row gap-3 align-items-stretch align-items-sm-center mb-4 pt-2">
-                    <div class="d-flex align-items-center justify-content-between stepper-group p-1">
-                        <button class="btn-stepper-action rounded-3 d-flex align-items-center justify-content-center"
-                            type="button" wire:click="decreaseQty"
+                <div class="d-flex gap-3 align-items-center mb-4 pt-2">
+                    <!-- Stepper Group -->
+                    <div class="d-flex align-items-center justify-content-between stepper-group p-1 shadow-sm">
+                        <button class="btn-stepper-action rounded-3" type="button" wire:click="decreaseQty"
                             {{ ($product->stock_quantity ?? 0) <= 0 ? 'disabled' : '' }}>
                             <i class="fa-solid fa-minus fs-6"></i>
                         </button>
                         <input type="text" class="form-control text-center input-stepper-qty fs-5 p-0"
                             wire:model="quantity" readonly>
-                        <button class="btn-stepper-action rounded-3 d-flex align-items-center justify-content-center"
-                            type="button" wire:click="increaseQty"
+                        <button class="btn-stepper-action rounded-3" type="button" wire:click="increaseQty"
                             {{ ($product->stock_quantity ?? 0) <= 0 || $quantity >= ($product->stock_quantity ?? 0) ? 'disabled' : '' }}>
                             <i class="fa-solid fa-plus fs-6"></i>
                         </button>
                     </div>
 
+                    <!-- Add to Cart Button -->
                     <button type="button"
                         class="btn d-flex align-items-center justify-content-center gap-2 flex-grow-1 btn-premium-cart shadow-sm {{ ($product->stock_quantity ?? 0) <= 0 ? 'btn-secondary disabled' : '' }}"
                         wire:click.prevent="addToCart" wire:loading.attr="disabled"
@@ -460,39 +479,268 @@ new class extends Component {
                         <span wire:loading.remove
                             wire:target="addToCart">{{ ($product->stock_quantity ?? 0) <= 0 ? 'Out of Stock' : 'Add to Cart' }}</span>
                     </button>
+                </div>
 
-                    <button type="button" wire:click.stop="addToWishlist" wire:loading.attr="disabled"
-                        class="btn btn-outline-secondary d-none d-sm-flex align-items-center justify-content-center border-2 border-light-subtle bg-white"
-                        style="height: 48px; width: 48px; border-radius: 12px; transition: all 0.2s;">
-                        <span wire:loading wire:target="addToWishlist"
-                            class="spinner-border spinner-border-sm text-secondary" role="status"></span>
-                        <span wire:loading.remove wire:target="addToWishlist">
-                            @if ($isInWishlist)
-                                <i class="fa-solid fa-heart fs-5 text-danger"></i>
-                            @else
-                                <i class="fa-regular fa-heart fs-5 text-muted"></i>
-                            @endif
-                        </span>
+                {{-- Write Review Form Block --}}
+                <div class="card p-4 shadow-sm mt-4 border-0" style="background-color: #f8fafc; border-radius: 16px;">
+                    <h5 class="fw-bold mb-3" style="color: #0f172a;">Write Your Review</h5>
+
+                    @auth
+                        @if (session('success'))
+                            <div class="alert alert-success border-0 rounded-3 small mb-3"
+                                style="background-color: #ecfdf5; color: #065f46;">{{ session('success') }}</div>
+                        @endif
+
+                        <form action="{{ route('reviews.store') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+
+                            <!-- Rating Stars Dropdown -->
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-secondary text-uppercase mb-1"
+                                    style="letter-spacing: 0.5px; font-size: 0.75rem;">Rating Stars:</label>
+                                <select name="rating" class="form-select form-select-custom" style="max-width: 180px;"
+                                    required>
+                                    <option value="5">&#9733;&#9733;&#9733;&#9733;&#9733; (5 Stars)</option>
+                                    <option value="4">&#9733;&#9733;&#9733;&#9733; (4 Stars)</option>
+                                    <option value="3">&#9733;&#9733;&#9733; (3 Stars)</option>
+                                    <option value="2">&#9733;&#9733; (2 Stars)</option>
+                                    <option value="1">&#9733; (1 Star)</option>
+                                </select>
+                            </div>
+
+                            <!-- Review Textarea -->
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-secondary text-uppercase mb-1"
+                                    style="letter-spacing: 0.5px; font-size: 0.75rem;">Your Comment:</label>
+                                {{-- 💡 កែប្រែឈ្មោះ attribute ពី name="comment" ទៅជា name="review" --}}
+                                <textarea name="review" class="form-control form-control-custom" rows="3"
+                                    placeholder="Write your opinion about this product..." required></textarea>
+                            </div>
+
+                            <button type="submit"
+                                class="btn text-white px-4 fw-semibold border-0 shadow-sm transition-all"
+                                style="background: linear-gradient(135deg, #4f46e5, #3730a3); border-radius: 10px; height: 42px;">
+                                Submit Review
+                            </button>
+                        </form>
+                    @else
+                        <div class="alert alert-warning m-0 border-0 rounded-3 small"
+                            style="background-color: #fffbeb; color: #92400e;">
+                            Please <a href="{{ route('login') }}" class="fw-bold text-decoration-none"
+                                style="color: #4f46e5;">Sign In</a> first to write a review.
+                        </div>
+                    @endauth
+                </div>
+
+                {{-- 💬 ផ្នែកបង្ហាញបញ្ជី Review (Customer Reviews Display Section) --}}
+                <div class="card p-4 shadow-sm mt-4 border-0" style="background-color: #ffffff; border-radius: 16px;">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="fw-bold m-0" style="color: #0f172a;">
+                            {{-- 💡 កែប្រែការរាប់ចំនួនឱ្យទៅរក productReviews --}}
+                            Customer Reviews ({{ $product->productReviews->count() }})
+                        </h5>
+
+                        {{-- បង្ហាញពិន្ទុផ្កាយមធ្យមភាគ (Average Rating) --}}
+                        @if ($product->productReviews->count() > 0)
+                            <div class="d-flex align-items-center gap-1">
+                                <span
+                                    class="fw-bold text-dark">{{ number_format($product->productReviews->avg('rating'), 1) }}</span>
+                                <span class="text-warning">
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        @if ($i <= round($product->productReviews->avg('rating')))
+                                            &#9733;
+                                        @else
+                                            &#9734;
+                                        @endif
+                                    @endfor
+                                </span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <hr class="text-muted opacity-25 my-2">
+
+                    {{-- បញ្ជីនៃមតិយោបល់ --}}
+                    @if ($product->productReviews && $product->productReviews->count() > 0)
+                        <div class="review-list-container"
+                            style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                            {{-- 💡 ប្តូរពី reviews ទៅជា productReviews --}}
+                            @foreach ($product->productReviews->sortByDesc('created_at') as $reviewItem)
+                                <div class="py-3 border-bottom border-light-subtle">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <div>
+                                            <!-- ឈ្មោះអ្នក Review -->
+                                            <h6 class="fw-bold mb-0 text-slate-800" style="font-size: 0.95rem;">
+                                                {{ $reviewItem->user->name ?? 'Anonymous User' }}
+                                            </h6>
+                                            <!-- កាលបរិច្ឆេទ -->
+                                            <small class="text-muted" style="font-size: 0.75rem;">
+                                                {{ $reviewItem->created_at->diffForHumans() }}
+                                            </small>
+                                        </div>
+
+                                        <!-- ចំនួនផ្កាយដែលគេបានផ្តល់ឱ្យ -->
+                                        <div class="text-warning" style="font-size: 0.85rem;">
+                                            @for ($i = 1; $i <= 5; $i++)
+                                                @if ($i <= $reviewItem->rating)
+                                                    &#9733;
+                                                @else
+                                                    &#9734;
+                                                @endif
+                                            @endfor
+                                        </div>
+                                    </div>
+
+                                    <!-- ខ្លឹមសារមតិយោបល់ -->
+                                    <!-- ខ្លឹមសារមតិយោបល់ -->
+                                    <p class="text-secondary m-0 mt-1 lh-base" style="font-size: 0.9rem;">
+                                        {{ $reviewItem->review ?? 'No comment provided.' }}
+                                    </p>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        {{-- បង្ហាញសារនេះ បើមិនទាន់មាននរណា Review ឡើយ --}}
+                        <div class="text-center py-4 text-muted">
+                            <i class="fa-regular fa-comment-dots fs-3 d-block mb-2 opacity-50"></i>
+                            <span class="small">No reviews yet. Be the first to review this product!</span>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Vendor Information Box --}}
+                <div class="d-flex align-items-center justify-content-between vendor-profile-box p-3 mt-4 shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        @if (
+                            $product->vendor &&
+                                $product->vendor->stores &&
+                                $product->vendor->stores->first() &&
+                                $product->vendor->stores->first()->logo)
+                            <img src="{{ asset('storage/' . $product->vendor->stores->first()->logo) }}"
+                                class="rounded-3 border border-light-subtle shadow-sm"
+                                style="width: 44px; height: 44px; object-fit: cover;"
+                                alt="{{ $product->vendor->stores->first()->store_name }}">
+                        @else
+                            <div class="vendor-avatar-circle shadow-sm">
+                                {{ strtoupper(substr($product->vendor?->stores?->first()?->store_name ?? 'ST', 0, 2)) }}
+                            </div>
+                        @endif
+
+                        <div>
+                            <small class="text-muted d-block fw-bold text-uppercase"
+                                style="font-size: 0.65rem; letter-spacing: 0.5px;">Sold by</small>
+                            <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#vendorModal"
+                                class="text-dark fw-bold text-decoration-none hover:text-primary fs-6 transition-all">
+                                {{ $product->vendor?->stores?->first()?->store_name ?? 'Unknown Store' }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <button type="button"
+                        class="btn btn-sm btn-white border border-light-subtle rounded-3 bg-white px-3 py-1.5 fw-bold text-secondary shadow-sm"
+                        style="font-size: 0.8rem; border-radius: 10px !important; transition: all 0.2s;"
+                        data-bs-toggle="modal" data-bs-target="#vendorModal">
+                        View Profile
                     </button>
                 </div>
 
-                {{-- Vendor Premium Card Information --}}
-                <div class="d-flex align-items-center justify-content-between vendor-profile-box p-3 mt-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="vendor-avatar-circle">
-                            {{ strtoupper(substr($product->vendor->vendor_name ?? 'VN', 0, 2)) }}
-                        </div>
-                        <div>
-                            <small class="text-muted d-block fw-semibold text-uppercase"
-                                style="font-size: 0.7rem; letter-spacing: 0.3px;">Sold by</small>
-                            <a href="#"
-                                class="text-dark fw-bold text-decoration-none hover:text-primary fs-6">{{ $product->vendor->vendor_name ?? 'Unknown Vendor' }}</a>
+                {{-- 🔔 Vendor / Store Profile Modal --}}
+                <div class="modal fade" id="vendorModal" tabindex="-1" aria-labelledby="vendorModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+                            <div class="modal-header border-0 pb-0">
+                                <button type="button" class="btn-close me-1" data-bs-shadow="none"
+                                    data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center pt-0 px-4 pb-4">
+                                <div class="mb-3 d-flex justify-content-center">
+                                    @if (
+                                        $product->vendor &&
+                                            $product->vendor->stores &&
+                                            $product->vendor->stores->first() &&
+                                            $product->vendor->stores->first()->logo)
+                                        <img src="{{ asset('storage/' . $product->vendor->stores->first()->logo) }}"
+                                            class="rounded-circle border p-1 bg-white shadow-sm"
+                                            style="width: 90px; height: 90px; object-fit: cover;"
+                                            alt="{{ $product->vendor->stores->first()->store_name }}">
+                                    @else
+                                        <div class="vendor-avatar-circle mx-auto fs-3 shadow-sm"
+                                            style="width: 90px; height: 90px; border-radius: 50% !important;">
+                                            {{ strtoupper(substr($product->vendor?->stores?->first()?->store_name ?? 'ST', 0, 2)) }}
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <h4 class="fw-bold text-slate-900 mb-1">
+                                    {{ $product->vendor?->stores?->first()?->store_name ?? 'Unknown Store' }}
+                                </h4>
+                                <span
+                                    class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 mb-3 small fw-bold">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Verified Store
+                                </span>
+
+                                @if ($product->vendor?->stores?->first()?->description)
+                                    <p class="text-secondary small mb-3 px-2 lh-base">
+                                        {{ $product->vendor->stores->first()->description }}
+                                    </p>
+                                @endif
+
+                                <hr class="text-muted opacity-25 my-3">
+
+                                <div class="text-start bg-light p-3 rounded-3 mb-4"
+                                    style="font-size: 0.9rem; border-radius: 12px !important;">
+                                    <div class="d-flex justify-content-between align-items-start mb-2.5">
+                                        <span class="text-muted"><i
+                                                class="fa-regular fa-envelope me-2 text-primary"></i> Email:</span>
+                                        <span class="fw-semibold text-dark text-break text-end"
+                                            style="max-width: 220px;">
+                                            {{ $product->vendor?->stores?->first()?->store_email ?? 'N/A' }}
+                                        </span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2.5">
+                                        <span class="text-muted"><i class="fa-solid fa-phone me-2 text-primary"></i>
+                                            Phone:</span>
+                                        <span class="fw-semibold text-dark">
+                                            {{ $product->vendor?->stores?->first()?->store_phone ?? 'N/A' }}
+                                        </span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2.5">
+                                        <span class="text-muted"><i class="fa-regular fa-clock me-2 text-primary"></i>
+                                            Business Hours:</span>
+                                        <span class="fw-semibold text-dark">
+                                            {{ $product->vendor?->stores?->first()?->opening_hours ?? 'Mon - Sun (8:00 AM - 9:00 PM)' }}
+                                        </span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-start mb-0">
+                                        <span class="text-muted"><i
+                                                class="fa-solid fa-location-dot me-2 text-primary"></i>
+                                            Location:</span>
+                                        <span class="fw-semibold text-dark text-end small"
+                                            style="max-width: 220px; line-height: 1.4;">
+                                            {{ $product->vendor?->stores?->first()?->address ?? 'N/A' }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <a href="{{ route('home.store.details', $product->vendor->stores->first()->slug ?? '') }}"
+                                        class="btn btn-primary py-2.5 fw-semibold border-0 shadow-sm text-white"
+                                        style="background: linear-gradient(135deg, #4f46e5, #3730a3); border-radius: 12px;">
+                                        <i class="fa-solid fa-basket-shopping me-2"></i> Visit Shop Website
+                                    </a>
+                                    <button type="button"
+                                        class="btn btn-link text-secondary text-decoration-none fw-medium btn-sm mt-1"
+                                        data-bs-dismiss="modal">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <a href="#"
-                        class="btn btn-sm btn-white border border-light-subtle rounded-3 bg-white px-3 py-1.5 fw-bold text-secondary"
-                        style="font-size: 0.8rem;">Visit Store</a>
                 </div>
+
             </div>
         </div>
     </div>
@@ -522,11 +770,11 @@ new class extends Component {
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 1500,
+                timer: 2000,
                 timerProgressBar: true,
                 background: '#ffffff',
                 color: '#1e293b',
-                iconColor: data.type === 'success' ? '#10b981' : '#ef4444'
+                iconColor: data.type === 'success' ? '#4f46e5' : '#ef4444'
             });
         });
     });

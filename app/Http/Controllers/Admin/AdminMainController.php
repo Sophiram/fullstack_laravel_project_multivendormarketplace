@@ -8,6 +8,8 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Order;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 
 class AdminMainController extends Controller
@@ -68,42 +70,60 @@ class AdminMainController extends Controller
        return redirect()->route('admin.settings')->with('success', 'Settings updated successfully.');
     }
 
-
-    // public function manage_user(Request $request)
-    // {
-    //     $stats = [
-    //         'total' => User::count(),
-    //         'active' => User::where('status', 'active')->count(),
-    //         'admins' => User::where('role', 'admin')->count(),
-    //         'suspended' => User::where('status', 'suspended')->count(),
-    //     ];
-
-    //     // ២. ទាញទិន្នន័យជាមួយនឹង Search & Filter
-    //     $users = User::query()
-    //         ->when($request->search, function($query, $search) {
-    //             $query->where('name', 'like', "%{$search}%")
-    //                   ->orWhere('email', 'like', "%{$search}%");
-    //         })
-    //         ->when($request->role, fn($q, $role) => $q->where('role', $role))
-    //         ->when($request->status, fn($q, $status) => $q->where('status', $status))
-    //         ->latest()
-    //         ->paginate(10);
-    //     return view('admin.manage.user', compact('users', 'stats'));
-    // }
-
-    // public function manage_stores()
-    // {
-    //     return view('admin.manage.store');
-    // }
-
-    // public function cart_history()
-    // {
-    //     return view('admin.cart.history');
-    // }
-
     public function order_history()
     {
         return view('admin.order.history');
+    }
+
+    public function manage_profile()
+    {
+        return view('admin.admin_profile');
+    }
+
+
+   public function update_profile(Request $request)
+    {
+        // ១. Validation
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'current_password' => 'nullable|required_with:password',
+            'password' => 'nullable|min:8|confirmed',
+        ]);
+
+        $user = Auth::user();
+
+        // ២. បំពេញទិន្នន័យ (Fill data)
+        $user->fill($request->only(['name', 'email']));
+
+        // ៣. ចាត់ចែងរូបភាព
+        if ($request->hasFile('image')) {
+            // លុបរូបភាពចាស់ (បើមាន)
+            if ($user->image && file_exists(public_path('upload/admin_images/' . $user->image))) {
+                unlink(public_path('upload/admin_images/' . $user->image));
+            }
+
+            // Upload រូបភាពថ្មី
+            $file = $request->file('image');
+            $filename = date('YmdHi') . $file->getClientOriginalName();
+            $file->move(public_path('upload/admin_images'), $filename);
+
+            $user->image = $filename;
+        }
+
+        // ៤. ផ្លាស់ប្តូរ Password (បើមាន)
+        if ($request->filled('password')) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Password ចាស់មិនត្រឹមត្រូវទេ។']);
+            }
+            $user->password = Hash::make($request->password);
+        }
+
+        // ៥. រក្សាទុកចូល Database
+        $user->save();
+
+        return redirect()->back()->with('success', 'Profile updated successfully!');
     }
 
     public function pendingVendors()

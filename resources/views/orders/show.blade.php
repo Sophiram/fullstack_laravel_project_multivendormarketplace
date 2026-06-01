@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.user')
 
 @section('content')
     <div class="py-12 bg-gray-50">
@@ -16,7 +16,7 @@
             @endif
 
             <div class="mb-6">
-                <a href="{{ route('order.index') }}" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center gap-1">
+                <a href="{{ route('user.history') }}" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center gap-1">
                     ← Back to Orders
                 </a>
             </div>

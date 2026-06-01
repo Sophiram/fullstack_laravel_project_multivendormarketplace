@@ -71,13 +71,96 @@ new class extends Component {
 };
 ?>
 
-<div class="container py-5">
+<div class="container py-4 py-md-5">
+    <!-- Google Fonts & Animate.css -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
     <style>
         .wishlist-page-wrapper {
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
+        /* Header Banner Style */
+        .wishlist-header-banner {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 35px;
+        }
+
+        .back-btn-custom {
+            background-color: #ffffff;
+            color: #4f46e5;
+            border: 1px solid #e2e8f0 !important;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .back-btn-custom:hover {
+            background-color: #4f46e5 !important;
+            color: #ffffff !important;
+            border-color: #4f46e5 !important;
+            transform: translateX(-3px);
+        }
+
+        /* Product Card Glassmorphism and Premium Hover */
+        .wishlist-card {
+            border-radius: 24px;
+            border: 1px solid rgba(226, 232, 240, 0.8) !important;
+            box-shadow: 0 10px 25px -15px rgba(0, 0, 0, 0.05);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            background: #ffffff !important;
+        }
+
+        .wishlist-card:hover {
+            transform: translateY(-8px);
+            border-color: #7c3aed !important;
+            box-shadow: 0 20px 40px -15px rgba(124, 58, 237, 0.18);
+        }
+
+        /* Trash Floating Button */
+        .trash-floating-btn {
+            width: 36px;
+            height: 36px;
+            color: #94a3b8;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            z-index: 10;
+            transition: all 0.25s ease;
+        }
+
+        .trash-floating-btn:hover {
+            background-color: #fee2e2 !important;
+            color: #ef4444 !important;
+            transform: scale(1.1);
+        }
+
+        /* Image Wrapper & Zoom Hover */
+        .wishlist-img-container {
+            height: 200px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .wishlist-img {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 16px;
+        }
+
+        .wishlist-card:hover .wishlist-img {
+            transform: scale(1.08) rotate(1deg);
+        }
+
+        /* Text Styling */
         .product-title-text {
             font-size: 0.95rem;
             font-weight: 700;
@@ -88,37 +171,54 @@ new class extends Component {
             overflow: hidden;
             height: 2.6rem;
             line-height: 1.3;
+            transition: color 0.2s ease;
         }
 
-        /* 🛠️ កែសម្រួលរចនាសម្ព័ន្ធប៊ូតុងខាងក្រោមឱ្យ Responsive បានល្អ */
+        .wishlist-card:hover .product-title-text a {
+            color: #7c3aed !important;
+        }
+
+        .price-tag {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #ef4444;
+        }
+
+        /* Stepper & Cart Buttons */
         .premium-stepper-container {
             width: 100%;
         }
 
         .stepper-input-group {
             border: 1px solid #cbd5e1;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
-            background-color: #ffffff;
+            background-color: #f8fafc;
             display: flex;
             align-items: center;
             justify-content: space-between;
             width: 100%;
-            height: 38px;
+            height: 40px;
+            transition: border-color 0.2s;
+        }
+
+        .stepper-input-group:focus-within {
+            border-color: #7c3aed;
         }
 
         .btn-stepper {
             border: none;
             background: #f1f5f9;
-            color: #334155;
-            width: 32px;
+            color: #475569;
+            width: 34px;
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             cursor: pointer;
-            transition: background-color 0.15s ease;
+            transition: all 0.15s ease;
         }
 
         .btn-stepper:hover {
@@ -129,9 +229,9 @@ new class extends Component {
         .qty-inline-input {
             border: none !important;
             background-color: transparent !important;
-            color: #1e293b !important;
+            color: #0f172a !important;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             text-align: center;
             flex-grow: 1;
             width: 30px;
@@ -146,122 +246,182 @@ new class extends Component {
             font-weight: 700;
             font-size: 0.8rem;
             border: none !important;
-            border-radius: 10px !important;
+            border-radius: 12px !important;
             width: 100%;
-            height: 38px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
-            transition: all 0.25s ease-in-out !important;
+            gap: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             white-space: nowrap !important;
-            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.15);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
         }
 
         .btn-premium-inline-cart:hover {
             background: linear-gradient(135deg, #f97316, #ea580c) !important;
-            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25);
-            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(249, 115, 22, 0.35);
+            transform: translateY(-2px);
         }
 
-        /* បង្រួមអក្សរលើប៊ូតុងបន្តិចពេលនៅលើទូរស័ព្ទតូចខ្លាំង ដើម្បីកុំឱ្យធ្លាក់បន្ទាត់ */
+        /* Empty State Premium Styling */
+        .empty-wishlist-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 32px;
+            padding: 60px 20px;
+            box-shadow: 0 15px 35px -15px rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-icon-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 24px;
+        }
+
+        .empty-heart-icon {
+            font-size: 5rem;
+            color: #cbd5e1;
+        }
+
+        .empty-icon-overlay {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #ef4444;
+            color: #ffffff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            border: 3px solid #ffffff;
+        }
+
+        @media (max-width: 575.98px) {
+            .wishlist-img-container {
+                height: 150px;
+            }
+
+            .wishlist-header-banner {
+                padding: 20px;
+                border-radius: 18px;
+            }
+
+            .product-title-text {
+                font-size: 0.85rem;
+                height: 2.2rem;
+            }
+
+            .price-tag {
+                font-size: 1.05rem;
+            }
+        }
+
         @media (max-width: 380px) {
             .btn-premium-inline-cart span {
-                display: none; /* បង្ហាញតែ Icon ឡានទិញទំនិញ ពេលអេក្រង់តូចពេក */
+                display: none;
+            }
+
+            .btn-premium-inline-cart {
+                gap: 0;
             }
         }
     </style>
 
     {{-- Back Button --}}
-    <div class="mb-4">
-        <a href="{{ url()->previous() }}" class="btn rounded-3 px-3 py-2 fw-medium border-0"
-            style="background-color: #eef2ff; color: #4f46e5; transition: all 0.3s ease;"
-            onmouseover="this.style.backgroundColor='#4f46e5'; this.style.color='#ffffff';"
-            onmouseout="this.style.backgroundColor='#eef2ff'; this.style.color='#4f46e5';">
-            <i class="fa-solid fa-chevron-left me-1"></i> Back
+    <div class="mb-4 animate__animated animate__fadeIn">
+        <a href="{{ url()->previous() }}"
+            class="btn back-btn-custom rounded-3 px-3 py-2 fw-medium d-inline-flex align-items-center">
+            <i class="fa-solid fa-arrow-left me-2"></i> Back
         </a>
     </div>
 
     <div class="wishlist-page-wrapper">
-        <div class="row mb-4">
-            <div class="col-12">
-                <h3 class="fw-bold text-dark">
+        {{-- Header Banner --}}
+        <div
+            class="wishlist-header-banner d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 animate__animated animate__fadeIn">
+            <div>
+                <h3 class="fw-extrabold text-dark m-0"
+                    style="font-family: 'Outfit', sans-serif; letter-spacing: -0.5px;">
                     <i class="fa-solid fa-heart me-2 text-danger"></i> My Wishlist
                     <span class="fs-5 text-muted fw-normal">({{ count($wishlistItems) }} Items)</span>
                 </h3>
-                <p class="text-muted">Manage all the products you have saved for later</p>
+                <p class="text-muted m-0 mt-1 small">Manage all the products you have saved for later</p>
+            </div>
+            <div>
+                <span class="badge bg-dark text-white px-3 py-2 rounded-pill fw-semibold shadow-sm"
+                    style="font-size: 0.75rem; font-family: 'Outfit';">
+                    PREMIUM USER
+                </span>
             </div>
         </div>
 
         @if (count($wishlistItems) > 0)
             <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-2 g-md-3 g-lg-4">
                 @foreach ($wishlistItems as $id => $item)
-                    <div class="col">
-                        <div class="card h-100 border-0 position-relative border-light d-flex flex-column justify-content-between"
-                            style="
-                                border-radius: 22px;
-                                border: 1px solid rgba(226, 232, 240, 0.7);
-                                box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.03);
-                                transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-                                overflow: hidden;
-                            "
-                            onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='#7c3aed'; this.style.boxShadow='0 20px 35px -10px rgba(124, 58, 237, 0.15)';"
-                            onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(226, 232, 240, 0.7)'; this.style.boxShadow='0 10px 30px -10px rgba(0, 0, 0, 0.03)';">
+                    <div class="col animate__animated animate__fadeInUp">
+                        <div class="card h-100 wishlist-card d-flex flex-column justify-content-between">
 
                             <div>
-                                <!-- Trash Button -->
+                                <!-- Floating Trash Button -->
                                 <button wire:click="removeFromWishlist('{{ $id }}')"
-                                    class="btn position-absolute top-0 end-0 m-2 d-flex align-items-center justify-content-center p-0 border-0 shadow-none rounded-circle"
-                                    style="width: 32px; height: 32px; color: #9ca3af; background-color: rgba(255,255,255,0.9); box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; transition: all 0.2s;"
-                                    onmouseover="this.style.backgroundColor='#fee2e2'; this.style.color='#ef4444';"
-                                    onmouseout="this.style.backgroundColor='rgba(255,255,255,0.9)'; this.style.color='#9ca3af';">
-                                    <i class="fa-solid fa-trash-can" style="font-size: 0.9rem;"></i>
+                                    class="btn trash-floating-btn position-absolute top-0 end-0 m-2 d-flex align-items-center justify-content-center p-0 border-0 shadow-none rounded-circle">
+                                    <i class="fa-solid fa-trash-can"></i>
                                 </button>
 
-                                <!-- Product Image -->
-                                <a href="{{ route('product.details', ['productId' => $id]) }}" class="d-block text-decoration-none">
-                                    <div class="p-3 text-center bg-light position-relative" style="height: 180px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
+                                <!-- Product Image Container -->
+                                <a href="{{ route('product.details', ['productId' => $id]) }}"
+                                    class="d-block text-decoration-none">
+                                    <div
+                                        class="wishlist-img-container d-flex align-items-center justify-content-center">
                                         <img src="{{ !empty($item['image']) ? asset('storage/' . $item['image']) : 'https://placehold.co/400x400?text=No+Image' }}"
-                                            class="w-100 h-100 object-fit-contain" style="transition: transform 0.5s;"
-                                            alt="{{ $item['name'] ?? 'Product' }}"
-                                            onmouseover="this.style.transform='scale(1.06) rotate(2deg)';"
-                                            onmouseout="this.style.transform='scale(1) rotate(0deg)';">
+                                            class="w-100 h-100 object-fit-contain wishlist-img"
+                                            alt="{{ $item['name'] ?? 'Product' }}">
                                     </div>
                                 </a>
 
-                                <!-- Product Body -->
+                                <!-- Product Content Body -->
                                 <div class="p-2 p-sm-3 pb-0">
-                                    <span class="text-muted small text-uppercase fw-bold d-none d-sm-inline-block" style="font-size: 0.65rem; letter-spacing: 0.5px;">Saved Item</span>
+                                    <span class="badge bg-light text-secondary mb-1 border d-none d-sm-inline-block"
+                                        style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.3px;">SAVED
+                                        ITEM</span>
                                     <h5 class="product-title-text mb-1" title="{{ $item['name'] ?? '' }}">
-                                        <a href="{{ route('product.details', ['productId' => $id]) }}" class="text-dark text-decoration-none">
+                                        <a href="{{ route('product.details', ['productId' => $id]) }}"
+                                            class="text-dark text-decoration-none">
                                             {{ $item['name'] ?? 'Product Title' }}
                                         </a>
                                     </h5>
                                     <div class="my-1">
-                                        <span class="fs-5 fw-bold text-danger" style="font-family: 'Outfit';">
+                                        <span class="price-tag">
                                             ${{ number_format($item['price'] ?? 0, 2) }}
                                         </span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- 🛒 ផ្នែកកែសម្រួលថ្មី៖ ប្រើប្រាស់ Bootstrap Row/Col ងាយស្រួលរត់តាមអេក្រង់ -->
+                            <!-- Interactive Stepper & Add to Cart Section -->
                             <div class="px-2 pb-2 px-sm-3 pb-sm-3 mt-auto">
                                 <div x-data="{ quantity: 1, maxStock: 10 }" class="premium-stepper-container">
-                                    <div class="row g-1 align-items-center">
-                                        <!-- កំណត់ទំហំ 5/12 សម្រាប់ Stepper -->
+                                    <div class="row g-1.5 align-items-center">
+                                        <!-- Interactive Stepper -->
                                         <div class="col-5">
                                             <div class="stepper-input-group">
-                                                <button type="button" class="btn-stepper" @click="if(quantity > 1) quantity--">
+                                                <button type="button" class="btn-stepper"
+                                                    @click="if(quantity > 1) quantity--">
                                                     <i class="fa-solid fa-minus"></i>
                                                 </button>
-                                                <input type="number" x-model="quantity" class="form-control qty-inline-input" readonly>
-                                                <button type="button" class="btn-stepper" @click="if(quantity < maxStock) quantity++">
+                                                <input type="number" x-model="quantity"
+                                                    class="form-control qty-inline-input" readonly>
+                                                <button type="button" class="btn-stepper"
+                                                    @click="if(quantity < maxStock) quantity++">
                                                     <i class="fa-solid fa-plus"></i>
                                                 </button>
                                             </div>
                                         </div>
-                                        <!-- កំណត់ទំហំ 7/12 សម្រាប់ប៊ូតុង Add to Cart -->
+                                        <!-- Gradient Add to Cart Button -->
                                         <div class="col-7">
                                             <button type="button"
                                                 @click="$wire.addToCart({ productId: '{{ $id }}', quantity: quantity })"
@@ -279,17 +439,26 @@ new class extends Component {
                 @endforeach
             </div>
         @else
-            <!-- Empty State -->
-            <div class="row justify-content-center py-5">
+            <!-- Premium Empty State -->
+            <div class="row justify-content-center py-5 animate__animated animate__fadeIn">
                 <div class="col-md-6 text-center">
-                    <div class="mb-4">
-                        <i class="fa-regular fa-heart display-1 text-muted opacity-25"></i>
+                    <div class="empty-wishlist-box">
+                        <div class="empty-icon-wrapper">
+                            <i class="fa-regular fa-heart empty-heart-icon"></i>
+                            <div class="empty-icon-overlay">
+                                <i class="fa-solid fa-times"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold text-dark mb-2" style="font-family: 'Outfit', sans-serif;">Your Wishlist is
+                            Empty</h4>
+                        <p class="text-muted small mb-4 px-md-4">You haven't saved any products yet. Go back to the
+                            store to discover and save your favorite premium products.</p>
+                        <a href="/"
+                            class="btn px-4 py-2 text-white fw-bold btn-premium-inline-cart d-inline-flex align-items-center justify-content-center mx-auto"
+                            style="width: auto; max-width: 220px;">
+                            <i class="fa-solid fa-arrow-left me-2"></i> Continue Shopping
+                        </a>
                     </div>
-                    <h4 class="fw-bold text-secondary">Your wishlist is empty</h4>
-                    <p class="text-muted mb-4">You haven't saved any products yet. Go back to the shop to find your favorite items.</p>
-                    <a href="/" class="btn px-4 py-2 text-white fw-bold" style="background-color: #3b82f6; border-radius: 10px; text-decoration: none;">
-                        <i class="fa-solid fa-arrow-left me-2"></i> Continue Shopping
-                    </a>
                 </div>
             </div>
         @endif
@@ -307,11 +476,14 @@ new class extends Component {
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 2400,
+                timer: 2000,
                 timerProgressBar: true,
                 background: '#ffffff',
                 color: '#1e293b',
                 iconColor: data.type === 'success' ? '#10b981' : '#ef4444',
+                customClass: {
+                    popup: 'animate__animated animate__fadeInRight animate__faster'
+                },
                 didOpen: (toast) => {
                     toast.addEventListener('mouseenter', Swal.stopTimer)
                     toast.addEventListener('mouseleave', Swal.resumeTimer)

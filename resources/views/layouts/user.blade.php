@@ -92,20 +92,14 @@
         }
 
         .account-btn {
-            background: #4f46e5;
-            color: #ffffff !important;
-            padding: 11px 25px;
-            border-radius: 12px;
-            font-weight: 600;
             text-decoration: none;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
-            transition: all 0.2s;
+            transition: all 0.2s ease-in-out;
         }
 
-        .account-btn:hover {
+        /* .account-btn:hover {
             background: #4338ca;
             transform: translateY(-1px);
-        }
+        } */
 
         /* -----------------------------------------
            🎨 PREMIUM NAVBAR WITH ROUNDED HOVER/ACTIVE
@@ -113,7 +107,6 @@
         .navigation-bar {
             background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
             padding: 8px 0 !important;
-            /* បន្ថែម padding លើក្រោមដើម្បីកុំឱ្យប៊ូតុងមូលបុកគែម */
             border-bottom: none;
             box-shadow: 0 4px 20px rgba(79, 70, 229, 0.15);
             border-radius: 16px !important;
@@ -124,7 +117,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            /* បង្កើតគម្លាតរវាងប៊ូតុងនីមួយៗ */
         }
 
         .menu-item-link {
@@ -134,7 +126,6 @@
             text-decoration: none;
             padding: 10px 20px;
             border-radius: 12px !important;
-            /* ✨ ធ្វើឱ្យប៊ូតុងមានរាងមូលពេល Hover និង Active */
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-flex;
             align-items: center;
@@ -181,7 +172,6 @@
             padding: 12px !important;
             min-width: 290px;
             margin-top: 8px !important;
-            /* លៃតម្រូវគម្លាតធ្លាក់ចុះក្រោមបន្តិច */
             background: #ffffff;
             z-index: 1060;
         }
@@ -254,7 +244,19 @@
         }
 
         #accountDropdown:hover {
-            background-color: #4338ca !important;
+            background-color: transparent !important;
+            /* រក្សាទុក Background ដើមនៃ Div ខាងក្នុង */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.25) !important;
+        }
+
+        #accountDropdown:active {
+            transform: translateY(0);
+        }
+
+        #accountDropdown img {
+            border: 2px solid rgba(255, 255, 255, 0.8) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         }
 
         /* -----------------------------------------
@@ -262,7 +264,6 @@
         -------------------------------------------- */
         .premium-footer {
             background: #0b1329;
-            /* ពណ៌ Dark បែបទំនើប */
             font-family: 'Plus Jakarta Sans', sans-serif;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
@@ -287,7 +288,6 @@
             padding-bottom: 12px;
         }
 
-        /* បន្ថែមបន្ទាត់តូចពីក្រោម Heading */
         .footer-heading::after {
             content: '';
             position: absolute;
@@ -319,7 +319,6 @@
             gap: 8px;
         }
 
-        /* បន្ថែម Effect ពេល Hover លើ Link */
         .footer-links a::before {
             content: '\f105';
             font-family: 'Font Awesome 6 Free';
@@ -433,10 +432,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            /* background: rgba(255, 255, 255, 0.04); */
-            /* padding: 6px 14px; */
             border-radius: 10px;
-            /* border: 1px solid rgba(255, 255, 255, 0.05); */
             height: 30px;
             overflow: hidden;
             transition: all 0.3s ease;
@@ -452,19 +448,12 @@
         }
 
         .pay-badge img {
-            /* max-height: 22px; */
             width: 100%;
-            /* width: auto; */
             height: 100%;
             object-fit: contain;
         }
 
-        /* .pay-badge.badge-bakong img {
-            filter: brightness(0) invert(1);
-        } */
-
         .pay-badge:hover {
-            /* background: #ffffff; */
             border-color: #006eff;
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
@@ -472,7 +461,6 @@
 
         .pay-badge:hover img {
             filter: none !important;
-            /* ឱ្យរូបភាពធនាគារចេញពណ៌ដើមពេល Hover */
         }
 
         .hover-search-item:hover {
@@ -487,9 +475,6 @@
             color: #4f46e5 !important;
         }
 
-
-
-
         /* -----------------------------------------
            📱 RESPONSIVE MEDIA QUERIES
         -------------------------------------------- */
@@ -501,7 +486,6 @@
             .menu-item-link {
                 padding: 12px 16px;
                 width: 100%;
-                /* border-radius: 0px !important; លើទូរស័ព្ទឱ្យវាពេញធម្មតាវិញ */
             }
 
             .nav-menu-container {
@@ -549,7 +533,14 @@
             }
 
             #accountDropdown {
-                padding: 12px 12px !important;
+                padding: 0 !important;
+            }
+
+            #accountDropdown .text-white {
+                width: 42px !important;
+                height: 42px !important;
+                padding: 0 !important;
+                justify-content: center !important;
             }
 
             .brand-logo {
@@ -570,11 +561,12 @@
                 <button class="navbar-toggler d-block d-lg-none text-dark border-0 p-0 me-2" type="button"
                     data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar"
                     aria-expanded="false" aria-label="Toggle navigation" style="font-size: 1.25rem;">
-                    <i class="fa-solid fa-bars"></i>
+                    <i data-lucide="menu" style="width: 22px; height: 22px;"></i>
                 </button>
 
                 <a href="/" class="brand-logo flex-shrink-0">
-                    <i class="fa-solid fa-bag-shopping me-1 me-sm-2"></i>Quick<span>Cart</span>
+                    <i data-lucide="shopping-bag" class="me-1 me-sm-2"
+                        style="width: 24px; height: 24px;"></i>Quick<span>Cart</span>
                 </a>
             </div>
 
@@ -586,34 +578,57 @@
                 @livewire('wishlist-icon-component')
                 @livewire('cart-component')
 
-
-
+                {{-- 🔄 UPDATED CONSISTENT ACCOUNT DROPDOWN BUTTON --}}
                 <div class="dropdown">
-                    <button class="btn text-white d-flex align-items-center gap-1 gap-md-2 px-2 px-md-3 py-2 shadow-sm"
-                        type="button" id="accountDropdown" data-bs-toggle="dropdown" aria-expanded="false"
-                        style="background-color: #4f46e5; border-radius: 12px; font-weight: 600; border: none; transition: all 0.2s;">
-                        <i class="fa-regular fa-user" style="font-size: 1.1rem;"></i>
+                    <button class="btn d-flex align-items-center gap-2 p-0 border-0 shadow-sm" type="button"
+                        id="accountDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                        style="border-radius: 16px; overflow: hidden; transition: all 0.2s; background: none;">
+
                         @auth
-                            <span class="account-text">{{ Str::limit(Auth::user()->name, 10) }}</span>
+                            @php
+                                $userImage = trim(Auth::user()->image);
+                                $imagePath = !empty($userImage)
+                                    ? asset('storage/' . $userImage)
+                                    : 'https://ui-avatars.com/api/?name=' .
+                                        urlencode(Auth::user()->name) .
+                                        '&background=ffffff&color=4f46e5&bold=true';
+                            @endphp
+
+                            {{-- កែប្រែ Style ត្រង់នេះឱ្យទៅជាប៊ូតុងវែងមានឈ្មោះ និងរូបថត ស៊ីសង្វាក់គ្នាយ៉ាងល្អ --}}
+                            <div class="d-flex align-items-center gap-2 px-3 py-2 text-white"
+                                style="background: #4f46e5; border-radius: 16px; height: 42px; font-weight: 600;">
+                                <img src="{{ $imagePath }}"
+                                    onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=ffffff&color=4f46e5&bold=true';"
+                                    class="rounded-circle"
+                                    style="width: 26px; height: 26px; object-fit: cover; border: 1px solid rgba(255,255,255,0.6);"
+                                    alt="{{ Auth::user()->name }}">
+                                <span class="account-text d-none d-sm-inline"
+                                    style="font-size: 0.9rem;">{{ Str::limit(Auth::user()->name, 10) }}</span>
+                            </div>
                         @else
-                            <span class="account-text">Account</span>
+                            {{-- ប៊ូតុងរាងជ្រុងបត់មន (Rounded Square) ធម្មតាសម្រាប់ភ្ញៀវមិនទាន់ Login --}}
+                            <div class="d-flex align-items-center justify-content-center text-white shadow-sm"
+                                style="background: #4f46e5; border-radius: 16px; width: 42px; height: 42px;">
+                                <i data-lucide="user" style="width: 20px; height: 20px;"></i>
+                            </div>
                         @endauth
-                        <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.75rem;"></i>
                     </button>
 
-                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2 p-2"
-                        aria-labelledby="accountDropdown" style="border-radius: 16px; min-width: 200px;">
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2 p-2 rounded-3"
+                        aria-labelledby="accountDropdown" style="min-width: 210px; font-size: 0.9rem;">
                         @guest
                             <li>
-                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary"
-                                    href="{{ route('login') }}" style="border-radius: 10px; font-weight: 500;">
-                                    <i class="fa-solid fa-right-to-bracket text-muted"></i> Sign In
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary rounded-2"
+                                    href="{{ route('login') }}" style="font-weight: 500;">
+                                    <i data-lucide="log-in" class="text-muted" style="width: 16px; height: 16px;"></i> Sign
+                                    In
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary"
-                                    href="{{ route('register') }}" style="border-radius: 10px; font-weight: 500;">
-                                    <i class="fa-solid fa-user-plus text-muted"></i> Create Account
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary rounded-2"
+                                    href="{{ route('register') }}" style="font-weight: 500;">
+                                    <i data-lucide="user-plus" class="text-muted" style="width: 16px; height: 16px;"></i>
+                                    Create Account
                                 </a>
                             </li>
                         @endguest
@@ -626,55 +641,73 @@
                                 </h6>
                             </li>
 
-                            {{-- បង្ហាញ Dashboard ទៅតាម Role របស់ user --}}
-                            @if (Auth::user()->role == 'admin')
+                            @if (Auth::user()->role == '0')
                                 <li>
-                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary"
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary rounded-2"
                                         href="/admin/dashboard">
-                                        <i class="fa-solid fa-user-shield text-muted"></i> Admin Dashboard
+                                        <i data-lucide="shield-check" class="text-muted"
+                                            style="width: 16px; height: 16px;"></i> Admin Dashboard
                                     </a>
                                 </li>
-                            @elseif (Auth::user()->role == 'vendor')
                                 <li>
-                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary"
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary rounded-2"
+                                        href="{{ route('admin.manage.profile') }}">
+                                        <i data-lucide="user" class="text-muted" style="width: 16px; height: 16px;"></i> My
+                                        Profile
+                                    </a>
+                                </li>
+                            @elseif (Auth::user()->role == '1')
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary rounded-2"
                                         href="/vendor/dashboard">
-                                        <i class="fa-solid fa-gauge text-muted"></i> Vendor Panel
+                                        <i data-lucide="layout-dashboard" class="text-muted"
+                                            style="width: 16px; height: 16px;"></i> Vendor Panel
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary rounded-2"
+                                        href="{{ route('vendor.profile') }}">
+                                        <i data-lucide="user" class="text-muted" style="width: 16px; height: 16px;"></i> My
+                                        Profile
                                     </a>
                                 </li>
                             @else
                                 <li>
-                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary"
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary rounded-2"
                                         href="{{ route('dashboard') }}">
-                                        <i class="fa-solid fa-house-user text-muted"></i> User Dashboard
+                                        <i data-lucide="layout-dashboard" class="text-muted"
+                                            style="width: 16px; height: 16px;"></i> User Dashboard
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary rounded-2"
+                                        href="{{ route('user.profile') }}">
+                                        <i data-lucide="user" class="text-muted" style="width: 16px; height: 16px;"></i>
+                                        My Profile
                                     </a>
                                 </li>
                             @endif
 
                             <li>
-                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-secondary"
-                                    href="/profile">
-                                    <i class="fa-regular fa-id-card text-muted"></i> My Profile
-                                </a>
-                            </li>
-
-                            <li>
-                                <hr class="dropdown-divider my-2" style="border-color: #f1f5f9;">
+                                <hr class="dropdown-divider my-2 opacity-50" style="border-color: #f1f5f9;">
                             </li>
 
                             <li>
                                 <form method="POST" action="{{ route('logout') }}" class="m-0">
                                     @csrf
-                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-semibold"
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-semibold rounded-2"
                                         href="{{ route('logout') }}"
                                         onclick="event.preventDefault(); this.closest('form').submit();">
-                                        <i class="fa-solid fa-power-off"></i> Sign Out
+                                        <i data-lucide="power" style="width: 16px; height: 16px;"></i> Sign Out
                                     </a>
                                 </form>
                             </li>
                         @endauth
-
                     </ul>
                 </div>
+
+
+
             </div>
         </div>
 
@@ -687,7 +720,7 @@
     {{-- 🗺️ PREMIUM DOUBLE-GRADIENT NAVIGATION BAR --}}
     <div class="container">
         <nav class="navigation-bar navbar navbar-expand-lg navbar-dark p-0" id="mainNavbar">
-            <div class="w-100 px-3"> <!-- បន្ថែមដកឃ្លាខាងក្នុងបន្តិច -->
+            <div class="w-100 px-3">
                 <div class="collapse navbar-collapse" id="mainNavbar">
                     <div
                         class="nav-menu-container flex-column flex-lg-row w-100 justify-content-lg-center align-items-stretch py-2 py-lg-0">
@@ -695,7 +728,8 @@
                         {{-- 1. Trending Link --}}
                         <a href="/"
                             class="menu-item-link {{ request()->is('/') || request()->is('trending*') ? 'active' : '' }}">
-                            <i class="fa-solid fa-fire me-2 text-danger"></i>Trending
+                            <i data-lucide="flame" class="me-2 text-danger"
+                                style="width: 16px; height: 16px;"></i>Trending
                         </a>
 
                         {{-- 2. Categories Dropdown --}}
@@ -704,7 +738,8 @@
                                 class="menu-item-link dropdown-toggle d-flex align-items-center justify-content-between gap-2 w-100 {{ request()->is('category*') ? 'active' : '' }}"
                                 role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <span>Categories</span>
-                                <i class="fa-solid fa-angle-down drop-icon"></i>
+                                <i data-lucide="chevron-down" class="drop-icon"
+                                    style="width: 14px; height: 14px;"></i>
                             </a>
 
                             <div class="dropdown-menu premium-dropdown-menu animate__animated animate__fadeIn">
@@ -716,11 +751,12 @@
                                         <div class="d-flex align-items-center justify-content-between w-100">
                                             <div class="d-flex align-items-center gap-3">
                                                 <div class="category-icon-wrapper">
-                                                    <i class="fa-solid fa-layer-group"></i>
+                                                    <i data-lucide="layers" style="width: 15px; height: 15px;"></i>
                                                 </div>
                                                 <span class="category-name">{{ $category->category_name }}</span>
                                             </div>
-                                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                                            <i data-lucide="chevron-right" class="arrow-icon"
+                                                style="width: 14px; height: 14px;"></i>
                                         </div>
                                     </a>
                                 @endforeach
@@ -759,8 +795,10 @@
 
                 {{-- Column 1: Brand & Desc --}}
                 <div class="col-12 col-md-6 col-lg-4 mb-3 mb-lg-0">
-                    <h5 class="footer-brand mb-3"><i
-                            class="fa-solid fa-bag-shopping me-2 text-primary"></i>Quick<span>Cart</span></h5>
+                    <h5 class="footer-brand mb-3">
+                        <i data-lucide="shopping-bag" class="me-2 text-primary d-inline-block"
+                            style="width: 22px; height: 22px;"></i>Quick<span>Cart</span>
+                    </h5>
                     <p class="footer-desc mb-4">
                         Connecting buyers and sellers instantly. Enjoy a seamless, secure shopping experience with high
                         marketplace standards and verified local vendors.
@@ -794,13 +832,13 @@
                     <ul class="footer-contact-list list-unstyled m-0 p-0">
                         <li class="d-flex gap-3 mb-3 align-items-start">
                             <div class="contact-icon-box flex-shrink-0">
-                                <i class="fa-solid fa-map-pin"></i>
+                                <i data-lucide="map-pin" style="width: 15px; height: 15px;"></i>
                             </div>
                             <span>99 Main St. Teuk Thla, Khan Sen Sok, Phnom Penh, Cambodia</span>
                         </li>
                         <li class="d-flex gap-3 mb-3 align-items-center">
                             <div class="contact-icon-box flex-shrink-0">
-                                <i class="fa-solid fa-phone"></i>
+                                <i data-lucide="phone" style="width: 15px; height: 15px;"></i>
                             </div>
                             <span>+00 123-456-789</span>
                         </li>
@@ -816,8 +854,9 @@
                         <div class="input-group gap-2">
                             <input type="email" class="form-control bg-slate border-0 px-3"
                                 placeholder="Email address...">
-                            <button class="btn btn-subscribe" type="button">
-                                <i class="fa-solid fa-paper-plane"></i>
+                            <button class="btn btn-subscribe d-flex align-items-center justify-content-center"
+                                type="button">
+                                <i data-lucide="send" style="width: 15px; height: 15px;"></i>
                             </button>
                         </div>
                     </div>
@@ -840,11 +879,9 @@
                     </span>
                     <span class="pay-badge badge-bakong" title="Bakong">
                         <img src="{{ asset('home_asset/img/bakong.svg') }}" alt="Bakong">
-
                     </span>
                     <span class="pay-badge badge-visa" title="Visa / MasterCard">
                         <img src="{{ asset('home_asset/img/credit-debit-card.png') }}" alt="Visa">
-
                     </span>
                     <span class="pay-badge badge-aceleda" title="ACLEDA">
                         <img src="{{ asset('home_asset/img/aceleda.png') }}" alt="ACLEDA">
@@ -853,6 +890,7 @@
             </div>
         </div>
     </footer>
+
     @if (session('vendor_registered'))
         <script>
             Swal.fire({
@@ -869,6 +907,15 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Render Structural Vector Graphics Icons Engine
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
     @livewireScripts
 </body>
 

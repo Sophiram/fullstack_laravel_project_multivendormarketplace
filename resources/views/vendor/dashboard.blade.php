@@ -12,49 +12,52 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
+    <div class="row g-4 mb-4">
+        <!-- Card 1: Stores -->
         <div class="col-sm-6 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 card-gradient-primary text-white">
-                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+            <div class="card border-0 shadow-lg rounded-4 h-100 card-gradient-primary text-white">
+                <div class="card-body p-4 py-5 d-flex align-items-center justify-content-between">
                     <div>
-                        <h6 class="text-uppercase text-white text-opacity-75 fw-bold small tracking-wider mb-1">Stores</h6>
-                        <h1 class="fw-bold mb-0 display-5">{{ $total_stores ?? 0 }}</h1>
+                        <h6 class="text-white text-opacity-75 fw-bold text-uppercase small tracking-wider mb-2">Stores</h6>
+                        <h1 class="fw-bold display-4 text-white mb-0">{{ $total_stores ?? 0 }}</h1>
                     </div>
-                    <div class="icon-container rounded-circle d-flex align-items-center justify-content-center shadow-sm">
-                        <i data-feather="home" class="text-white"
-                            style="width: 24px; height: 24px; stroke: currentColor;"></i>
+                    <div class="icon-container rounded-circle d-flex align-items-center justify-content-center bg-white bg-opacity-25"
+                        style="width: 60px; height: 60px;">
+                        <i data-feather="home" style="width: 30px; height: 30px; stroke: white;"></i>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Card 2: Products -->
         <div class="col-sm-6 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 card-gradient-success text-white">
-                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+            <div class="card border-0 shadow-lg rounded-4 h-100 card-gradient-success text-white">
+                <div class="card-body p-4 py-5 d-flex align-items-center justify-content-between">
                     <div>
-                        <h6 class="text-uppercase text-white text-opacity-75 fw-bold small tracking-wider mb-1">Active
+                        <h6 class="text-white text-opacity-75 fw-bold text-uppercase small tracking-wider mb-2">Active
                             Products</h6>
-                        <h1 class="fw-bold mb-0 display-5">{{ $total_products ?? 0 }}</h1>
+                        <h1 class="fw-bold display-4 text-white mb-0">{{ $total_products ?? 0 }}</h1>
                     </div>
-                    <div class="icon-container rounded-circle d-flex align-items-center justify-content-center shadow-sm">
-                        <i data-feather="shopping-bag" class="text-white"
-                            style="width: 24px; height: 24px; stroke: currentColor;"></i>
+                    <div class="icon-container rounded-circle d-flex align-items-center justify-content-center bg-white bg-opacity-25"
+                        style="width: 60px; height: 60px;">
+                        <i data-feather="shopping-bag" style="width: 30px; height: 30px; stroke: white;"></i>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Card 3: Orders -->
         <div class="col-sm-6 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 card-gradient-warning text-white">
-                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+            <div class="card border-0 shadow-lg rounded-4 h-100 card-gradient-warning text-white">
+                <div class="card-body p-4 py-5 d-flex align-items-center justify-content-between">
                     <div>
-                        <h6 class="text-uppercase text-white text-opacity-75 fw-bold small tracking-wider mb-1">Total Orders
+                        <h6 class="text-white text-opacity-75 fw-bold text-uppercase small tracking-wider mb-2">Total Orders
                         </h6>
-                        <h1 class="fw-bold mb-0 display-5">{{ $total_orders ?? 0 }}</h1>
+                        <h1 class="fw-bold display-4 text-white mb-0">{{ $total_orders ?? 0 }}</h1>
                     </div>
-                    <div class="icon-container rounded-circle d-flex align-items-center justify-content-center shadow-sm">
-                        <i data-feather="shopping-cart" class="text-white"
-                            style="width: 24px; height: 24px; stroke: currentColor;"></i>
+                    <div class="icon-container rounded-circle d-flex align-items-center justify-content-center bg-white bg-opacity-25"
+                        style="width: 60px; height: 60px;">
+                        <i data-feather="shopping-cart" style="width: 30px; height: 30px; stroke: white;"></i>
                     </div>
                 </div>
             </div>
@@ -113,59 +116,31 @@
                         Activity</span>
                 </div>
                 <div class="card-body p-4 pt-2">
-                    <div class="row g-3">
-                        @isset($recent_activities)
-                            @forelse($recent_activities as $activity)
-                                <div class="col-md-6">
-                                    <div
-                                        class="d-flex align-items-center gap-3 p-3 rounded-4 bg-light bg-opacity-50 border border-light">
-                                        <div class="bg-{{ $activity->type ?? 'primary' }}-subtle text-{{ $activity->type ?? 'primary' }} rounded-circle p-2 d-flex align-items-center justify-content-center"
-                                            style="width: 40px; height: 40px;">
-                                            <i data-feather="{{ $activity->icon ?? 'bell' }}"
-                                                style="width: 18px; height: 18px;"></i>
-                                        </div>
-                                        <div class="flex-grow-1 min-w-0">
-                                            <p class="text-dark fw-semibold mb-0 text-truncate small">{{ $activity->title }}</p>
-                                            <span class="text-muted"
-                                                style="font-size: 12px;">{{ $activity->created_at ? $activity->created_at->diffForHumans() : 'Just now' }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="col-12 text-center py-4 text-muted">
-                                    <i data-feather="info" class="mb-2"></i>
-                                    <p class="small mb-0">No recent activity available.</p>
-                                </div>
-                            @endforelse
-                        @else
-                            <div class="col-md-6">
-                                <div
-                                    class="d-flex align-items-center gap-3 p-3 rounded-4 bg-light bg-opacity-50 border border-light">
+                    @isset($recent_activities)
+                        @forelse($recent_activities as $activity)
+                            <div class="d-flex align-items-center py-3 {{ !$loop->last ? 'border-bottom border-light' : '' }}">
+                                <div class="avatar-sm flex-shrink-0 me-3">
                                     <div class="bg-primary-subtle text-primary rounded-circle p-2 d-flex align-items-center justify-content-center"
                                         style="width: 40px; height: 40px;">
-                                        <i data-feather="clock" style="width: 18px; height: 18px;"></i>
-                                    </div>
-                                    <div class="flex-grow-1 min-w-0">
-                                        <p class="text-dark fw-semibold mb-0 text-truncate small">Order #V-1025 Shipped</p>
-                                        <span class="text-muted" style="font-size: 12px;">10m ago</span>
+                                        <i data-feather="{{ $activity->icon ?? 'bell' }}"
+                                            style="width: 18px; height: 18px;"></i>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div
-                                    class="d-flex align-items-center gap-3 p-3 rounded-4 bg-light bg-opacity-50 border border-light">
-                                    <div class="bg-danger-subtle text-danger rounded-circle p-2 d-flex align-items-center justify-content-center"
-                                        style="width: 40px; height: 40px;">
-                                        <i data-feather="alert-triangle" style="width: 18px; height: 18px;"></i>
-                                    </div>
-                                    <div class="flex-grow-1 min-w-0">
-                                        <p class="text-dark fw-semibold mb-0 text-truncate small">Product 'Honey' Stock Low</p>
-                                        <span class="text-muted" style="font-size: 12px;">25m ago</span>
-                                    </div>
+                                <div>
+                                    <p class="mb-0 fw-bold text-dark">{{ $activity->title }}</p>
+                                    <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
                                 </div>
                             </div>
-                        @endisset
-                    </div>
+                        @empty
+                            <div class="text-center py-5">
+                                <i data-feather="inbox" class="text-muted mb-2" style="width: 40px; height: 40px;"></i>
+                                <p class="text-muted">No recent activity available.</p>
+                            </div>
+                        @endforelse
+                    @else
+                        <!-- Fallback content បើគ្មានទិន្នន័យ -->
+                        <p class="text-muted small">No activities to display.</p>
+                    @endisset
                 </div>
             </div>
         </div>
@@ -174,6 +149,40 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <style>
+        /* Gradient Color Palettes */
+        .card-gradient-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .card-gradient-success {
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        }
+
+        .card-gradient-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+        }
+
+        /* បង្កើនទំហំកាត និងភាពទាក់ទាញ */
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        .icon-container {
+            backdrop-filter: blur(8px);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .icon-container {
+            transform: scale(1.1);
+        }
+
+
+        
         .card-gradient-primary {
             background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
         }
@@ -226,6 +235,14 @@
                 border-right: 1px solid #e2e8f0 !important;
             }
         }
+
+        @media (max-width: 768px) {
+
+            #salesChart,
+            #storeChart {
+                width: 100% !important;
+            }
+        }
     </style>
 
     <script>
@@ -268,6 +285,20 @@
                     y: {
                         formatter: val => "$ " + val
                     }
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.7,
+                        opacityTo: 0.3
+                    }
+                },
+                // បន្ថែម Marker
+                markers: {
+                    size: 5,
+                    strokeColors: '#fff',
+                    strokeWidth: 2
                 }
             };
             new ApexCharts(document.querySelector("#salesChart"), salesChartOptions).render();

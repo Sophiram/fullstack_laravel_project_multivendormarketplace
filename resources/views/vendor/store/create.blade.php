@@ -36,33 +36,60 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('create.store') }}" method="POST">
+                    <form action="{{ route('create.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="row g-3">
+                            <!-- Store Name & Slug -->
                             <div class="col-md-6">
-                                <label for="store_name" class="form-label fw-bold text-secondary small text-uppercase">Store Name <span class="text-danger">*</span></label>
+                                <label for="store_name" class="form-label fw-bold text-secondary small text-uppercase">Store
+                                    Name <span class="text-danger">*</span></label>
                                 <input type="text" name="store_name" id="store_name"
-                                    class="form-control shadow-none py-2 @error('store_name') is-invalid @enderror"
-                                    placeholder="Zendo Store" value="{{ old('store_name') }}" required>
+                                    class="form-control shadow-none py-2" placeholder="Zendo Store"
+                                    value="{{ old('store_name') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="slug" class="form-label fw-bold text-secondary small text-uppercase">Store
+                                    Slug</label>
+                                <input type="text" name="slug" id="slug" class="form-control shadow-none py-2"
+                                    placeholder="zendo-store" value="{{ old('slug') }}">
                             </div>
 
+                            <!-- New Fields -->
                             <div class="col-md-6">
-                                <label for="slug" class="form-label fw-bold text-secondary small text-uppercase">Store Slug</label>
-                                <input type="text" name="slug" id="slug"
-                                    class="form-control shadow-none py-2 @error('slug') is-invalid @enderror"
-                                    placeholder="zendo-store" value="{{ old('slug') }}">
-                                <small class="text-muted" style="font-size: 11.5px;">* The slug will be auto-generated from the store name.</small>
+                                <label for="store_email"
+                                    class="form-label fw-bold text-secondary small text-uppercase">Store Email</label>
+                                <input type="email" name="store_email" id="store_email"
+                                    class="form-control shadow-none py-2" value="{{ old('store_email') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="store_phone"
+                                    class="form-label fw-bold text-secondary small text-uppercase">Store Phone</label>
+                                <input type="text" name="store_phone" id="store_phone"
+                                    class="form-control shadow-none py-2" value="{{ old('store_phone') }}">
                             </div>
 
                             <div class="col-12">
-                                <label for="details" class="form-label fw-bold text-secondary small text-uppercase">Store Details / Description</label>
-                                <textarea name="details" id="details" rows="6"
-                                    class="form-control shadow-none py-2 @error('details') is-invalid @enderror"
-                                    placeholder="Describe your store layout, products, or rules...">{{ old('details') }}</textarea>
+                                <label for="address"
+                                    class="form-label fw-bold text-secondary small text-uppercase">Address</label>
+                                <input type="text" name="address" id="address" class="form-control shadow-none py-2"
+                                    value="{{ old('address') }}">
+                            </div>
+
+                            <div class="col-12">
+                                <label for="logo" class="form-label fw-bold text-secondary small text-uppercase">Store
+                                    Logo</label>
+                                <input type="file" name="logo" id="logo" class="form-control shadow-none py-2">
+                            </div>
+
+                            <div class="col-12">
+                                <label for="details" class="form-label fw-bold text-secondary small text-uppercase">Store
+                                    Details / Description</label>
+                                <textarea name="details" id="details" rows="4" class="form-control shadow-none py-2">{{ old('details') }}</textarea>
                             </div>
 
                             <div class="col-12 mt-4">
-                                <button type="submit" class="btn btn-primary fw-bold py-2 w-100 rounded-3 shadow-sm text-uppercase tracking-wider" style="padding-top: 0.7rem; padding-bottom: 0.7rem;">
+                                <button type="submit"
+                                    class="btn btn-primary fw-bold py-2 w-100 rounded-3 shadow-sm text-uppercase">
                                     <i class="bi bi-plus-circle me-1"></i> Create Store
                                 </button>
                             </div>
@@ -74,18 +101,18 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const storeNameInput = document.getElementById('store_name');
             const slugInput = document.getElementById('slug');
 
-            storeNameInput.addEventListener('input', function () {
+            storeNameInput.addEventListener('input', function() {
                 // បម្លែងអក្សរទៅជាអក្សរតូច, លុបចន្លោះមិនចាំបាច់ និងជំនួសដកឃ្លាដោយសញ្ញា (-)
                 let slug = this.value
                     .toLowerCase()
                     .trim()
                     .replace(/[^a-z0-9\s-]/g, '') // លុបតួអក្សរពិសេសក្រៅពីអក្សរ លេខ និងចន្លោះ
-                    .replace(/\s+/g, '-')         // ជំនួសរាល់ដកឃ្លាដោយសញ្ញា -
-                    .replace(/-+/g, '-');         // បង្រួមសញ្ញា - ដែលនៅជាប់គ្នាឱ្យសល់តែមួយ
+                    .replace(/\s+/g, '-') // ជំនួសរាល់ដកឃ្លាដោយសញ្ញា -
+                    .replace(/-+/g, '-'); // បង្រួមសញ្ញា - ដែលនៅជាប់គ្នាឱ្យសល់តែមួយ
 
                 slugInput.value = slug;
             });

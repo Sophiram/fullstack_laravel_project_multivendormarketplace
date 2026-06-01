@@ -1,155 +1,162 @@
 @extends('user.layouts.layout')
 
-@section('user_page_title', 'Dashboard - User Panel')
+@section('user_page_title', 'My Profile')
 
 @section('user_layout')
-    <div class="container-fluid px-0">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h3 class="fw-bold text-slate-800 mb-1" style="color: #0f172a;">User Dashboard</h3>
-                <p class="text-muted small mb-0">Overview of your account activities and metrics.</p>
-            </div>
+    <div class="container-fluid px-2 px-md-4">
+        <div class="mb-4">
+            <h3 class="fw-bold text-dark mb-1" style="color: #0f172a;">
+                <i data-lucide="user" class="me-2 text-primary" style="vertical-align: middle;"></i>Profile Settings
+            </h3>
+            <p class="text-muted small mb-0">Update your personal identification and manage account security.</p>
         </div>
 
-        <div class="card border-0 p-4 mb-4 shadow-sm position-relative overflow-hidden"
-             style="border-radius: 20px; background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);">
-            <div class="row align-items-center">
-                <div class="col-md-8 position-relative" style="z-index: 2;">
-                    <h4 class="fw-bold text-dark mb-2">Welcome back, {{ Auth::user()->name }}! 👋</h4>
-                    <p class="text-secondary mb-0" style="max-width: 550px; font-size: 14.5px; line-height: 1.6;">
-                        This is your personal space. Easily manage your order tracking, process payment configurations, and control your affiliate link generation from one place.
-                    </p>
-                </div>
-            </div>
-            <div class="position-absolute end-0 top-0 translate-middle-y text-primary opacity-10 d-none d-md-block" style="font-size: 150px; right: 20px !important;">
-                <i data-lucide="activity" style="width: 180px; height: 180px; stroke-width: 1;"></i>
-            </div>
-        </div>
 
-        <div class="row g-4 mb-4">
-            <div class="col-md-6 col-xl-4">
-                <div class="card p-4 border-0 shadow-sm card-hover h-100" style="border-radius: 18px; background: #ffffff; transition: transform 0.2s;">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <span class="text-muted fw-medium d-block mb-1" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Total Orders</span>
-                            <h2 class="fw-extrabold text-dark mb-0" style="font-size: 32px;">{{ $totalOrders }}</h2>
+        @if (session('status') === 'profile-updated')
+            <script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Updated!',
+                    text: 'Your Profile has been successfully updated.',
+                    showConfirmButton: false,
+                    timer: 2000, // បិទដោយស្វ័យប្រវត្តិក្នុង 2 វិនាទី
+                    position: 'top-end', // ឱ្យវាលោតនៅជ្រុងខាងលើ
+                    toast: true, // ធ្វើឱ្យវាចេញជាទម្រង់ Toast ស្អាត
+                    timerProgressBar: true
+                });
+            </script>
+        @endif
+
+        <!-- បង្ហាញ Error ក្នុងករណីរូបភាពធំពេក ឬ Validation ខុស -->
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('patch')
+
+            <div class="row g-4">
+                <div class="col-12 col-lg-4 col-xl-3">
+                    <div class="card shadow-sm border-0 rounded-4">
+                        <div class="p-4 text-center">
+                            <div class="position-relative d-inline-block mb-3">
+                                @if (Auth::user()->image)
+                                    <img id="profileImagePreview" src="{{ asset('storage/' . Auth::user()->image) }}"
+                                        alt="{{ Auth::user()->name }}"
+                                        class="img-fluid rounded-circle p-1 border border-2 border-primary-subtle shadow-sm"
+                                        style="width: 110px; height: 110px; object-fit: cover;" />
+                                @else
+                                    <img id="profileImagePreview"
+                                        src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&size=128&background=4f46e5&color=fff&bold=true"
+                                        alt="{{ Auth::user()->name }}"
+                                        class="img-fluid rounded-circle p-1 border border-2 border-primary-subtle shadow-sm"
+                                        style="width: 110px; height: 110px; object-fit: cover;" />
+                                @endif
+                                <span
+                                    class="position-absolute bottom-0 end-0 rounded-circle bg-success border border-2 border-white"
+                                    style="width: 14px; height: 14px; margin-right: 8px; margin-bottom: 8px;"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="imageUpload" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm"
+                                    style="cursor: pointer; transition: all 0.2s ease-in-out;">
+                                    <i data-lucide="camera" style="width: 12px; height: 12px;" class="me-1"></i> Change
+                                    Photo
+                                </label>
+                                <input type="file" id="imageUpload" name="image" class="d-none" accept="image/*"
+                                    onchange="previewImage(event)">
+                            </div>
+
+                            <h5 class="fw-bold text-dark mb-1">{{ Auth::user()->name }}</h5>
+                            <span class="badge rounded-pill bg-primary-subtle text-primary text-uppercase"
+                                style="font-size: 10px;">
+                                {{ Auth::user()->role ?? 'User' }}
+                            </span>
                         </div>
-                        <div class="p-3 rounded-3" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5;">
-                            <i data-lucide="shopping-cart" style="width: 24px; height: 24px; stroke-width: 2.5;"></i>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-8 col-xl-9">
+                    <div class="card shadow-sm border-0 p-4 rounded-4">
+                        <h5 class="fw-bold text-dark mb-3">Account Information</h5>
+
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold text-secondary small" for="inputName">Full Name</label>
+                                <input type="text" class="form-control rounded-3" id="inputName" name="name"
+                                    value="{{ Auth::user()->name }}" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold text-secondary small" for="inputEmail">Email
+                                    Address</label>
+                                <input type="text" class="form-control rounded-3" id="inputEmail" name="email"
+                                    value="{{ Auth::user()->email }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label fw-semibold text-secondary small d-block mb-2">Gender</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" id="genderMale"
+                                        value="male" {{ Auth::user()->gender == 'male' ? 'checked' : '' }}>
+                                    <label class="form-check-label small" for="genderMale">Male</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" id="genderFemale"
+                                        value="female" {{ Auth::user()->gender == 'female' ? 'checked' : '' }}>
+                                    <label class="form-check-label small" for="genderFemale">Female</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary px-4 py-2 rounded-3 fw-semibold w-100 w-md-auto">
+                                <i data-lucide="save" style="width: 16px; height: 16px;" class="me-2"></i> Save Changes
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
+        </form>
 
-            <div class="col-md-6 col-xl-4">
-                <div class="card p-4 border-0 shadow-sm card-hover h-100" style="border-radius: 18px; background: #ffffff; transition: transform 0.2s;">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <span class="text-muted fw-medium d-block mb-1" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Account Status</span>
-                            <h2 class="fw-extrabold text-success mb-0 d-flex align-items-center gap-2" style="font-size: 28px;">
-                                <span class="d-inline-block rounded-circle bg-success" style="width: 10px; height: 10px; animation: pulse 2s infinite;"></span>
-                                Active
-                            </h2>
-                        </div>
-                        <div class="p-3 rounded-3" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">
-                            <i data-lucide="shield-check" style="width: 24px; height: 24px; stroke-width: 2.5;"></i>
-                        </div>
-                    </div>
+        <div class="card shadow-sm border-0 p-4 rounded-4 mt-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">Security & Privacy</h5>
+                    <p class="text-muted small mb-0">Change your password regularly for better security.</p>
                 </div>
-            </div>
-
-            <div class="col-md-12 col-xl-4">
-                <div class="card p-4 border-0 shadow-sm card-hover h-100" style="border-radius: 18px; background: #ffffff; transition: transform 0.2s;">
-                    <div class="d-flex flex-column justify-content-between h-100">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <span class="text-muted fw-medium d-block" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Referral Link</span>
-                            <div class="text-primary"><i data-lucide="link" style="width: 18px; height: 18px;"></i></div>
-                        </div>
-                        <div class="input-group input-group-sm">
-                            <input type="text" id="dbRefLink" class="form-control bg-light border-0 px-2 text-truncate" style="font-size: 12px; font-weight: 500;" value="{{ url('/ref/' . Auth::user()->id) }}" readonly>
-                            <button class="btn btn-primary btn-sm px-3 fw-medium" onclick="copyDbLink()" id="btnDbCopy">Copy</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm border-0 p-4" style="border-radius: 20px; background: #ffffff;">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-dark mb-0" style="font-size: 16px;">Recent Orders</h5>
-                        <a href="{{ route('user.history') }}" class="btn btn-link text-primary btn-sm fw-medium text-decoration-none p-0">View All Orders →</a>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table align-middle mb-0">
-                            <thead>
-                                <tr class="text-secondary" style="font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">
-                                    <th class="border-0 ps-0">Order ID</th>
-                                    <th class="border-0">Date</th>
-                                    <th class="border-0">Status</th>
-                                    <th class="border-0 text-end pe-0">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($orders->take(3) as $order)
-                                <tr style="border-bottom: 1px solid #f1f5f9;">
-                                    <td class="fw-semibold text-dark ps-0 py-3" style="font-size: 14px;">#{{ $order->order_number }}</td>
-                                    <td class="text-secondary" style="font-size: 13.5px;">{{ $order->created_at->format('M d, Y') }}</td>
-                                    <td>
-                                        @if($order->status == 'completed' || $order->status == 'complete')
-                                            <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 11px;">Completed</span>
-                                        @else
-                                            <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle px-2 py-1" style="font-size: 11px;">Pending</span>
-                                        @endif
-                                    </td>
-                                    <td class="fw-bold text-dark text-end pe-0" style="font-size: 14px;">${{ number_format($order->total_price, 2) }}</td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="4" class="text-center py-4 text-muted small">No recent orders found.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <a href="#" class="btn btn-outline-danger btn-sm rounded-3 py-2 px-3 border-dashed">
+                    <i data-lucide="lock" style="width: 16px; height: 16px;" class="me-1"></i> Change Password
+                </a>
             </div>
         </div>
     </div>
 
-    <style>
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.05) !important;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-    </style>
-
     <script>
-        // Initialize Lucide Icons
+        // បើកដំណើរការ Lucide Icons
         lucide.createIcons();
 
-        function copyDbLink() {
-            const linkInput = document.getElementById('dbRefLink');
-            const btnCopy = document.getElementById('btnDbCopy');
+        // មុខងារសម្រាប់បង្ហាញរូបភាពភ្លាមៗពេលជ្រើសរើសរួច (Preview Image)
+        function previewImage(event) {
+            const imageInput = event.target;
+            const imagePreview = document.getElementById('profileImagePreview');
 
-            navigator.clipboard.writeText(linkInput.value).then(() => {
-                btnCopy.innerText = 'Copied!';
-                btnCopy.classList.remove('btn-primary');
-                btnCopy.classList.add('btn-success');
+            if (imageInput.files && imageInput.files[0]) {
+                // បង្កើត URL បណ្តោះអាសន្នសម្រាប់ File រូបភាពដែលបានរើស
+                imagePreview.src = URL.createObjectURL(imageInput.files[0]);
 
-                setTimeout(() => {
-                    btnCopy.innerText = 'Copy';
-                    btnCopy.classList.remove('btn-success');
-                    btnCopy.classList.add('btn-primary');
-                }, 2000);
-            });
+                // រក្សាទម្រង់រូបភាពឱ្យនៅជាកណ្ដាលរង្វង់ស្អាត ទោះបីជាទំហំដើមប៉ុណ្ណាក៏ដោយ
+                imagePreview.style.objectFit = "cover";
+            }
         }
     </script>
 @endsection

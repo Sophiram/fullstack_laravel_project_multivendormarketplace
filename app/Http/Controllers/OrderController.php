@@ -3,38 +3,60 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\CommissionRule;
+use App\Models\Product;
+use App\Models\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
     public function index()
     {
         $orders = Auth::user()->orders()
-            ->with(['items']) // 🚀 បន្ថែមដើម្បីការលឿន
+            ->with(['items'])
             ->orderByDesc('created_at')
             ->paginate(10);
 
-     $total_stores = Auth::user()->stores()->count();
-    $total_products = Auth::user()->products()->count();
-    $total_orders = Auth::user()->orders()->count();
+        $total_stores = Auth::user()->stores()->count();
+        $total_products = Auth::user()->products()->count();
+        $total_orders = Auth::user()->orders()->count();
 
-    // 🟢 ទាញយកសកម្មភាពថ្មីៗពី Database (បន្ថែមថ្មី)
-    $activities = Auth::user()->activities()->latest()->take(4)->get();
+        $activities = Auth::user()->activities()->latest()->take(4)->get();
 
         return view('orders.index', compact('orders', 'total_stores', 'total_products', 'total_orders', 'activities'));
     }
 
     public function show($id)
     {
-        // 🚀 ទាញយកទិន្នន័យព្រមទាំងរូបភាពផលិតផលទាំងអស់មកជាមួយគ្នាតែម្តង (ការពារ N+1 Query)
-        $order = Order::with(['items.product.images'])->findOrFail($id);
+        $order = Order::with(['items.product.images', 'items.product.store', 'user'])->findOrFail($id);
 
-        if ($order->user_id !== Auth::id() && Auth::user()->role !== 0) {
-            abort(403);
+        // ត្រួតពិនិត្យសិទ្ធិ: ម្ចាស់ Order ទើបអាចមើលបាន
+        if ($order->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
         }
 
         return view('orders.show', compact('order'));
+    }
+
+    public function vendorShowOrder($id)
+    {
+        $order = Order::with(['items.product.images', 'items.product.store', 'user'])->findOrFail($id);
+        $userId = Auth::id();
+
+        // ត្រងយកតែ Items ណាដែលជារបស់ Vendor នេះ
+        $order->items = $order->items->filter(function ($item) use ($userId) {
+            return ($item->product->store->user_id ?? null) == $userId;
+        });
+
+        // បើសិនជា Order នោះមិនមាន Items របស់ Vendor នេះទេ មិនអនុញ្ញាតឱ្យមើល
+        if ($order->items->isEmpty()) {
+            abort(403, 'You do not have permission to view this order.');
+        }
+
+        return view('vendor.ordershow', compact('order'));
     }
 
     public function cancel($id)
@@ -49,9 +71,7 @@ class OrderController extends Controller
             return redirect()->back()->with('error', 'Cannot cancel this order');
         }
 
-        // Restore stock
         foreach ($order->items as $item) {
-            // កែសម្រួលចំណុច product() មក product ដើម្បីការពារ Bug
             if ($item->product) {
                 $item->product->increment('stock_quantity', $item->quantity);
             }
@@ -60,32 +80,79 @@ class OrderController extends Controller
         $order->update(['status' => 'cancelled']);
 
         return redirect()->route('order.index')->with('success', 'Order cancelled successfully');
+    }
+
+   /**
+ * 🛒 មុខងារគណនា Commission ពេលអតិថិជនកុម្ម៉ង់ទិញ (Checkout Process)
+ */
+    public function completeCheckout(Request $request)
+    {
+        $cartItems = $request->input('cart_items', []);
+        $order = new Order();
+
+        DB::transaction(function () use ($cartItems, $order) {
+
+            foreach ($cartItems as $item) {
+                // 🟢 កែប្រែត្រង់នេះ៖ ប្តូរពី .findOrFail() មកជា ->findOrFail()
+                $product = Product::with('store.user')->findOrFail($item['product_id']);
+
+                // ១. ស្វែងរក % Commission ផ្អែកលើ Category របស់ផលិតផល
+                $rule = CommissionRule::where('category_id', $product->category_id)
+                    ->where('status', 'Active')
+                    ->first();
+
+                $commissionRate = $rule ? $rule->commission_rate : 0.00;
+
+                $totalPrice = $item['price'] * $item['quantity'];
+
+                // ២. គណនាទឹកប្រាក់ដែលក្រុមហ៊ុនត្រូវកាត់ទុក
+                $commissionAmount = ($totalPrice * $commissionRate) / 100;
+
+                // ៣. គណនាទឹកប្រាក់សុទ្ធដែល Vendor ត្រូវទទួលបាន (Net Earnings)
+                $vendorNetAmount = $totalPrice - $commissionAmount;
+
+                // ៤. បញ្ចូលទៅក្នុងតារាងលម្អិត OrderItem
+                OrderItem::create([
+                    'order_id'          => $order->id,
+                    'product_id'        => $product->id,
+                    'vendor_id'         => $product->store->user_id,
+                    'quantity'          => $item['quantity'],
+                    'price'             => $item['price'],
+                    'commission_rate'   => $commissionRate,
+                    'commission_amount' => $commissionAmount,
+                    'vendor_net_amount' => $vendorNetAmount,
+                ]);
+
+                // ៥. បន្ថយចំនួនស្តុកផលិតផល
+                $product->decrement('stock_quantity', $item['quantity']);
             }
+        });
 
-            /**
-         * 🏪 បង្ហាញប្រវត្តិនៃការលក់របស់ Vendor (Vendor Order History)
-         * URL: /vendor/order/history
-         */
-        public function vendorIndex(Request $request)
-        {
-            $search = $request->input('search');
-            $vendor_store_ids = \App\Models\Store::where('user_id', Auth::id())->pluck('id');
+        return redirect()->route('order.index')->with('success', 'Order placed successfully!');
+    }
 
-            // ទាញយកការកម្មង់ទិញដែលពាក់ព័ន្ធនឹងផលិតផលរបស់ Vendor ម្នាក់នេះ
-        $orders = Order::whereHas('items.product', function ($query) use ($vendor_store_ids) {
-                $query->whereIn('store_id', $vendor_store_ids);
-            })
-            ->with(['user', 'items.product.store']) // Eager loading ការពារ N+1 query
-            ->when($search, function ($query, $search) {
-                return $query->where('order_number', 'LIKE', "%{$search}%");
-            })
-            ->orderByDesc('created_at')
-            ->paginate(10); // 🚀 រក្សាទុក Pagination សម្រាប់ firstItem()
+    /**
+     * 🏪 បង្ហាញប្រវត្តិនៃការលក់របស់ Vendor និងចំណូលដែលបានកាត់ Commission រួច
+     */
+    /**
+ * 🏪 បង្ហាញប្រវត្តិនៃការលក់របស់ Vendor និងចំណូលដែលបានកាត់ Commission រួច
+ */
+    public function vendorIndex(Request $request)
+{
+    $vendor_store_ids = Store::where('user_id', Auth::id())->pluck('id');
 
-            // ហៅទៅកាន់ឯកសារ blade របស់ vendor (ត្រូវប្រាកដថាឈ្មោះ orderhistory.blade.php)
-            return view('vendor.orderhistory', compact('orders'));
-        }
+    $orders = Order::whereHas('items.product', function ($query) use ($vendor_store_ids) {
+            $query->whereIn('store_id', $vendor_store_ids);
+        })
+        ->with(['user', 'items' => function($q) use ($vendor_store_ids) {
+            // ត្រងយកតែ Items ដែលជាផលិតផលរបស់ហាងខ្លួនឯងប៉ុណ្ណោះ
+            $q->whereHas('product', function($pQuery) use ($vendor_store_ids) {
+                $pQuery->whereIn('store_id', $vendor_store_ids);
+            });
+        }])
+        ->orderByDesc('created_at')
+        ->paginate(10);
 
-
-        
+    return view('vendor.orderhistory', compact('orders'));
+}
 }
