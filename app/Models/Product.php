@@ -65,4 +65,14 @@ class Product extends Model
         // កំណត់ទៅកាន់ Model នៃតារាង product_reviews
         return $this->hasMany(ProductReview::class, 'product_id');
     }
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($product) {
+            if (empty($product->slug)) {
+                $product->slug = \Illuminate\Support\Str::slug($product->product_name);
+            }
+        });
+    }
 }

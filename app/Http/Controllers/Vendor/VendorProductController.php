@@ -42,11 +42,12 @@ class VendorProductController extends Controller
     public function storeproduct(Request $request){
         // dd($request->attributes);
         $validated = $request->validate([
+
             'product_name' => 'required|string|max:250',
             'description' => 'nullable|string',
             'sku' => 'required|string|unique:products,sku',
             'category_id' => 'required|exists:categories,id',
-            'subcategory_id' => 'nullable|exists:sub_categories,id',
+            'subcategory_id' => 'required|exists:sub_categories,id', // ប្តូរពី nullable ទៅ required
             'store_id' => 'required|exists:stores,id',
             'regular_price' => 'required|numeric|min:0',
             'discounted_price' => 'nullable|numeric|min:0',
@@ -59,19 +60,28 @@ class VendorProductController extends Controller
             'attributes.*.additional_price' => 'nullable|numeric|min:0',
         ]);
 
+
+        $slug = Str::slug($request->product_name);
+        $originalSlug = $slug;
+        $count = 1;
+        while (Product::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $count;
+            $count++;
+        }
+
         $product = Product::create([
             'product_name' => $request->product_name,
-            'description' => $request->description,
+            'description' => $request->description ?? 'No description provided', // បន្ថែមតម្លៃ Default នេះ
             'sku' => $request->sku,
             'vendor_id' => Auth::id(),
             'category_id' => $request->category_id,
-            'subcategory_id' => $request->subcategory_id ?: null,
+            'subcategory_id'   => $request->subcategory_id,
             'store_id' => $request->store_id,
             'regular_price' => $request->regular_price,
             'discounted_price' => $request->discounted_price,
             'tax_rate' => $request->tax_rate,
             'stock_quantity' => $request->stock_quantity,
-            'slug' => $request->slug ?? Str::slug($request->product_name),
+            'slug' => $request->slug ?? $slug,
             'meta_title' => $request->meta_title ?? null,
             'meta_description' => $request->meta_description ?? null,
         ]);
@@ -89,20 +99,7 @@ class VendorProductController extends Controller
             }
         }
 
-        // Handle attribute associations
-            // if ($request->has('attributes') && is_array($request->attributes)) {
-            //     foreach ($request->attributes as $attr) {
-            //         // ពិនិត្យថាមានទិន្នន័យពិតប្រាកដមុននឹងរក្សាទុក
-            //         if (!empty($attr['attribute_id']) && !empty($attr['attribute_value_id'])) {
-            //             ProductAttribute::create([
-            //                 'product_id'         => $product->id, // យក ID នៃផលិតផលដែលទើបតែបង្កើត
-            //                 'attribute_id'       => $attr['attribute_id'],
-            //                 'attribute_value_id' => $attr['attribute_value_id'],
-            //                 'additional_price'   => $attr['additional_price'] ?? 0,
-            //             ]);
-            //         }
-            //     }
-            // }
+
             // បន្ថែមនៅខាងលើ foreach នៃ attributes
             $attributes = $request->input('attributes', []);
 

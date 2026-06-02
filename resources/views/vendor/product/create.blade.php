@@ -10,13 +10,15 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h3 class="fw-bold text-dark mb-0">Add New Product</h3>
-                    <p class="text-muted small mb-0">Upload a new product with multiple variants and attributes to your store.</p>
+                    <p class="text-muted small mb-0">Upload a new product with multiple variants and attributes to your
+                        store.</p>
                 </div>
             </div>
 
             @if ($errors->any())
                 <div class="alert alert-warning alert-dismissible fade show shadow-sm rounded-3 mb-4">
-                    <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please fix the following errors:</div>
+                    <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please fix the following
+                        errors:</div>
                     <ul class="mb-0 sm-thin">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -33,7 +35,9 @@
                 </div>
             @endif
 
-            <form action="{{ route('vendor.product.store') }}" method="POST" enctype="multipart/form-data" id="productForm">
+
+            <form action="{{ route('vendor.product.store') }}" method="POST" enctype="multipart/form-data"
+                id="productForm">
                 @csrf
                 <div class="row g-4">
 
@@ -45,13 +49,18 @@
                             </div>
                             <div class="card-body p-4">
                                 <div class="mb-3">
-                                    <label for="product_name" class="form-label fw-bold text-secondary small">Product Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="product_name" class="form-control shadow-none py-2" placeholder="e.g., Lenovo IdeaPad 3 15 Thin" value="{{ old('product_name') }}" required>
+                                    <label for="product_name" class="form-label fw-bold text-secondary small">Product Name
+                                        <span class="text-danger">*</span></label>
+                                    <input type="text" name="product_name" class="form-control shadow-none py-2"
+                                        placeholder="e.g., Lenovo IdeaPad 3 15 Thin" value="{{ old('product_name') }}"
+                                        required>
                                 </div>
 
                                 <div class="mb-0">
-                                    <label for="description" class="form-label fw-bold text-secondary small">Description</label>
-                                    <textarea name="description" cols="30" rows="7" class="form-control shadow-none" placeholder="Provide detailed specifications of the product...">{{ old('description') }}</textarea>
+                                    <label for="description"
+                                        class="form-label fw-bold text-secondary small">Description</label>
+                                    <textarea name="description" cols="30" rows="7" class="form-control shadow-none"
+                                        placeholder="Provide detailed specifications of the product...">{{ old('description') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -62,12 +71,18 @@
                             </div>
                             <div class="card-body p-4">
                                 <div class="mb-0">
-                                    <label for="images" class="form-label fw-bold text-secondary small">Upload Images</label>
-                                    <div class="border border-dashed p-4 text-center rounded-3 bg-light position-relative" style="border-style: dashed !important;">
+                                    <label for="images" class="form-label fw-bold text-secondary small">Upload
+                                        Images</label>
+                                    <div class="border border-dashed p-4 text-center rounded-3 bg-light position-relative"
+                                        style="border-style: dashed !important;">
                                         <i class="bi bi-images fs-1 text-muted mb-2 d-block"></i>
-                                        <input type="file" name="images[]" class="form-control shadow-none position-absolute top-0 start-0 w-100 h-100 opacity-0 style-pointer" multiple id="image-input" style="cursor: pointer;">
-                                        <span class="text-primary fw-bold">Click to upload</span> or drag and drop files here
-                                        <small class="text-muted d-block mt-1">Supports: JPEG, PNG, JPG, GIF (Max: 10MB)</small>
+                                        <input type="file" name="images[]"
+                                            class="form-control shadow-none position-absolute top-0 start-0 w-100 h-100 opacity-0 style-pointer"
+                                            multiple id="image-input" style="cursor: pointer;">
+                                        <span class="text-primary fw-bold">Click to upload</span> or drag and drop files
+                                        here
+                                        <small class="text-muted d-block mt-1">Supports: JPEG, PNG, JPG, GIF (Max:
+                                            10MB)</small>
                                     </div>
                                     <div id="image-preview-container" class="d-flex flex-wrap gap-2 mt-3"></div>
                                 </div>
@@ -75,23 +90,30 @@
                         </div>
 
                         <div class="card border-0 shadow-sm rounded-3 mb-4">
-                            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                            <div
+                                class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                                 <h5 class="fw-bold text-dark mb-0">Product Variants & Attributes</h5>
-                                <button type="button" class="btn btn-outline-primary btn-sm fw-bold px-3 rounded-2" id="add-attribute-btn">
+                                <button type="button" class="btn btn-outline-primary btn-sm fw-bold px-3 rounded-2"
+                                    id="add-attribute-btn">
                                     <i class="bi bi-plus-circle me-1"></i> Add Row
                                 </button>
                             </div>
                             <div class="card-body p-3 bg-light-subtle">
                                 <div id="attributes-container">
-                                    <div class="p-3 mb-3 bg-white rounded-3 border position-relative attribute-row shadow-sm">
-                                        <button type="button" class="btn btn-sm btn-link text-danger position-absolute top-0 end-0 mt-2 me-2 p-0 remove-row-btn shadow-none d-none" title="Remove Row">
+                                    <div
+                                        class="p-3 mb-3 bg-white rounded-3 border position-relative attribute-row shadow-sm">
+                                        <button type="button"
+                                            class="btn btn-sm btn-link text-danger position-absolute top-0 end-0 mt-2 me-2 p-0 remove-row-btn shadow-none d-none"
+                                            title="Remove Row">
                                             <i class="bi bi-x-circle-fill fs-5"></i>
                                         </button>
 
                                         <div class="row g-3">
                                             <div class="col-12 col-md-4">
-                                                <label class="form-label mb-1 fw-bold text-secondary small">Attribute Type</label>
-                                                <select name="attributes[0][attribute_id]" class="form-select form-select-sm attribute-selector shadow-none py-2">
+                                                <label class="form-label mb-1 fw-bold text-secondary small">Attribute
+                                                    Type</label>
+                                                <select name="attributes[0][attribute_id]"
+                                                    class="form-select form-select-sm attribute-selector shadow-none py-2">
                                                     <option value="">-- Select Option --</option>
                                                     @foreach ($availableAttributes as $attr)
                                                         <option value="{{ $attr->id }}">{{ $attr->name }}</option>
@@ -100,15 +122,20 @@
                                             </div>
                                             <div class="col-12 col-md-4">
                                                 <label class="form-label mb-1 fw-bold text-secondary small">Value</label>
-                                                <select name="attributes[0][attribute_value_id]" class="form-select form-select-sm value-selector shadow-none py-2" disabled>
+                                                <select name="attributes[0][attribute_value_id]"
+                                                    class="form-select form-select-sm value-selector shadow-none py-2"
+                                                    disabled>
                                                     <option value="">-- Select Value --</option>
                                                 </select>
                                             </div>
                                             <div class="col-12 col-md-4">
-                                                <label class="form-label mb-1 fw-bold text-secondary small">Additional Price</label>
+                                                <label class="form-label mb-1 fw-bold text-secondary small">Additional
+                                                    Price</label>
                                                 <div class="input-group input-group-sm">
                                                     <span class="input-group-text bg-light text-muted fw-bold">$</span>
-                                                    <input type="number" step="0.01" name="attributes[0][additional_price]" class="form-control shadow-none py-2" placeholder="0.00">
+                                                    <input type="number" step="0.01"
+                                                        name="attributes[0][additional_price]"
+                                                        class="form-control shadow-none py-2" placeholder="0.00">
                                                 </div>
                                             </div>
                                         </div>
@@ -127,10 +154,13 @@
                             </div>
                             <div class="card-body p-4">
                                 <div class="mb-3">
-                                    <label for="store_id" class="form-label fw-bold text-secondary small">Select Store <span class="text-danger">*</span></label>
+                                    <label for="store_id" class="form-label fw-bold text-secondary small">Select Store
+                                        <span class="text-danger">*</span></label>
                                     <select name="store_id" class="form-select shadow-none py-2" required>
                                         @foreach ($stores as $store)
-                                            <option value="{{ $store->id }}" {{ old('store_id') == $store->id ? 'selected' : '' }}>{{ $store->store_name }}</option>
+                                            <option value="{{ $store->id }}"
+                                                {{ old('store_id') == $store->id ? 'selected' : '' }}>
+                                                {{ $store->store_name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -141,7 +171,9 @@
                                         <select name="category_id" id="category_id" class="form-select" required>
                                             <option value="">Select Category</option>
                                             @foreach ($categories as $category)
-                                                <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->category_name }}</option>
+                                                <option value="{{ $category->id }}"
+                                                    {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->category_name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -162,29 +194,39 @@
                             </div>
                             <div class="card-body p-4">
                                 <div class="mb-3">
-                                    <label for="sku" class="form-label fw-bold text-secondary small">Product SKU <span class="text-danger">*</span></label>
-                                    <input type="text" name="sku" class="form-control shadow-none" placeholder="e.g., LXD3402" value="{{ old('sku') }}" required>
+                                    <label for="sku" class="form-label fw-bold text-secondary small">Product SKU
+                                        <span class="text-danger">*</span></label>
+                                    <input type="text" name="sku" class="form-control shadow-none"
+                                        placeholder="e.g., LXD3402" value="{{ old('sku') }}" required>
                                 </div>
 
                                 <div class="row g-2 mb-3">
                                     <div class="col-6">
-                                        <label for="regular_price" class="form-label fw-bold text-secondary small">Regular Price ($) <span class="text-danger">*</span></label>
-                                        <input type="number" step="0.01" name="regular_price" class="form-control shadow-none" value="{{ old('regular_price') }}" required>
+                                        <label for="regular_price" class="form-label fw-bold text-secondary small">Regular
+                                            Price ($) <span class="text-danger">*</span></label>
+                                        <input type="number" step="0.01" name="regular_price"
+                                            class="form-control shadow-none" value="{{ old('regular_price') }}" required>
                                     </div>
                                     <div class="col-6">
-                                        <label for="discounted_price" class="form-label fw-bold text-secondary small">Discount ($)</label>
-                                        <input type="number" step="0.01" name="discounted_price" class="form-control shadow-none" value="{{ old('discounted_price') }}">
+                                        <label for="discounted_price"
+                                            class="form-label fw-bold text-secondary small">Discount ($)</label>
+                                        <input type="number" step="0.01" name="discounted_price"
+                                            class="form-control shadow-none" value="{{ old('discounted_price') }}">
                                     </div>
                                 </div>
 
                                 <div class="row g-2">
                                     <div class="col-6">
-                                        <label for="tax_rate" class="form-label fw-bold text-secondary small">Tax (%)</label>
-                                        <input type="number" step="0.01" name="tax_rate" class="form-control shadow-none" value="{{ old('tax_rate', 0.0) }}">
+                                        <label for="tax_rate" class="form-label fw-bold text-secondary small">Tax
+                                            (%)</label>
+                                        <input type="number" step="0.01" name="tax_rate"
+                                            class="form-control shadow-none" value="{{ old('tax_rate', 0.0) }}">
                                     </div>
                                     <div class="col-6">
-                                        <label for="stock_quantity" class="form-label fw-bold text-secondary small">Stock Qty <span class="text-danger">*</span></label>
-                                        <input type="number" name="stock_quantity" class="form-control shadow-none" value="{{ old('stock_quantity', 0) }}" required>
+                                        <label for="stock_quantity" class="form-label fw-bold text-secondary small">Stock
+                                            Qty <span class="text-danger">*</span></label>
+                                        <input type="number" name="stock_quantity" class="form-control shadow-none"
+                                            value="{{ old('stock_quantity', 0) }}" required>
                                     </div>
                                 </div>
                             </div>
@@ -197,17 +239,22 @@
                             <div class="card-body p-4">
                                 <div class="mb-3">
                                     <label for="slug" class="form-label fw-bold text-secondary small">URL Slug</label>
-                                    <input type="text" name="slug" class="form-control shadow-none" placeholder="lenovo-ideapad-3" value="{{ old('slug') }}">
+                                    <input type="text" name="slug" class="form-control shadow-none"
+                                        placeholder="lenovo-ideapad-3" value="{{ old('slug') }}">
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="meta_title" class="form-label fw-bold text-secondary small">Meta Title</label>
-                                    <input type="text" name="meta_title" class="form-control shadow-none" value="{{ old('meta_title') }}">
+                                    <label for="meta_title" class="form-label fw-bold text-secondary small">Meta
+                                        Title</label>
+                                    <input type="text" name="meta_title" class="form-control shadow-none"
+                                        value="{{ old('meta_title') }}">
                                 </div>
 
                                 <div class="mb-0">
-                                    <label for="meta_description" class="form-label fw-bold text-secondary small">Meta Description</label>
-                                    <input type="text" name="meta_description" class="form-control shadow-none" value="{{ old('meta_description') }}">
+                                    <label for="meta_description" class="form-label fw-bold text-secondary small">Meta
+                                        Description</label>
+                                    <input type="text" name="meta_description" class="form-control shadow-none"
+                                        value="{{ old('meta_description') }}">
                                 </div>
                             </div>
                         </div>
@@ -241,7 +288,8 @@
                             div.className = 'position-relative border rounded p-1 bg-white';
                             div.style.width = '80px';
                             div.style.height = '80px';
-                            div.innerHTML = `<img src="${e.target.result}" class="w-100 h-100 object-fit-cover rounded">`;
+                            div.innerHTML =
+                                `<img src="${e.target.result}" class="w-100 h-100 object-fit-cover rounded">`;
                             previewContainer.appendChild(div);
                         }
                         reader.readAsDataURL(file);
@@ -265,11 +313,13 @@
                     .then(data => {
                         subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
                         data.forEach(sub => {
-                            subcategorySelect.innerHTML += `<option value="${sub.id}">${sub.subcategory_name}</option>`;
+                            subcategorySelect.innerHTML +=
+                                `<option value="${sub.id}">${sub.subcategory_name}</option>`;
                         });
                     })
                     .catch(error => {
-                        subcategorySelect.innerHTML = '<option value="">Error loading subcategories</option>';
+                        subcategorySelect.innerHTML =
+                            '<option value="">Error loading subcategories</option>';
                     });
             });
 
@@ -302,7 +352,8 @@
                         .then(data => {
                             valueSelect.innerHTML = '<option value="">-- Select Value --</option>';
                             data.forEach(val => {
-                                valueSelect.innerHTML += `<option value="${val.id}">${val.value}</option>`;
+                                valueSelect.innerHTML +=
+                                    `<option value="${val.id}">${val.value}</option>`;
                             });
                         })
                         .catch(error => {
@@ -319,11 +370,13 @@
                 // កំណត់ Name attribute ថ្មីដោយប្រើ rowIndex
                 clone.querySelector('.attribute-selector').name = `attributes[${rowIndex}][attribute_id]`;
                 clone.querySelector('.value-selector').name = `attributes[${rowIndex}][attribute_value_id]`;
-                clone.querySelector('input[type="number"]').name = `attributes[${rowIndex}][additional_price]`;
+                clone.querySelector('input[type="number"]').name =
+                    `attributes[${rowIndex}][additional_price]`;
 
                 // Reset values សម្រាប់ជួរថ្មី
                 clone.querySelector('.attribute-selector').value = '';
-                clone.querySelector('.value-selector').innerHTML = '<option value="">-- Select Value --</option>';
+                clone.querySelector('.value-selector').innerHTML =
+                    '<option value="">-- Select Value --</option>';
                 clone.querySelector('.value-selector').disabled = true;
                 clone.querySelector('input[type="number"]').value = '';
 
@@ -340,5 +393,27 @@
                 }
             });
         });
+
+        @if ($errors->any())
+            <
+            script >
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: '{{ $errors->first() }}', // បង្ហាញកំហុសដំបូង
+                }); <
+            />
+        @endif
+
+        @if (session('success'))
+            <
+            script >
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: '{{ session('success') }}',
+                }); <
+            />
+        @endif
     </script>
 @endsection

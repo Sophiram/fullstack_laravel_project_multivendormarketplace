@@ -228,6 +228,11 @@
                         <i data-lucide="layout-dashboard"></i> Dashboard
                     </a>
                 </li>
+                <li class="sidebar-item {{ request()->routeIs('admin.reports.index') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('admin.reports.index') }}">
+                        <i data-lucide="bar-chart-2"></i> Reports
+                    </a>
+                </li>
 
                 <li class="sidebar-header">Product Catalog</li>
 

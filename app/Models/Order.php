@@ -19,7 +19,7 @@ class Order extends Model
         'shipped_at',
         'delivered_at',
         'payment_status',
-                'status',
+        'status',
     ];
 
     protected $casts = [
@@ -40,5 +40,9 @@ class Order extends Model
     public function payment()
     {
         return $this->hasOne(Payment::class);
+    }
+
+     public function shipping() {
+        return $this->hasOne(Shipping::class);
     }
 }

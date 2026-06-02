@@ -23,9 +23,17 @@ new class extends Component {
 
         if ($this->product->attributes) {
             $grouped = $this->product->attributes->groupBy('attribute_id');
+            // ផ្លាស់ប្តូរពីជួរទី ២៨ ដើម មកជាកូដនេះ៖
             foreach ($grouped as $attrId => $group) {
-                $attrName = $group->first()->attribute->name;
-                $this->selectedAttributes[$attrName] = $group->first()->attributeValue->value;
+                $firstItem = $group->first();
+                $attrName = $firstItem->attribute->name ?? 'Attribute';
+
+                // ពិនិត្យថាតើ attributeValue មានទិន្នន័យឬអត់ ទើបចូលទៅយក value
+                if ($firstItem->attributeValue) {
+                    $this->selectedAttributes[$attrName] = $firstItem->attributeValue->value;
+                } else {
+                    $this->selectedAttributes[$attrName] = 'N/A'; // ឬតម្លៃណាមួយដែលអ្នកចង់ដាក់
+                }
             }
         }
 
@@ -312,16 +320,29 @@ new class extends Component {
                 height: 300px;
             }
         }
+
+        .btn-back {
+            background-color: #f1f5f9;
+            color: #475569;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-back:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
     </style>
 
     {{-- Back Button --}}
     <div class="mb-4">
-        <a href="{{ url()->previous() }}" class="btn px-3 py-2 fw-semibold border-0 shadow-sm"
+        <button type="button" onclick="history.back()" class="btn px-3 py-2 fw-semibold border-0 shadow-sm"
             style="background-color: #f1f5f9; color: #475569; border-radius: 10px; transition: all 0.2s ease;"
             onmouseover="this.style.backgroundColor='#e2e8f0'; this.style.color='#0f172a';"
             onmouseout="this.style.backgroundColor='#f1f5f9'; this.style.color='#475569';">
             <i class="fa-solid fa-arrow-left-long me-2"></i> Back
-        </a>
+        </button>
     </div>
 
     <div class="row g-4 lg:g-5">

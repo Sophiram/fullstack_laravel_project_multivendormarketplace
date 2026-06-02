@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -79,4 +80,55 @@ public function update(Request $request, $id) {
         return redirect()->back()->with('success', 'Product deleted successfully!');
     }
 
+
+    public function store(Request $request)
+    {
+        // ១. Validate ទិន្នន័យ
+        $request->validate([
+            'product_name' => 'required|string|max:255',
+            'store_id'     => 'required', // យក store_id ពី form
+            'sku'          => 'required|unique:products,sku',
+            'regular_price'=> 'required|numeric',
+            'stock_quantity' => 'required|integer',
+            'category_id'  => 'required',
+            'images.*'     => 'image|mimes:jpeg,png,jpg|max:2048'
+        ]);
+
+        $store = \App\Models\Store::find($request->store_id);
+        $slug = Str::slug($request->product_name);
+        // ២. រក្សាទុកទិន្នន័យចូល Database
+            $product = Product::create([
+            'product_name'   => $request->product_name,
+            'slug'           => $slug, // បន្ថែមជួរនេះចូល
+            'vendor_id'      => $store->vendor_id,
+            'store_id'       => $request->store_id,
+            'description'    => $request->description,
+            'sku'            => $request->sku,
+            'regular_price'  => $request->regular_price,
+            'discounted_price'=> $request->discounted_price,
+            'stock_quantity' => $request->stock_quantity,
+            'category_id'    => $request->category_id,
+            'subcategory_id' => $request->subcategory_id,
+            'status'         => $request->status,
+        ]);
+
+        // ៣. រក្សាទុករូបភាព (ប្រសិនបើមាន)
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('products', 'public');
+                $product->images()->create(['image_path' => $path]);
+            }
+        }
+
+        // ៤. រក្សាទុក Attributes (ប្រសិនបើមាន)
+        if ($request->has('attributes')) {
+            foreach ($request->attributes as $attr) {
+                if ($attr['attribute_id']) {
+                    $product->attributes()->create($attr);
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', 'Product created successfully!');
+    }
 }

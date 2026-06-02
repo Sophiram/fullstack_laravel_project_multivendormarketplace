@@ -296,9 +296,10 @@
                 </div>
 
                 {{-- 📝 ទម្រង់ Form បង្កើតផលិតផល --}}
-                <form action="{{ route('vendor.product.store') }}" method="POST" enctype="multipart/form-data"
+                <form action="{{ route('admin.product.store') }}" method="POST" enctype="multipart/form-data"
                     id="modalProductForm">
                     @csrf
+                    <input type="hidden" name="vendor_id" value="{{ auth()->id() }}">
                     <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
                         <div class="row g-4">
 
@@ -411,6 +412,8 @@
                                                 @endforeach
                                             </select>
                                         </div>
+
+
                                         <div class="mb-2">
                                             <label class="form-label small text-secondary fw-semibold">Category <span
                                                     class="text-danger">*</span></label>
@@ -617,7 +620,7 @@
                         .then(response => response.json())
                         .then(data => {
                             subcategorySelect.innerHTML =
-                            '<option value="">Select Subcategory</option>';
+                                '<option value="">Select Subcategory</option>';
                             data.forEach(sub => {
                                 subcategorySelect.innerHTML +=
                                     `<option value="${sub.id}">${sub.subcategory_name}</option>`;

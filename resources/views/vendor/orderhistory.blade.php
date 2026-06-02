@@ -117,15 +117,42 @@
 
                                         <!-- 🟢 កែប្រែដោយបន្ថែម d-flex justify-content-end លើយុថ្កា (A tag) ឬ TD -->
                                         <td class="pe-4 text-end">
-                                            <div class="d-flex justify-content-end">
+                                            <div class="d-flex justify-content-end align-items-center gap-2">
+                                                <!-- View Details Button -->
                                                 <a href="{{ route('vendor.ordershow', $order->id) }}"
-                                                    class="btn btn-sm btn-light border shadow-none d-inline-flex align-items-center justify-content-center"
-                                                    title="View Details" style="width: 32px; height: 32px; padding: 0;">
+                                                    class="btn btn-sm btn-light border shadow-none d-flex align-items-center justify-content-center"
+                                                    title="View Details" style="width: 32px; height: 32px;">
                                                     <i class="align-middle text-secondary" data-feather="eye"
                                                         style="width: 15px; height: 15px;"></i>
                                                 </a>
+
+                                                <!-- Edit Status Dropdown Form -->
+                                                <form action="{{ route('vendor.orders.updateStatus', $order->id) }}"
+                                                    method="POST" class="m-0">
+                                                    @csrf
+                                                    <select name="status" class="form-select form-select-sm shadow-none"
+                                                        onchange="this.form.submit()" style="width: 120px;">
+                                                        <option value="pending"
+                                                            {{ $order->status == 'pending' ? 'selected' : '' }}>Pending
+                                                        </option>
+                                                        <option value="processing"
+                                                            {{ $order->status == 'processing' ? 'selected' : '' }}>
+                                                            Processing</option>
+                                                        <option value="shipped"
+                                                            {{ $order->status == 'shipped' ? 'selected' : '' }}>Shipped
+                                                        </option>
+                                                        <option value="completed"
+                                                            {{ $order->status == 'completed' ? 'selected' : '' }}>Completed
+                                                        </option>
+                                                        <option value="cancelled"
+                                                            {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled
+                                                        </option>
+                                                    </select>
+                                                </form>
                                             </div>
                                         </td>
+
+                                        
                                     </tr>
                                 @empty
                                     <tr>

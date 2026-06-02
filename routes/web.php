@@ -27,10 +27,14 @@ use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\PaymentRequestController as AdminPaymentRequestController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\ReviewManagementController;
+use App\Http\Controllers\Admin\SystemReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VendorController;
+use App\Http\Controllers\Vendor\VendorReportController;
 use App\Http\Controllers\VendorPayoutController;
 use App\Models\SubCategory;
+use App\Notifications\OrderStatusUpdated;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Volt;
 
 
@@ -107,6 +111,10 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
     Route::get('/admin/payouts', [AdminPaymentRequestController::class, 'index'])->name('admin.payouts');
     Route::post('/admin/payouts/{id}/approve', [AdminPaymentRequestController::class, 'approve'])->name('admin.payouts.approve');
     Route::post('/admin/payouts/{id}/reject', [AdminPaymentRequestController::class, 'reject'])->name('admin.payouts.reject'); // បន្ថែមត្រង់នេះ
+
+
+    Route::get('/admin/reports', [SystemReportController::class, 'index'])->name('admin.reports.index');
+    Route::get('/admin/reports/export', [SystemReportController::class, 'export'])->name('admin.reports.export');
 
     Route::prefix('admin/payment')->name('admin.payment.')->group(function () {
         Route::controller(PaymentMethodController::class)->group(function () {
@@ -192,12 +200,16 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
             Route::get('/product/manage', 'index')->name('product.manage');
 
 
-            Route::get('/product/create', [ProductController::class, 'create'])->name('product.create');
+            // Route::get('/product/create', [ProductController::class, 'create'])->name('product.create');
             Route::get('/product/edit/{id}', 'edit')->name('product.edit');
              Route::put('/product/update/{id}', 'update')->name('product.update');
              Route::delete('/product/destroy/{id}', 'destroy')->name('product.destroy');
 
            Route::get('/product/review/manage', 'review_manage')->name('product.review.manage');
+
+             Route::post('/admin/product/store',  'store')->name('admin.product.store');
+
+
         });
 
         Route::controller(ProductAttributeController::class)->group(function () {
@@ -272,14 +284,19 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
 Route::middleware(['auth', 'verified', 'rolemanager:vendor', 'approved.vendor'])->group(function () {
     Route::prefix('vendor')->group(function () {
 
-    Route::get('/order/history', [\App\Http\Controllers\OrderController::class, 'vendorIndex'])->name('vendor.orders.history');
-    // បន្ថែម Route នេះទៅក្នុងក្រុមរបស់ Vendor (prefix 'vendor')
-    Route::get('/order/show/{id}', [OrderController::class, 'vendorShowOrder'])->name('vendor.ordershow');
-    Route::get('/products/{id}', [ProductController::class, 'show'])->name('vendor.products.show');
-    Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel'])->name('vendor.order.cancel');
+        Route::get('/order/history', [\App\Http\Controllers\OrderController::class, 'vendorIndex'])->name('vendor.orders.history');
+        // បន្ថែម Route នេះទៅក្នុងក្រុមរបស់ Vendor (prefix 'vendor')
+        Route::get('/order/show/{id}', [OrderController::class, 'vendorShowOrder'])->name('vendor.ordershow');
+        Route::post('/orders/{order}/update-status', [App\Http\Controllers\OrderController::class, 'updateStatus'])
+            ->name('vendor.orders.updateStatus');
+
+        Route::get('/products/{id}', [ProductController::class, 'show'])->name('vendor.products.show');
+        Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel'])->name('vendor.order.cancel');
     // Route::get('/order/export', [OrderController::class, 'export'])->name('order.export');
 
-    Route::get('/payout', [VendorPayoutController::class, 'index'])->name('vendor.payout.index');
+        Route::get('/payout', [VendorPayoutController::class, 'index'])->name('vendor.payout.index');
+
+
     Route::post('/payout/request', [VendorPayoutController::class, 'requestPayout'])->name('vendor.payout.request');
         Route::controller(VendorMainController::class)->group(function () {
 
@@ -288,6 +305,7 @@ Route::middleware(['auth', 'verified', 'rolemanager:vendor', 'approved.vendor'])
             Route::get('/settings', 'settings')->name('vendor.settings');
             Route::patch('/profile', 'update')->name('vendor.profile.update');
             Route::get('/sales/report', 'salesReport')->name('vendor.sales.report');
+            Route::get('/vendor/sales-report/export', 'exportSalesReport')->name('vendor.report.export');
         });
 
         Route::controller(VendorProductController::class)->group(function () {
@@ -337,9 +355,30 @@ Route::middleware(['auth', 'verified', 'rolemanager:user'])->group(function () {
              Route::get('/profile',  'profile')->name('user.profile');
             Route::patch('/profile', 'update')->name('user.profile.update');
              Route::delete('/profile',  'destroy')->name('user.profile.destroy');
+
+             Route::get('/notifications/read-all', function () {
+                    Auth::user()->unreadNotifications->markAsRead();
+                    return redirect()->back();
+            })->name('user.notifications.readAll');
         });
     });
 });
+
+Route::get('/test-notification-debug', function () {
+    $user = Auth::user();
+
+    // បង្កើត Object តេស្តមួយ
+    $order = (object)[
+        'id' => 999,
+        'order_number' => 'TEST-12345',
+        'status' => 'Delivered'
+    ];
+
+    // ផ្ញើ Notification
+    $user->notify(new OrderStatusUpdated($order));
+
+    return "Notification ត្រូវបានផ្ញើទៅកាន់ Database ហើយ!";
+})->middleware('auth');
 
 
 Route::middleware('auth')->group(function () {

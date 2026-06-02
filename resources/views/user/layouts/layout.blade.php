@@ -213,12 +213,50 @@
                         {{ Auth::user()->name }}</span>
                 </div>
 
+
                 <div class="navbar-nav align-items-center gap-2">
+
+                    <!-- បន្ថែមនៅក្បែរផ្នែក Profile ក្នុង Navbar -->
+                    <div class="dropdown me-3">
+                        <a class="nav-link text-secondary position-relative" href="#" role="button"
+                            data-bs-toggle="dropdown">
+                            <i data-lucide="bell" style="width: 20px; height: 20px;"></i>
+                            <!-- បង្ហាញចំណុចក្រហមប្រសិនបើមាន Unread Notification -->
+                            @if (Auth::user()->unreadNotifications->count() > 0)
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                            @endif
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" style="width: 300px;">
+                            <li class="px-3 py-2 fw-bold border-bottom">Notifications</li>
+                            <div style="max-height: 300px; overflow-y: auto;">
+                                @forelse(Auth::user()->notifications as $notification)
+                                    <li
+                                        class="dropdown-item text-wrap p-3 border-bottom {{ $notification->read_at ? '' : 'bg-light' }}">
+                                        <div class="small fw-semibold">
+                                            {{ $notification->data['message'] ?? 'New Notification' }}</div>
+                                        <div class="text-muted" style="font-size: 11px;">
+                                            {{ $notification->created_at->diffForHumans() }}</div>
+                                    </li>
+                                @empty
+                                    <li class="dropdown-item text-center text-muted py-3">No new notifications</li>
+                                @endforelse
+                            </div>
+                            <li>
+                                <a href="{{ route('user.notifications.readAll') }}"
+                                    class="dropdown-item text-center text-primary small">Mark all as read</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    
                     <a class="btn btn-light btn-sm d-flex align-items-center gap-1 border-0 px-2 px-sm-3 py-2 rounded-3 text-secondary fw-medium"
                         href="{{ url('/') }}">
                         <i data-lucide="home" style="width: 16px; height: 16px;"></i> <span
                             class="d-none d-md-inline">Home</span>
                     </a>
+
+
 
                     <div class="dropdown">
                         <a class="btn btn-light btn-sm d-flex align-items-center gap-2 border-0 px-2 px-sm-3 py-2 rounded-3 text-dark fw-semibold dropdown-toggle"

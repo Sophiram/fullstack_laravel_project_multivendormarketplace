@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Exports\SalesReportExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class VendorMainController extends Controller
 {
@@ -90,6 +92,10 @@ class VendorMainController extends Controller
         return view('vendor.sales_report', compact('total_earnings', 'total_items_sold', 'monthly_sales'));
     }
 
+    public function exportSalesReport()
+    {
+        return Excel::download(new SalesReportExport, 'sales_report.xlsx');
+    }
 
     public function update(Request $request)
     {

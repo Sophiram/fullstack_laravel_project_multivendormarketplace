@@ -7,6 +7,8 @@ use App\Models\OrderItem;
 use App\Models\CommissionRule;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\User;
+use App\Notifications\OrderStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -138,21 +140,52 @@ class OrderController extends Controller
  * 🏪 បង្ហាញប្រវត្តិនៃការលក់របស់ Vendor និងចំណូលដែលបានកាត់ Commission រួច
  */
     public function vendorIndex(Request $request)
-{
-    $vendor_store_ids = Store::where('user_id', Auth::id())->pluck('id');
+        {
+            $vendor_store_ids = Store::where('user_id', Auth::id())->pluck('id');
 
-    $orders = Order::whereHas('items.product', function ($query) use ($vendor_store_ids) {
-            $query->whereIn('store_id', $vendor_store_ids);
-        })
-        ->with(['user', 'items' => function($q) use ($vendor_store_ids) {
-            // ត្រងយកតែ Items ដែលជាផលិតផលរបស់ហាងខ្លួនឯងប៉ុណ្ណោះ
-            $q->whereHas('product', function($pQuery) use ($vendor_store_ids) {
-                $pQuery->whereIn('store_id', $vendor_store_ids);
+            $orders = Order::whereHas('items.product', function ($query) use ($vendor_store_ids) {
+                    $query->whereIn('store_id', $vendor_store_ids);
+                })
+                ->with(['user', 'items' => function($q) use ($vendor_store_ids) {
+                    // ត្រងយកតែ Items ដែលជាផលិតផលរបស់ហាងខ្លួនឯងប៉ុណ្ណោះ
+                    $q->whereHas('product', function($pQuery) use ($vendor_store_ids) {
+                        $pQuery->whereIn('store_id', $vendor_store_ids);
+                    });
+                }])
+                ->orderByDesc('created_at')
+                ->paginate(10);
+
+            return view('vendor.orderhistory', compact('orders'));
+        }
+
+        public function updateStatus(Request $request, Order $order)
+        {
+            $request->validate([
+                'status' => 'required|in:pending,processing,shipped,completed,cancelled',
+                // បន្ថែម validation សម្រាប់ Shipping (ចាំបាច់បើ status = shipped)
+                'shipping_company' => 'required_if:status,shipped|string',
+                'tracking_number'  => 'required_if:status,shipped|string',
+            ]);
+
+            // ប្រើ Database Transaction ដើម្បីសុវត្ថិភាព
+            DB::transaction(function () use ($request, $order) {
+                $order->update(['status' => $request->status]);
+
+                if ($request->status == 'shipped') {
+                    \App\Models\Shipping::updateOrCreate(
+                        ['order_id' => $order->id],
+                        [
+                            'shipping_company' => $request->shipping_company,
+                            'tracking_number'  => $request->tracking_number,
+                            'shipping_status'  => 'Shipped',
+                            'shipping_date'    => now(),
+                        ]
+                    );
+                }
             });
-        }])
-        ->orderByDesc('created_at')
-        ->paginate(10);
+            $user = User::find($order->user_id);
+            $order->user->notify(new OrderStatusUpdated($order));
 
-    return view('vendor.orderhistory', compact('orders'));
-}
+            return redirect()->back()->with('success', 'Order status updated and customer notified!');
+        }
 }
