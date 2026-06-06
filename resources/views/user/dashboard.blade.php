@@ -3,113 +3,159 @@
 @section('user_page_title', 'Dashboard - User Panel')
 
 @section('user_layout')
-    <div class="container-fluid px-0">
+    <div class="container-fluid px-2 px-md-4 py-3">
+        <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h3 class="fw-bold text-slate-800 mb-1" style="color: #0f172a;">User Dashboard</h3>
+                <h3 class="fw-bold text-dark mb-1 d-flex align-items-center" style="color: #0f172a;">
+                    <i data-lucide="layout-dashboard" class="me-2 text-primary"></i>
+                    User Dashboard
+                </h3>
                 <p class="text-muted small mb-0">Overview of your account activities and metrics.</p>
             </div>
         </div>
 
-        <div class="card border-0 p-4 mb-4 shadow-sm position-relative overflow-hidden"
-             style="border-radius: 20px; background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);">
+        <!-- Welcome Banner -->
+        <div class="card border-0 p-4 p-md-5 mb-4 shadow-sm position-relative overflow-hidden welcome-banner"
+            style="border-radius: 20px; background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);">
             <div class="row align-items-center">
-                <div class="col-md-8 position-relative" style="z-index: 2;">
+                <div class="col-md-9 position-relative" style="z-index: 2;">
                     <h4 class="fw-bold text-dark mb-2">Welcome back, {{ Auth::user()->name }}! 👋</h4>
-                    <p class="text-secondary mb-0" style="max-width: 550px; font-size: 14.5px; line-height: 1.6;">
-                        This is your personal space. Easily manage your order tracking, process payment configurations, and control your affiliate link generation from one place.
+                    <p class="text-secondary mb-0" style="max-width: 600px; font-size: 15px; line-height: 1.6;">
+                        This is your personal space. Easily manage your order tracking, process payment configurations, and
+                        control your affiliate link generation from one place.
                     </p>
                 </div>
             </div>
-            <div class="position-absolute end-0 top-0 translate-middle-y text-primary opacity-10 d-none d-md-block" style="font-size: 150px; right: 20px !important;">
-                <i data-lucide="activity" style="width: 180px; height: 180px; stroke-width: 1;"></i>
+            <!-- Decorative Icon -->
+            <div class="position-absolute end-0 top-50 translate-middle-y text-primary opacity-10 d-none d-md-block pe-4"
+                style="z-index: 1;">
+                <i data-lucide="activity" style="width: 160px; height: 160px; stroke-width: 1;"></i>
             </div>
         </div>
 
+        <!-- Stat Cards Section -->
         <div class="row g-4 mb-4">
-            <div class="col-md-6 col-xl-4">
-                <div class="card p-4 border-0 shadow-sm card-hover h-100" style="border-radius: 18px; background: #ffffff; transition: transform 0.2s;">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <span class="text-muted fw-medium d-block mb-1" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Total Orders</span>
-                            <h2 class="fw-extrabold text-dark mb-0" style="font-size: 32px;">{{ $totalOrders }}</h2>
-                        </div>
-                        <div class="p-3 rounded-3" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5;">
-                            <i data-lucide="shopping-cart" style="width: 24px; height: 24px; stroke-width: 2.5;"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            @php
+                $cards = [
+                    [
+                        'title' => 'Total Spent',
+                        'value' => '$' . number_format($stats['totalSpent'], 2),
+                        'icon' => 'dollar-sign',
+                        'color' => 'text-primary',
+                        'bg' => 'bg-primary-subtle',
+                    ],
+                    [
+                        'title' => 'Total Orders',
+                        'value' => $stats['totalOrders'],
+                        'icon' => 'shopping-bag',
+                        'color' => 'text-info',
+                        'bg' => 'bg-info-subtle',
+                    ],
+                    [
+                        'title' => 'Completed',
+                        'value' => $stats['completedOrders'],
+                        'icon' => 'check-circle',
+                        'color' => 'text-success',
+                        'bg' => 'bg-success-subtle',
+                    ],
+                    [
+                        'title' => 'Pending',
+                        'value' => $stats['pendingOrders'],
+                        'icon' => 'clock',
+                        'color' => 'text-warning',
+                        'bg' => 'bg-warning-subtle',
+                    ],
+                ];
+            @endphp
 
-            <div class="col-md-6 col-xl-4">
-                <div class="card p-4 border-0 shadow-sm card-hover h-100" style="border-radius: 18px; background: #ffffff; transition: transform 0.2s;">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <span class="text-muted fw-medium d-block mb-1" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Account Status</span>
-                            <h2 class="fw-extrabold text-success mb-0 d-flex align-items-center gap-2" style="font-size: 28px;">
-                                <span class="d-inline-block rounded-circle bg-success" style="width: 10px; height: 10px; animation: pulse 2s infinite;"></span>
-                                Active
-                            </h2>
-                        </div>
-                        <div class="p-3 rounded-3" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">
-                            <i data-lucide="shield-check" style="width: 24px; height: 24px; stroke-width: 2.5;"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-12 col-xl-4">
-                <div class="card p-4 border-0 shadow-sm card-hover h-100" style="border-radius: 18px; background: #ffffff; transition: transform 0.2s;">
-                    <div class="d-flex flex-column justify-content-between h-100">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <span class="text-muted fw-medium d-block" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Referral Link</span>
-                            <div class="text-primary"><i data-lucide="link" style="width: 18px; height: 18px;"></i></div>
-                        </div>
-                        <div class="input-group input-group-sm">
-                            <input type="text" id="dbRefLink" class="form-control bg-light border-0 px-2 text-truncate" style="font-size: 12px; font-weight: 500;" value="{{ url('/ref/' . Auth::user()->id) }}" readonly>
-                            <button class="btn btn-primary btn-sm px-3 fw-medium" onclick="copyDbLink()" id="btnDbCopy">Copy</button>
+            @foreach ($cards as $card)
+                <div class="col-6 col-md-3">
+                    <div class="card p-3 border-0 shadow-sm card-hover h-100" style="border-radius: 16px;">
+                        <div class="d-flex align-items-center">
+                            <div class="p-3 rounded-4 {{ $card['bg'] }} {{ $card['color'] }} me-3">
+                                <i data-lucide="{{ $card['icon'] }}" style="width: 24px; height: 24px;"></i>
+                            </div>
+                            <div>
+                                <span class="text-muted d-block"
+                                    style="font-size: 11px; text-transform: uppercase; font-weight: 700;">{{ $card['title'] }}</span>
+                                <h5 class="fw-bold mb-0 mt-1">{{ $card['value'] }}</h5>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            @endforeach
         </div>
 
+        <!-- Recent Orders Section -->
         <div class="row">
             <div class="col-12">
-                <div class="card shadow-sm border-0 p-4" style="border-radius: 20px; background: #ffffff;">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-dark mb-0" style="font-size: 16px;">Recent Orders</h5>
-                        <a href="{{ route('user.history') }}" class="btn btn-link text-primary btn-sm fw-medium text-decoration-none p-0">View All Orders →</a>
+                <div class="card shadow-sm border-0 mb-4"
+                    style="border-radius: 20px; background: #ffffff; overflow: hidden;">
+                    <div
+                        class="card-header bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold text-dark mb-0 d-flex align-items-center" style="font-size: 16px;">
+                            <i data-lucide="clock" class="me-2 text-secondary icon-sm"></i>
+                            Recent Orders
+                        </h5>
+                        <a href="{{ route('user.order.history') }}"
+                            class="btn btn-link text-primary btn-sm fw-semibold text-decoration-none p-0 d-flex align-items-center">
+                            View All <i data-lucide="arrow-right" class="ms-1" style="width: 14px; height: 14px;"></i>
+                        </a>
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table align-middle mb-0">
-                            <thead>
-                                <tr class="text-secondary" style="font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">
-                                    <th class="border-0 ps-0">Order ID</th>
-                                    <th class="border-0">Date</th>
-                                    <th class="border-0">Status</th>
-                                    <th class="border-0 text-end pe-0">Total</th>
+                        <table class="table custom-table align-middle mb-0 text-nowrap">
+                            <thead style="background-color: #f8fafc;">
+                                <tr class="text-secondary"
+                                    style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <th class="border-0 ps-4 py-3">Order ID</th>
+                                    <th class="border-0 py-3">Date</th>
+                                    <th class="border-0 py-3">Status</th>
+                                    <th class="border-0 text-end pe-4 py-3">Total</th>
+                                    <th class="border-0 text-end pe-4 py-3">Action</th> {{-- បន្ថែមថ្មី --}}
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($orders->take(3) as $order)
-                                <tr style="border-bottom: 1px solid #f1f5f9;">
-                                    <td class="fw-semibold text-dark ps-0 py-3" style="font-size: 14px;">#{{ $order->order_number }}</td>
-                                    <td class="text-secondary" style="font-size: 13.5px;">{{ $order->created_at->format('M d, Y') }}</td>
-                                    <td>
-                                        @if($order->status == 'completed' || $order->status == 'complete')
-                                            <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 11px;">Completed</span>
-                                        @else
-                                            <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle px-2 py-1" style="font-size: 11px;">Pending</span>
-                                        @endif
-                                    </td>
-                                    <td class="fw-bold text-dark text-end pe-0" style="font-size: 14px;">${{ number_format($order->total_price, 2) }}</td>
-                                </tr>
+                                    <tr class="hover-bg-light">
+                                        <td class="ps-4 py-3 fw-bold text-dark">#{{ $order->order_number }}</td>
+                                        <td class="text-secondary">{{ $order->created_at->format('M d, Y') }}</td>
+                                        <td class="py-3">
+                                            @php
+                                                $statusClass = [
+                                                    'completed' => 'bg-success-subtle text-success border-success',
+                                                    'pending' => 'bg-warning-subtle text-warning border-warning',
+                                                    'processing' => 'bg-info-subtle text-info border-info',
+                                                    'canceled' => 'bg-danger-subtle text-danger border-danger',
+                                                ];
+                                                $status = strtolower($order->status);
+                                                $badgeStyle =
+                                                    $statusClass[$status] ?? 'bg-secondary-subtle text-secondary';
+                                            @endphp
+                                            <span class="badge rounded-pill border {{ $badgeStyle }} px-3 py-1">
+                                                {{ ucfirst($status) }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end pe-4 fw-bold text-dark">
+                                            ${{ number_format($order->total_amount, 2) }}</td>
+                                        <td class="text-end pe-4">
+                                            <a href="{{ route('user.order.show', $order->id) }}"
+                                                class="btn btn-sm btn-outline-primary" style="border-radius: 8px;">
+                                                View
+                                            </a>
+                                        </td>
+                                    </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="4" class="text-center py-4 text-muted small">No recent orders found.</td>
-                                </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5">
+                                            <div class="text-secondary">
+                                                <i data-lucide="package"
+                                                    style="width: 40px; height: 40px; opacity: 0.5;"></i>
+                                                <p class="mt-2 mb-0 fw-medium">No recent orders yet.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -120,14 +166,85 @@
     </div>
 
     <style>
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.05) !important;
+        /* Card Hover Effects */
+        .card-hover {
+            transition: all 0.3s ease;
         }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Table Row Hover */
+        .custom-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #f8fafc !important;
+        }
+
+        /* Status Dot */
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            vertical-align: middle;
+        }
+
+        /* Icon Sizing */
+        .icon-sm {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Active Status Pulse Animation */
         @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        /* Mobile Scrollbar */
+        .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .hover-bg-light:hover {
+            background-color: #fcfcfc !important;
+            cursor: pointer;
+        }
+
+        .border-success {
+            border-color: rgba(25, 135, 84, 0.2) !important;
+        }
+
+        .border-warning {
+            border-color: rgba(255, 193, 7, 0.2) !important;
+        }
+
+        .border-info {
+            border-color: rgba(13, 202, 240, 0.2) !important;
+        }
+
+        .border-danger {
+            border-color: rgba(220, 53, 69, 0.2) !important;
         }
     </style>
 
@@ -135,19 +252,26 @@
         // Initialize Lucide Icons
         lucide.createIcons();
 
+        // Copy Referral Link Function
         function copyDbLink() {
             const linkInput = document.getElementById('dbRefLink');
             const btnCopy = document.getElementById('btnDbCopy');
+            const originalContent = '<i data-lucide="copy" class="me-1" style="width: 14px; height: 14px;"></i> Copy';
 
             navigator.clipboard.writeText(linkInput.value).then(() => {
-                btnCopy.innerText = 'Copied!';
+                // Change to Success state
+                btnCopy.innerHTML =
+                    '<i data-lucide="check" class="me-1" style="width: 14px; height: 14px;"></i> Copied!';
                 btnCopy.classList.remove('btn-primary');
                 btnCopy.classList.add('btn-success');
+                lucide.createIcons(); // Re-initialize icons inside button
 
+                // Revert after 2 seconds
                 setTimeout(() => {
-                    btnCopy.innerText = 'Copy';
+                    btnCopy.innerHTML = originalContent;
                     btnCopy.classList.remove('btn-success');
                     btnCopy.classList.add('btn-primary');
+                    lucide.createIcons();
                 }, 2000);
             });
         }

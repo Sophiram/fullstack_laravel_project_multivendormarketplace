@@ -9,11 +9,18 @@ class PaymentMethod extends Model
     protected $fillable = [
         'name',
         'type',
+        'description',
+        'credentials',
         'logo',
         'qr_code',
-        'credentials', // ត្រូវតែមានព្រោះលោកអ្នកបានកែច្នៃវាជា array នៅក្នុង Controller
+        'status'
     ];
-    protected $casts = [
+   protected $casts = [
         'credentials' => 'array',
+        'status' => 'boolean',
     ];
+    public function getApiKeyAttribute()
+    {
+        return $this->credentials['secret_key'] ?? env('KHQR_TOKEN');
+    }
 }

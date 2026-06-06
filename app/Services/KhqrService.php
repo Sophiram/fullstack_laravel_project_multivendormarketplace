@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PaymentMethod;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -16,20 +17,24 @@ class KhqrService
 
     public function __construct()
     {
+        $method = PaymentMethod::where('name', 'Bakong')->first();
+
+
         $this->baseUrl       = rtrim(config('khqr.base_url', 'https://api-bakong.nbc.gov.kh'), '/');
-        $this->token         = config('khqr.token');
+        // $this->token         = config('khqr.token');
+        $this->token         = $method ? $method->api_key : config('khqr.token');
         $this->bakongAccount = config('khqr.account');       // e.g. hongly_boun@bkrt
         $this->merchantName  = config('khqr.merchant_name', 'My Shop');
         $this->storeLabel    = config('khqr.store_label', 'POS');
         $this->phone         = config('khqr.phone', '');
     }
 
-    /**
-     * Generate KHQR string locally — no API call needed.
-     * Uses EMV QR standard that all Cambodian banking apps can scan.
-     *
-     * Returns ['success' => true, 'qr' => '...', 'md5' => '...']
-     */
+    // /
+    //  * Generate KHQR string locally — no API call needed.
+    //  * Uses EMV QR standard that all Cambodian banking apps can scan.
+    //  *
+    //  * Returns ['success' => true, 'qr' => '...', 'md5' => '...']
+    //  */
     public function generateQr(float $amount, string $currency = 'USD', string $billNumber = ''): array
     {
         try {
@@ -89,7 +94,8 @@ class KhqrService
             $qrBody .= $this->tlv('54', $amountStr);                          // Amount
             $qrBody .= $this->tlv('58', 'KH');                                // Country
             $qrBody .= $this->tlv('59', substr($this->merchantName, 0, 25)); // Merchant name
-            $qrBody .= $this->tlv('60', 'Phnom Penh');                        // City
+            $qrBody .= $this->tlv('60', 'Phnom Penh');
+// City
             $qrBody .= $tag62;                                                // Additional data
             $qrBody .= $tag99;                                                // Timestamp template
             $qrBody .= '6304';                                                // CRC tag
@@ -109,18 +115,26 @@ class KhqrService
         }
     }
 
-    /**
-     * Poll Bakong API to check if the QR was paid (by MD5 hash).
-     * Returns ['paid' => true/false]
-     */
+    // /
+    //  * Poll Bakong API to check if the QR was paid (by MD5 hash).
+    //  * Returns ['paid' => true/false]
+    //  */
     public function checkPayment(string $md5): array
     {
         try {
-            $response = Http::withToken($this->token)
+            // $response = Http::withToken($this->token)
+            //     ->timeout(10)
+            //     ->post("{$this->baseUrl}/v1/check_transaction_by_md5", [
+            //         'md5' => $md5,
+            //     ]);
+
+            $response = Http::withoutVerifying()
+                ->withToken($this->token) // ត្រូវថែមបន្ទាត់នេះចូលវិញដាច់ខាត
                 ->timeout(10)
                 ->post("{$this->baseUrl}/v1/check_transaction_by_md5", [
                     'md5' => $md5,
                 ]);
+
 
             Log::info('KHQR check response: ' . $response->body());
 
@@ -147,13 +161,13 @@ class KhqrService
     // Helpers
     // ─────────────────────────────────────────────────────────────
 
-    /** EMV TLV: Tag + zero-padded 2-digit Length + Value */
+    // / EMV TLV: Tag + zero-padded 2-digit Length + Value */
     private function tlv(string $tag, string $value): string
     {
         return $tag . str_pad(strlen($value), 2, '0', STR_PAD_LEFT) . $value;
     }
 
-    /** CRC-16/CCITT-FALSE required by EMV QR spec */
+    // / CRC-16/CCITT-FALSE required by EMV QR spec */
     private function crc16(string $data): string
     {
         $crc = 0xFFFF;
@@ -167,3 +181,4 @@ class KhqrService
         return str_pad(strtoupper(dechex($crc)), 4, '0', STR_PAD_LEFT);
     }
 }
+

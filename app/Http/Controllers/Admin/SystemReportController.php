@@ -8,32 +8,51 @@ use App\Models\User;
 use App\Models\Order;
 use App\Models\Product;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\PayoutsExport;
+use App\Exports\SystemReportExport; // ប្តូរមកប្រើ Export Class ថ្មីនេះ
 
 class SystemReportController extends Controller
 {
     public function index()
     {
-        $reportData = [
-            // ស្ថិតិទូទៅ
-            'total_users'     => User::count(),
-            'total_vendors'   => User::where('role', 'vendor')->count(),
-            'total_orders'    => Order::count(),
-            'total_sales'     => Order::where('status', 'completed')->sum('total_amount'),
-            'total_products'  => Product::count(),
+        $reportData = $this->getReportData();
 
-            // ស្ថិតិដកប្រាក់
-            'pending_payouts'  => PayoutRequest::where('status', 'pending')->sum('amount'),
-            'approved_payouts' => PayoutRequest::where('status', 'approved')->sum('amount'),
-        ];
-
+        // បង្ហាញតែ ១០ ថ្មីៗបំផុតនៅលើ UI
         $payouts = PayoutRequest::with('user')->latest()->take(10)->get();
 
         return view('admin.reports.index', compact('reportData', 'payouts'));
     }
 
+
     public function export()
     {
-        return Excel::download(new PayoutsExport, 'payout_report.xlsx');
+        $reportData = $this->getReportData();
+        $payouts = PayoutRequest::with('user')->latest()->get();
+
+        // កូដនេះនឹងដំណើរការហៅ Master Export ដែលមាន Sheets ច្រើនខាងលើដោយស្វ័យប្រវត្ត
+        return Excel::download(new SystemReportExport($reportData, $payouts), 'global_system_report.xlsx');
+    }
+
+    // បង្កើតលក្ខខណ្ឌជំនួយ (Helper) ដើម្បីកុំឱ្យសរសេរកូដដដែលៗ
+    private function getReportData()
+    {
+        $startDate = request('start_date');
+        $endDate = request('end_date');
+
+        // បង្កើតលក្ខខណ្ឌជំនួយសម្រាប់ចម្រោះកាលបរិច្ឆេទ
+        $filterDate = function($query) use ($startDate, $endDate) {
+            if ($startDate && $endDate) {
+                return $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            }
+        };
+
+        return [
+            'total_users'      => User::when($startDate && $endDate, $filterDate)->count(),
+            'total_vendors'    => User::where('role', 'vendor')->when($startDate && $endDate, $filterDate)->count(),
+            'total_orders'     => Order::when($startDate && $endDate, $filterDate)->count(),
+            'total_sales'      => Order::where('status', 'completed')->when($startDate && $endDate, $filterDate)->sum('total_amount'),
+            'total_products'   => Product::when($startDate && $endDate, $filterDate)->count(),
+            'pending_payouts'  => PayoutRequest::where('status', 'pending')->when($startDate && $endDate, $filterDate)->sum('amount'),
+            'approved_payouts' => PayoutRequest::where('status', 'approved')->when($startDate && $endDate, $filterDate)->sum('amount'),
+        ];
     }
 }

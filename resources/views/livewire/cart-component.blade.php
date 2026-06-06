@@ -9,20 +9,21 @@ new class extends Component {
         'cart-updated' => '$refresh',
     ];
 
-    public function getCartProperty()
+    // ទាញយក Cart ពី Session ដោយផ្ទាល់ជានិច្ច
+    public function getCart()
     {
         return session()->get('cart', []);
     }
 
     public function increaseQuantity($productId)
     {
-        $cart = $this->cart;
+        $cart = $this->getCart();
 
         if (isset($cart[$productId])) {
             $cart[$productId]['quantity']++;
             session()->put('cart', $cart);
 
-            $this->dispatch('cartUpdated');
+            $this->dispatch('cart-updated'); // កែឈ្មោះ Event ឱ្យត្រូវ
             $this->dispatch('notify', [
                 'title' => 'Item quantity increased',
                 'type' => 'success',
@@ -32,54 +33,55 @@ new class extends Component {
 
     public function decreaseQuantity($productId)
     {
-        $cart = $this->cart;
+        $cart = $this->getCart();
 
         if (isset($cart[$productId]) && $cart[$productId]['quantity'] > 1) {
             $cart[$productId]['quantity']--;
             session()->put('cart', $cart);
 
-            $this->dispatch('cartUpdated');
+            $this->dispatch('cart-updated'); // កែឈ្មោះ Event ឱ្យត្រូវ
             $this->dispatch('notify', [
                 'title' => 'Item quantity decreased',
                 'type' => 'info',
             ]);
         } else {
             $this->removeItem($productId);
-            $this->dispatch('cartUpdated');
         }
     }
 
     public function removeItem($productId)
     {
-        $cart = $this->cart;
-        unset($cart[$productId]);
-        session()->put('cart', $cart);
+        $cart = $this->getCart();
 
-        $this->dispatch('cartUpdated');
+        if (isset($cart[$productId])) {
+            unset($cart[$productId]);
+            session()->put('cart', $cart);
+        }
+
+        $this->dispatch('cart-updated'); // កែឈ្មោះ Event ឱ្យត្រូវ
         $this->dispatch('notify', [
             'title' => 'Item removed from cart',
-            'type' => 'error',
+            'type' => 'error', // អ្នកអាចប្តូរទៅជា 'success' វិញបើចង់
         ]);
-    }
-
-    public function getTotalProperty()
-    {
-        return collect($this->cart)->sum(fn($item) => $item['price'] * $item['quantity']);
     }
 
     public function render(): mixed
     {
+        $cart = $this->getCart();
+        $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
+        $cartCount = collect($cart)->sum('quantity');
+
         return view('livewire.cart-component', [
-            'cartItems' => $this->cart,
-            'total' => $this->total,
-            'cartCount' => collect($this->cart)->sum('quantity'),
+            'cartItems' => $cart,
+            'total' => $total,
+            'cartCount' => $cartCount,
         ]);
     }
 }; ?>
 
 <div class="d-inline-block position-relative" x-data="{ open: false }" @click.away="open = false">
 
- <style>
+    <style>
         @media (max-width: 575px) {
             .wishlist-dropdown {
                 position: fixed !important;
@@ -128,7 +130,7 @@ new class extends Component {
     </button>
 
     {{-- 🛍️ ផ្ទាំង Pop-up Mini Cart (កែសម្រួល class និង style ថ្មីដើម្បីកុំឱ្យឃ្លាតឆ្ងាយ) --}}
-    <div x-show="open" x-transition:enter="transition ease-out duration-200"
+    <div x-show="open" wire:ignore.self x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100"
         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 transform scale-100"
         x-transition:leave-end="opacity-0 transform scale-95"
@@ -142,7 +144,7 @@ new class extends Component {
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
             border: 1px solid rgba(0,0,0,0.05);
             top: 100%;
-            right: -200px;
+            right: 0;
             margin-top: 10px;
          ">
 
@@ -158,7 +160,8 @@ new class extends Component {
         {{-- បញ្ជីផលិតផលក្នុង Pop-up (ទាញចេញពី $item) --}}
         <div class="overflow-y-auto pe-1" style="max-height: 260px; scrollbar-width: thin;">
             @forelse ($cartItems as $id => $item)
-                <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom"
+                <div wire:key="cart-item-{{ $id }}"
+                    class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom"
                     style="border-bottom-color: #f9fafb !important;">
                     <div class="d-flex align-items-center">
 
@@ -182,7 +185,7 @@ new class extends Component {
 
                     <div class="d-flex flex-column align-items-end justify-content-between">
                         {{-- Red Hover Background --}}
-                        <button wire:click="removeItem('{{ $id }}')"
+                        <button wire:click.prevent="removeItem('{{ $id }}')"
                             class="btn d-flex align-items-center justify-content-center p-0 border-0 mb-2 shadow-none rounded-circle"
                             style="width: 28px; height: 28px; color: #9ca3af; background-color: transparent; transition: all 0.2s ease;"
                             onmouseover="this.style.backgroundColor='#fee2e2'; this.style.color='#ef4444';"

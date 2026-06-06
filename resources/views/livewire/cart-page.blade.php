@@ -1,28 +1,16 @@
 <?php
 
 use Livewire\Volt\Component;
-use App\Models\PaymentMethod; // 👈 នាំចូល Model ដើម្បីទាញទិន្នន័យវិធីសាស្ត្រទូទាត់
 
 new class extends Component {
-    public $paymentMethod = ''; // ទុកឱ្យទទេរដើម្បីចាំចាប់យក ID នៃ Gateway ដំបូងគេ
     public $promoCode = '';
     public $discount = 0.0;
-    public $shipping = 5.0;
+    public $shipping = 0.0;
     public $appliedCoupon = null;
 
-    // ចាប់ផ្តើមទាញយកវិធីសាស្ត្រទូទាត់ដំបូងគេដែល Active មកធ្វើជា Default
     public function mount()
     {
-        $defaultMethod = PaymentMethod::where('status', true)->first();
-        if ($defaultMethod) {
-            $this->paymentMethod = $defaultMethod->id;
-        }
-    }
-
-    // ទាញយកវិធីសាស្ត្រទូទាត់ទាំងអស់ដែល Active ពី Database ទៅកាន់ UI
-    public function getActivePaymentMethodsProperty()
-    {
-        return PaymentMethod::where('status', true)->get();
+        $this->shipping = 0.0; // បើគ្មានទិន្នន័យ ទើបប្រើតម្លៃលំនាំដើម
     }
 
     public function getCartItemsProperty()
@@ -35,12 +23,11 @@ new class extends Component {
         return collect($this->cartItems)->sum(fn($item) => $item['price'] * $item['quantity']);
     }
 
+    // ប្រើប្រាស់ logic នេះដើម្បីគណនា Total
     public function getTotalProperty()
     {
-        if (count($this->cartItems) === 0) {
-            return 0;
-        }
-        $total = $this->subtotal + $this->shipping - $this->discount;
+        $subtotal = $this->subtotal; // ហៅ property ដែលទើបគណនាខាងលើ
+        $total = $subtotal - $this->discount;
         return $total > 0 ? $total : 0;
     }
 
@@ -58,6 +45,7 @@ new class extends Component {
                 session()->put('cart', $cart);
             }
 
+            // បើមាន Coupon ត្រូវគណនាឡើងវិញ
             if ($this->appliedCoupon) {
                 $this->applyPromo();
             }
@@ -90,12 +78,11 @@ new class extends Component {
 
         $code = strtoupper(trim($this->promoCode));
 
-        // 🔍 1. ស្វែងរកកូដ Coupon នៅក្នុង Database ដែលមានស្ថានភាព Active (status = 1)
-        // លោកអ្នកអាចបន្ថែមលក្ខខណ្ឌពិនិត្យកាលបរិច្ឆេទ (Expiry Date) ប្រសិនបើមាន
+        // ស្វែងរកកូដ Coupon នៅក្នុង Database ដែលមានស្ថានភាព Active (status = 1)
         $coupon = \App\Models\Discount::where('code', $code)->where('status', 1)->first();
 
         if ($coupon) {
-            // 💰 2. ពិនិត្យលក្ខខណ្ឌទឹកប្រាក់ទិញអប្បបរមា (Minimum Requirement) ពី Admin
+            // ពិនិត្យលក្ខខណ្ឌទឹកប្រាក់ទិញអប្បបរមា
             if ($this->subtotal < $coupon->min_requirement) {
                 $this->discount = 0.0;
                 $this->appliedCoupon = null;
@@ -105,7 +92,7 @@ new class extends Component {
 
             $this->appliedCoupon = $code;
 
-            // 🧮 3. គណនាចំនួនទឹកប្រាក់ដែលត្រូវបញ្ចុះ (Percentage % ឬ Fixed Amount $)
+            // គណនាចំនួនទឹកប្រាក់ដែលត្រូវបញ្ចុះ
             if ($coupon->type === 'percentage') {
                 $this->discount = ($this->subtotal * $coupon->value) / 100;
             } else {
@@ -119,7 +106,7 @@ new class extends Component {
 
             session()->flash('success', 'Promo code "' . $code . '" applied successfully!');
         } else {
-            // ❌ ករណីរកមិនឃើញ ឬ កូដត្រូវបានហួសសុពលភាព
+            // ករណីរកមិនឃើញ ឬ កូដត្រូវបានហួសសុពលភាព
             $this->discount = 0.0;
             $this->appliedCoupon = null;
             session()->flash('error', 'Invalid, expired, or deactivated promo code.');
@@ -140,7 +127,7 @@ new class extends Component {
             return;
         }
 
-        session()->put('selected_payment_method_id', $this->paymentMethod); // រក្សាទុក ID នៃ Gateway ដែលបានជ្រើសរើស
+        // រក្សាទុកត្រឹមទិន្នន័យបញ្ចុះតម្លៃ និងតម្លៃដឹកជញ្ជូន
         session()->put('cart_shipping', $this->shipping);
         session()->put('cart_discount', $this->discount);
         session()->put('applied_coupon', $this->appliedCoupon);
@@ -243,42 +230,6 @@ new class extends Component {
             color: #ef4444;
             background: #fee2e2;
             transform: scale(1.05);
-        }
-
-        /* Dynamic Payment Grid Selection Cards */
-        .dynamic-payment-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 16px;
-            padding: 16px;
-            cursor: pointer;
-            display: flex;
-            flex-column: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 82px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .dynamic-payment-card:hover {
-            border-color: #cbd5e1 !important;
-            background-color: #f8fafc;
-            transform: translateY(-2px);
-        }
-
-        .btn-check:checked+.dynamic-payment-card {
-            border-color: #7c3aed !important;
-            background: linear-gradient(to bottom right, #ffffff, #f5f3ff) !important;
-            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
-        }
-
-        .payment-logo-container {
-            width: 100%;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
         }
 
         /* Summary Right Sticky Section */
@@ -412,61 +363,12 @@ new class extends Component {
                         </div>
                     @endforelse
                 </div>
-
-                <!-- 💳 ផ្នែកជ្រើសរើសវិធីសាស្ត្រទូទាត់រត់តាម Admin (Dynamic Gateways Interface) -->
-                @if (count($this->cartItems) > 0)
-                    <div class="premium-card p-4 mt-4 animate__animated animate__fadeInUp">
-                        <h5 class="fw-bold mb-1 text-dark premium-heading">
-                            <i class="bi bi-shield-check me-2 text-primary"></i>Secure Payment Gateway
-                        </h5>
-                        <p class="text-muted small mb-4">Please select your preferred secure transaction network option
-                        </p>
-
-                        <div class="row g-2.5">
-                            @forelse($this->activePaymentMethods as $method)
-                                <div class="col-6 col-sm-4 col-md-3">
-                                    <label class="w-100 m-0">
-                                        <input type="radio" wire:model="paymentMethod" value="{{ $method->id }}"
-                                            class="btn-check" name="payment_option">
-                                        <div class="dynamic-payment-card">
-                                            <div class="payment-logo-container">
-                                                @if ($method->logo)
-                                                    <img src="{{ asset('storage/' . $method->logo) }}"
-                                                        alt="{{ $method->name }}"
-                                                        style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                                                @else
-                                                    <span class="fw-bold text-dark font-monospace text-truncate"
-                                                        style="font-size: 0.85rem; font-family: 'Outfit'!important;">
-                                                        {{ $method->name }}
-                                                    </span>
-                                                @endif
-                                            </div>
-                                            <small
-                                                class="text-muted mt-1.5 font-monospace text-center d-block w-100 text-truncate"
-                                                style="font-size: 0.65rem; letter-spacing: -0.2px;">
-                                                {{ ucfirst(str_replace('_', ' ', $method->type)) }}
-                                            </small>
-                                        </div>
-                                    </label>
-                                </div>
-                            @empty
-                                <div class="col-12">
-                                    <div class="alert alert-warning border-0 small m-0 rounded-3">
-                                        <i class="bi bi-exclamation-triangle me-1"></i> No active payment gateway
-                                        methods configured by administrator.
-                                    </div>
-                                </div>
-                            @endforelse
-                        </div>
-                    </div>
-                @endif
             </div>
 
             <!-- Right Sidebar Panel Order Summary Box -->
             <div class="col-lg-4">
                 <div class="premium-card p-4 position-sticky animate__animated animate__fadeIn" style="top: 24px;">
                     <h5 class="mb-4 fw-bold text-dark premium-heading">Order Summary</h5>
-
                     <div class="d-flex justify-content-between mb-3 small">
                         <span class="text-muted">Subtotal</span>
                         <span
@@ -475,12 +377,7 @@ new class extends Component {
                     <div class="d-flex justify-content-between mb-3 small">
                         <span class="text-muted">Coupon Discount</span>
                         <span
-                            class="text-success fw-semibold summary-price-text">-${{ number_format($this->discount, 2) }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3 small">
-                        <span class="text-muted">Estimated Shipping</span>
-                        <span
-                            class="fw-semibold text-dark summary-price-text">${{ number_format($this->shipping, 2) }}</span>
+                            class="text-success fw-semibold summary-price-text">-${{ number_format($discount, 2) }}</span>
                     </div>
 
                     <hr class="my-3.5" style="border-color: #e2e8f0;">

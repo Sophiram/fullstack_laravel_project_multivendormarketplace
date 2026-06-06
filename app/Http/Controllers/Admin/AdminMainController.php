@@ -8,43 +8,77 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Order;
+use App\Models\Cart;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class AdminMainController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
-        $salesData = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $monthName = $date->format('M');
+        // ១. ចាប់យកថ្ងៃខែដែលបានជ្រើសរើសពី Flatpickr Filter (បើគ្មានទេ វានឹងយកលំនាំដើមពីដើមឆ្នាំដល់ចុងឆ្នាំ)
+        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date'))->startOfDay() : Carbon::now()->startOfYear();
+        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date'))->endOfDay() : Carbon::now()->endOfYear();
 
-            // គណនាសរុបតាមខែ និងឆ្នាំបច្ចុប្បន្ន (2026)
-            $amount = \App\Models\Order::whereMonth('created_at', $date->month)
-                        ->whereYear('created_at', $date->year)
-                        ->sum('total_amount');
+        // ២. ទាញទិន្នន័យសសរុបទឹកប្រាក់លក់ដាច់បំបែកតាមខែ សម្រាប់យកទៅគូរក្រាហ្វិក (ApexCharts Area) ទៅតាមចន្លោះកាលបរិច្ឆេទ
+        $salesData = Order::where('status', 'complete') // គណនាតែការកុម្ម៉ង់ដែលជោគជ័យ
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->select(
+                DB::raw('SUM(total_amount) as total'),
+                DB::raw("DATE_FORMAT(created_at, '%b') as month")
+            )
+            ->groupBy('month')
+            ->orderBy('created_at', 'ASC')
+            ->get();
 
-            $salesData[$monthName] = (float)$amount;
-        }
-        $recentOrders = \App\Models\Order::with('user')->latest()->take(5)->get();
+        // រៀបចំទិន្នន័យជាទម្រង់ Array JSON សម្រាប់ផ្ញើទៅកាន់ JavaScript ApexCharts
+        $labels = json_encode($salesData->pluck('month')->toArray());
+        $values = json_encode($salesData->pluck('total')->toArray());
 
-        // ត្រួតពិនិត្យទិន្នន័យត្រង់នេះ
-        // dd($recentOrders);
-        // dd($salesData);
+        // ៣. ទាញយកបញ្ជីបញ្ជាទិញថ្មីៗបំផុតចំនួន ៥ (Recent Orders) ភ្ជាប់ជាមួយទិន្នន័យ User
+        $recentOrders = Order::with('user')->latest()->take(5)->get();
+
+        // ៤. ទាញយកផលិតផលលក់ដាច់បំផុតកំពូលទាំង ៥ (Top Selling Products) ទៅតាមចន្លោះថ្ងៃខែដែលបានរើស
+       // Query ទាញយកផលិតផលលក់ដាច់បំផុតកំពូលទាំង ៥ រួមជាមួយរូបភាពចម្បង (Primary Image)
+        $topProducts = Product::join('order_items', 'products.id', '=', 'order_items.product_id')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->leftJoin('product_images', function($join) {
+                $join->on('products.id', '=', 'product_images.product_id')
+                    ->where('product_images.is_primary', '=', 1); // យកតែរូបភាពណាដែលកំណត់ថាជា Primary
+            })
+            ->select(
+                'products.id',
+                'products.product_name',
+                'product_images.image_path', // ទាញយកផ្លូវរូបភាពពី Table product_images
+                DB::raw('SUM(order_items.quantity) as total_qty'),
+                DB::raw('SUM(order_items.quantity * order_items.price) as total_revenue')
+            )
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->where('orders.status', 'completed')
+            ->groupBy('products.id', 'products.product_name', 'product_images.image_path') // ត្រូវថែម image_path ចូលក្នុង groupBy ដែរ
+            ->orderByDesc('total_qty')
+            ->take(5)
+            ->get();
+
+        // ៥. រៀបចំទិន្នន័យស្ថិតិទាំងអស់បញ្ជូនទៅកាន់ផ្ទាំង Dashboard (Blade View)
         $data = [
-                'categoryCount' => Category::count(),
-                'productCount' => Product::count(),
-                'pendingVendorCount' => User::where('role', 1)->where('is_approved', false)->count(),
-                'orderCount' => Order::count(),
-                'labels' => json_encode(array_keys($salesData)),
-                'values' => json_encode(array_values($salesData)),
-                'recentOrders' => $recentOrders,
-            ];
+            'categoryCount'      => Category::count(),
+            'productCount'       => Product::count(),
+            'pendingVendorCount' => User::where('role', 1)->where('is_approved', false)->count(),
+            'orderCount'         => Order::whereBetween('created_at', [$startDate, $endDate])->count(),
+            'labels'             => $labels,
+            'values'             => $values,
+            'recentOrders'       => $recentOrders,
+            'topProducts'        => $topProducts, // បានបន្ថែមអថេរនេះចូលទៅក្នុង Array រួចរាល់
+            'startDate'          => $startDate,
+            'endDate'            => $endDate,
+        ];
 
-        return view('admin.admin', $data);
+        return view('admin.dashboard', $data);
     }
 
     public function setting()
@@ -153,45 +187,45 @@ class AdminMainController extends Controller
     }
 
     public function exportReport()
-{
-    $filename = "report_" . date('Y-m-d') . ".csv";
+    {
+        $filename = "report_" . date('Y-m-d') . ".csv";
 
-    $callback = function() {
-        $handle = fopen('php://output', 'w');
-        // បង្កើត header
-        fputcsv($handle, ['ID', 'Customer', 'Total', 'Status']);
+        $callback = function() {
+            $handle = fopen('php://output', 'w');
+            // បង្កើត header
+            fputcsv($handle, ['ID', 'Customer', 'Total', 'Status']);
 
-        // ទាញយកទិន្នន័យពី Database
-        // ប្រើ chunk ដើម្បីកុំឱ្យស៊ី Memory ច្រើនបើទិន្នន័យមានចំនួនច្រើន
-        Order::chunk(100, function($orders) use ($handle) {
-            foreach ($orders as $order) {
-                fputcsv($handle, [
-                    $order->id,
-                    $order->user->name ?? 'N/A',
-                    $order->total_amount,
-                    $order->status
-                ]);
-            }
-        });
+            // ទាញយកទិន្នន័យពី Database
+            // ប្រើ chunk ដើម្បីកុំឱ្យស៊ី Memory ច្រើនបើទិន្នន័យមានចំនួនច្រើន
+            Order::chunk(100, function($orders) use ($handle) {
+                foreach ($orders as $order) {
+                    fputcsv($handle, [
+                        $order->id,
+                        $order->user->name ?? 'N/A',
+                        $order->total_amount,
+                        $order->status
+                    ]);
+                }
+            });
 
-        fclose($handle);
-    };
+            fclose($handle);
+        };
 
-    return response()->stream($callback, 200, [
-        "Content-Type" => "text/csv",
-        "Content-Disposition" => "attachment; filename=$filename",
-    ]);
-}
+        return response()->stream($callback, 200, [
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+        ]);
+    }
 
     public function cart_history()
-{
-    // ទាញយកទិន្នន័យដោយប្រើ paginate ដើម្បីកុំឱ្យទំព័រយឺត
-    $carts = \App\Models\Cart::with('user')->latest()->paginate(10);
+    {
+        // ទាញយកទិន្នន័យដោយប្រើ paginate ដើម្បីកុំឱ្យទំព័រយឺត
+        $carts = \App\Models\Cart::with('user')->latest()->paginate(10);
 
-    // គណនាស្ថិតិសម្រាប់ Dashboard
-    $totalAbandoned = \App\Models\Cart::where('status', 'abandoned')->count();
-    $totalConverted = \App\Models\Cart::where('status', 'converted')->count();
+        // គណនាស្ថិតិសម្រាប់ Dashboard
+        $totalAbandoned = \App\Models\Cart::where('status', 'abandoned')->count();
+        $totalConverted = \App\Models\Cart::where('status', 'converted')->count();
 
-    return view('admin.cart.history', compact('carts', 'totalAbandoned', 'totalConverted'));
-}
+        return view('admin.cart.history', compact('carts', 'totalAbandoned', 'totalConverted'));
+    }
 }

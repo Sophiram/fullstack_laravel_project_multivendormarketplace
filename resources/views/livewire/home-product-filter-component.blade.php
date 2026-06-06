@@ -34,22 +34,22 @@ new class extends Component {
         }
 
         $cart = session()->get('cart', []);
+        $price = $product->discounted_price > 0 && $product->discounted_price < $product->regular_price ? (float) $product->discounted_price : (float) $product->regular_price;
 
         if (isset($cart[$productId])) {
             $cart[$productId]['quantity'] += $quantity;
         } else {
             $cart[$productId] = [
                 'name' => $product->product_name,
-                'price' => $product->discounted_price ?? $product->regular_price,
+                'price' => $price,
                 'quantity' => $quantity,
-                'image' => $product->images && $product->images->first() ? $product->images->first()->image_path : null,
+                'image' => $product->images->first()?->image_path,
             ];
         }
 
         session()->put('cart', $cart);
 
         $this->dispatch('cart-updated');
-
         $this->dispatch('notify', [
             'title' => 'Successfully added to cart!',
             'type' => 'success',
@@ -63,6 +63,7 @@ new class extends Component {
         if (isset($wishlist[$productId])) {
             unset($wishlist[$productId]);
             $this->dispatch('wishlistUpdated');
+            $this->dispatch('$refresh');
             $this->dispatch('notify', [
                 'title' => 'Successfully removed from wishlist',
                 'type' => 'error',
@@ -82,6 +83,7 @@ new class extends Component {
             ];
 
             $this->dispatch('wishlistUpdated');
+            $this->dispatch('$refresh');
             $this->dispatch('notify', [
                 'title' => 'Successfully added to wishlist',
                 'type' => 'success',
@@ -94,7 +96,6 @@ new class extends Component {
     public function with(): array
     {
         return [
-            // 💡 បានបន្ថែម 'productReviews' ដើម្បីទាញយកទិន្នន័យផ្កាយមកបង្ហាញជៀសវាង Error N+1 Query
             'products' => Product::with(['images', 'productReviews'])
                 ->where('status', 'published')
                 ->when($this->selectedCategory, function ($query) {
@@ -116,20 +117,11 @@ new class extends Component {
                 </h2>
             </div>
 
-            <div class="col-12 mb-2 mb-md-4 position-relative" x-data="{
-                scrollNext() { $refs.scrollContainer.scrollBy({ left: 200, behavior: 'smooth' }) },
-                    scrollPrev() { $refs.scrollContainer.scrollBy({ left: -200, behavior: 'smooth' }) }
-            }">
-
+            <div class="col-12 mb-2 mb-md-4 position-relative">
                 <div class="category-scroll-wrapper position-relative">
 
-                    <button type="button" @click="scrollPrev()" class="category-nav-btn prev-btn d-md-none"
-                        aria-label="Previous">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-
-                    <div x-ref="scrollContainer"
-                        class="category-scroll-container d-flex flex-nowrap flex-md-wrap align-items-center justify-content-start justify-content-md-center gap-2 pb-2">
+                    <div
+                        class="category-scroll-container d-flex flex-nowrap flex-md-wrap align-items-center justify-content-start justify-content-md-center gap-2 pb-3">
 
                         <button wire:click="filterByCategory(null)"
                             class="btn px-3 py-2 rounded-3 d-flex align-items-center gap-2 fw-semibold shadow-sm transition-all text-nowrap
@@ -151,11 +143,6 @@ new class extends Component {
 
                     </div>
 
-                    <button type="button" @click="scrollNext()" class="category-nav-btn next-btn d-md-none"
-                        aria-label="Next">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-
                 </div>
             </div>
         </div>
@@ -171,7 +158,7 @@ new class extends Component {
 
         <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 g-md-4">
             @forelse($products as $product)
-                <div class="col d-flex align-items-stretch">
+                <div class="col d-flex align-items-stretch" wire:key="product-card-{{ $product->id }}">
                     <div
                         class="card w-100 border-0 custom-product-card position-relative overflow-hidden d-flex flex-column">
 
@@ -188,6 +175,7 @@ new class extends Component {
                                 @if (isset(session()->get('wishlist', [])[$product->id]))
                                     <i
                                         class="fa-solid fa-heart fs-5 fs-md-4 text-danger animate__animated animate__bounceIn"></i>
+                                    Anti-corruption
                                 @else
                                     <i class="fa-regular fa-heart fs-5 fs-md-4 text-secondary"></i>
                                 @endif
@@ -210,7 +198,6 @@ new class extends Component {
                                     </a>
                                 </h5>
 
-                                {{-- 💡 ផ្នែកបង្ហាញផ្កាយ Review Stars --}}
                                 <div class="d-flex align-items-center gap-1 mb-2" style="font-size: 0.78rem;">
                                     @php
                                         $reviewCount = $product->productReviews->count();
@@ -248,9 +235,10 @@ new class extends Component {
                                         <span class="price-label">Price</span>
                                         <div class="d-flex align-items-baseline gap-1">
                                             <span class="current-price fs-6 fs-md-5">
-                                                ${{ number_format($product->discounted_price ?? $product->regular_price, 2) }}
+                                                ${{ number_format($product->discounted_price > 0 && $product->discounted_price < $product->regular_price ? $product->discounted_price : $product->regular_price, 2) }}
                                             </span>
-                                            @if (isset($product->discounted_price) && $product->discounted_price < $product->regular_price)
+
+                                            @if ($product->discounted_price > 0 && $product->discounted_price < $product->regular_price)
                                                 <span class="old-price small">
                                                     ${{ number_format($product->regular_price, 2) }}
                                                 </span>
@@ -264,7 +252,7 @@ new class extends Component {
                                     </div>
                                 </div>
 
-                                <div x-data="{ quantity: 1, maxStock: {{ $product->stock_quantity ?? 99 }} }" class="mt-2">
+                                <div x-data="{ quantity: 1, maxStock: {{ $product->stock_quantity ?? 99 }} }" wire:ignore.self class="mt-2">
                                     <div class="responsive-cart-container">
 
                                         <div class="custom-qty-stepper">
@@ -279,6 +267,7 @@ new class extends Component {
 
                                         <button type="button"
                                             wire:click="addToCartFromAnywhere({{ $product->id }}, quantity)"
+                                            x-on:click="$wire.addToCartFromAnywhere({{ $product->id }}, quantity)"
                                             class="btn-premium-inline-cart">
                                             <i class="fa-solid fa-basket-shopping"></i>
                                             <span class="d-none d-sm-inline">Add to Cart</span>
@@ -304,7 +293,6 @@ new class extends Component {
 </div>
 
 <style>
-    /* Layout Base */
     .responsive-cart-container {
         display: flex;
         gap: 6px;
@@ -312,16 +300,60 @@ new class extends Component {
         width: 100%;
     }
 
-    /* Category horizontal scroll on mobile */
     .category-scroll-container {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         white-space: nowrap;
-        scrollbar-width: none;
     }
 
-    .category-scroll-container::-webkit-scrollbar {
-        display: none;
+    /* ==========================================================================
+       SCROLLBAR GLOBAL CUSTOMIZATION (លុបសញ្ញាព្រួញទាំងស្រុងគ្រប់ Screen និង Zoom Level)
+       ========================================================================== */
+    .category-scroll-container::-webkit-scrollbar-button {
+        display: none !important;
+        width: 0px !important;
+        height: 0px !important;
+        background: transparent !important;
+    }
+
+    @media (max-width: 767.98px) {
+        .category-scroll-container {
+            scrollbar-width: thin;
+            scrollbar-color: #ef0077 #f3e8ff;
+            padding-bottom: 12px !important;
+        }
+
+        .category-scroll-container::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .category-scroll-container::-webkit-scrollbar-track {
+            background: #f3e8ff !important;
+            border-radius: 10px;
+        }
+
+        .category-scroll-container::-webkit-scrollbar-thumb {
+            background: #ef0077 !important;
+            border-radius: 10px;
+        }
+
+        .category-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #d90067 !important;
+        }
+
+        .category-scroll-container::-webkit-scrollbar-button,
+        .category-scroll-container::-webkit-scrollbar-button:start,
+        .category-scroll-container::-webkit-scrollbar-button:end {
+            display: none !important;
+            width: 0px !important;
+            height: 0px !important;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .category-scroll-container::-webkit-scrollbar {
+            display: none !important;
+        }
     }
 
     /* Modern Quantity Stepper */
@@ -474,7 +506,7 @@ new class extends Component {
         font-size: 0.7rem;
         color: #94a3b8;
         display: block;
-        text-uppercase: uppercase;
+        text-transform: uppercase;
         font-weight: 600;
     }
 
@@ -497,46 +529,10 @@ new class extends Component {
         border-radius: 6px;
     }
 
-    .category-nav-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 32px;
-        height: 32px;
-        background: rgba(255, 255, 255, 0.95);
-        border: 1px solid #e2e8f0;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #4f46e5;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        z-index: 10;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .category-nav-btn:active {
-        background: #4f46e5;
-        color: #ffffff;
-    }
-
-    .prev-btn {
-        left: -5px;
-    }
-
-    .next-btn {
-        right: -5px;
-    }
-
     @media (max-width: 767.98px) {
-        .category-scroll-wrapper::after {
-            display: none !important;
-        }
-
         .category-scroll-container {
-            padding-left: 25px !important;
-            padding-right: 25px !important;
+            padding-left: 15px !important;
+            padding-right: 15px !important;
         }
 
         .product-img-container {

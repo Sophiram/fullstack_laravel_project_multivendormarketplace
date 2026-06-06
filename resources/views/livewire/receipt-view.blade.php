@@ -51,12 +51,12 @@ new class extends Component {
                 </tr>
             </thead>
             <tbody>
-                @foreach($order->items as $item)
-                <tr>
-                    <td class="ps-3">{{ $item->product->name ?? 'Product' }}</td>
-                    <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-end pe-3">${{ number_format($item->total, 2) }}</td>
-                </tr>
+                @foreach ($order->items as $item)
+                    <tr>
+                        <td class="ps-3">{{ $item->product->name ?? 'Product' }}</td>
+                        <td class="text-center">{{ $item->quantity }}</td>
+                        <td class="text-end pe-3">${{ number_format($item->total, 2) }}</td>
+                    </tr>
                 @endforeach
             </tbody>
         </table>
@@ -87,8 +87,31 @@ new class extends Component {
 
 <style>
     @media print {
-        .no-print { display: none !important; }
-        body { background-color: white !important; }
-        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+
+        /* លាក់អ្វីៗគ្រប់យ៉ាងដែលមិនមែនជា .card */
+        body * {
+            visibility: hidden;
+        }
+
+        /* បង្ហាញតែ .card ដែលយើងចង់ព្រីន */
+        .card,
+        .card * {
+            visibility: visible;
+        }
+
+        /* កំណត់ទីតាំង .card ឱ្យនៅចំកណ្តាលទំព័រក្រដាស */
+        .card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+        /* លាក់ប៊ូតុង Print និង Back */
+        .no-print {
+            display: none !important;
+        }
     }
 </style>

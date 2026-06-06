@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Notifications\OrderStatusUpdated;
+use App\Services\KhqrService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -43,23 +44,7 @@ class OrderController extends Controller
         return view('orders.show', compact('order'));
     }
 
-    public function vendorShowOrder($id)
-    {
-        $order = Order::with(['items.product.images', 'items.product.store', 'user'])->findOrFail($id);
-        $userId = Auth::id();
 
-        // ត្រងយកតែ Items ណាដែលជារបស់ Vendor នេះ
-        $order->items = $order->items->filter(function ($item) use ($userId) {
-            return ($item->product->store->user_id ?? null) == $userId;
-        });
-
-        // បើសិនជា Order នោះមិនមាន Items របស់ Vendor នេះទេ មិនអនុញ្ញាតឱ្យមើល
-        if ($order->items->isEmpty()) {
-            abort(403, 'You do not have permission to view this order.');
-        }
-
-        return view('vendor.ordershow', compact('order'));
-    }
 
     public function cancel($id)
     {
@@ -133,59 +118,45 @@ class OrderController extends Controller
         return redirect()->route('order.index')->with('success', 'Order placed successfully!');
     }
 
-    /**
-     * 🏪 បង្ហាញប្រវត្តិនៃការលក់របស់ Vendor និងចំណូលដែលបានកាត់ Commission រួច
-     */
-    /**
- * 🏪 បង្ហាញប្រវត្តិនៃការលក់របស់ Vendor និងចំណូលដែលបានកាត់ Commission រួច
- */
-    public function vendorIndex(Request $request)
-        {
-            $vendor_store_ids = Store::where('user_id', Auth::id())->pluck('id');
 
-            $orders = Order::whereHas('items.product', function ($query) use ($vendor_store_ids) {
-                    $query->whereIn('store_id', $vendor_store_ids);
-                })
-                ->with(['user', 'items' => function($q) use ($vendor_store_ids) {
-                    // ត្រងយកតែ Items ដែលជាផលិតផលរបស់ហាងខ្លួនឯងប៉ុណ្ណោះ
-                    $q->whereHas('product', function($pQuery) use ($vendor_store_ids) {
-                        $pQuery->whereIn('store_id', $vendor_store_ids);
-                    });
-                }])
-                ->orderByDesc('created_at')
-                ->paginate(10);
-
-            return view('vendor.orderhistory', compact('orders'));
-        }
-
-        public function updateStatus(Request $request, Order $order)
+        public function generateKhqr(Request $request)
         {
             $request->validate([
-                'status' => 'required|in:pending,processing,shipped,completed,cancelled',
-                // បន្ថែម validation សម្រាប់ Shipping (ចាំបាច់បើ status = shipped)
-                'shipping_company' => 'required_if:status,shipped|string',
-                'tracking_number'  => 'required_if:status,shipped|string',
+                'amount'   => 'required|numeric|min:0.01',
+                'currency' => 'nullable|in:USD,KHR',
             ]);
 
-            // ប្រើ Database Transaction ដើម្បីសុវត្ថិភាព
-            DB::transaction(function () use ($request, $order) {
-                $order->update(['status' => $request->status]);
+            $khqr   = new KhqrService();
+            $result = $khqr->generateQr(
+                (float) $request->amount,
+                $request->currency ?? 'USD',
+                'POS-' . date('YmdHis')
+            );
 
-                if ($request->status == 'shipped') {
-                    \App\Models\Shipping::updateOrCreate(
-                        ['order_id' => $order->id],
-                        [
-                            'shipping_company' => $request->shipping_company,
-                            'tracking_number'  => $request->tracking_number,
-                            'shipping_status'  => 'Shipped',
-                            'shipping_date'    => now(),
-                        ]
-                    );
-                }
-            });
-            $user = User::find($order->user_id);
-            $order->user->notify(new OrderStatusUpdated($order));
+            if ($result['success']) {
+                return response()->json([
+                    'status' => 'success',
+                    'qr'     => $result['qr'],
+                    'md5'    => $result['md5'],
+                ]);
+            }
 
-            return redirect()->back()->with('success', 'Order status updated and customer notified!');
+            return response()->json([
+                'status'  => 'error',
+                'message' => $result['message'],
+            ], 500);
         }
+
+
+    public function checkKhqrPayment(Request $request)
+    {
+        $request->validate(['md5' => 'required|string']);
+
+        $khqr   = new KhqrService();
+        $result = $khqr->checkPayment($request->md5);
+
+        return response()->json($result);
+    }
+
+
 }

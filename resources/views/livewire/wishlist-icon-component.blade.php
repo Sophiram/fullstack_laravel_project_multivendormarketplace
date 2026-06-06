@@ -113,6 +113,7 @@ new class extends Component {
         /* សម្រាប់ Desktop រក្សាទុកកន្លែងនេះ */
         top: 100%;
         right: -280px;
+        right: 0;
         margin-top: 10px;
      ">
 

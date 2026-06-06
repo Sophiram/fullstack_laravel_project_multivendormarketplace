@@ -22,8 +22,8 @@
         }
 
         /* -----------------------------------------
-           ✨ MAIN HEADER STYLES
-        -------------------------------------------- */
+        ✨ MAIN HEADER STYLES
+    -------------------------------------------- */
         .main-header {
             background: #ffffff;
             border-bottom: 1px solid #f3f4f6;
@@ -96,14 +96,9 @@
             transition: all 0.2s ease-in-out;
         }
 
-        /* .account-btn:hover {
-            background: #4338ca;
-            transform: translateY(-1px);
-        } */
-
         /* -----------------------------------------
-           🎨 PREMIUM NAVBAR WITH ROUNDED HOVER/ACTIVE
-        -------------------------------------------- */
+        🎨 PREMIUM NAVBAR WITH ROUNDED HOVER/ACTIVE
+    -------------------------------------------- */
         .navigation-bar {
             background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
             padding: 8px 0 !important;
@@ -217,18 +212,22 @@
             transition: all 0.2s ease;
         }
 
-        .premium-dropdown-item:hover {
+        .premium-dropdown-item:hover,
+        .premium-dropdown-item.active-subcategory {
+            /* ✨ បន្ថែម Style សម្រាប់ Active Subcategory */
             background-color: #f0fdf4 !important;
             color: #16a34a !important;
         }
 
-        .premium-dropdown-item:hover .category-icon-wrapper {
+        .premium-dropdown-item:hover .category-icon-wrapper,
+        .premium-dropdown-item.active-subcategory .category-icon-wrapper {
             background-color: #dcfce7;
             color: #16a34a;
             transform: scale(1.05);
         }
 
-        .premium-dropdown-item:hover .arrow-icon {
+        .premium-dropdown-item:hover .arrow-icon,
+        .premium-dropdown-item.active-subcategory .arrow-icon {
             opacity: 1;
             transform: translateX(0);
             color: #16a34a;
@@ -245,7 +244,6 @@
 
         #accountDropdown:hover {
             background-color: transparent !important;
-            /* រក្សាទុក Background ដើមនៃ Div ខាងក្នុង */
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(79, 70, 229, 0.25) !important;
         }
@@ -260,8 +258,8 @@
         }
 
         /* -----------------------------------------
-           🏢 PREMIUM MODERN FOOTER STYLES
-        -------------------------------------------- */
+        🏢 PREMIUM MODERN FOOTER STYLES
+    -------------------------------------------- */
         .premium-footer {
             background: #0b1329;
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -476,8 +474,8 @@
         }
 
         /* -----------------------------------------
-           📱 RESPONSIVE MEDIA QUERIES
-        -------------------------------------------- */
+        📱 RESPONSIVE MEDIA QUERIES
+    -------------------------------------------- */
         @media (max-width: 991.98px) {
             .brand-logo {
                 font-size: 1.3rem;
@@ -492,31 +490,33 @@
                 gap: 8px;
             }
 
+            /* ✨ កែប្រែ Contrast លើ Mobile ឱ្យស្អាតជាងមុន */
             .premium-dropdown-menu {
                 position: static !important;
                 box-shadow: none !important;
                 border: none !important;
-                background: rgba(255, 255, 255, 0.05) !important;
-                padding: 0 !important;
-                margin-top: 0px !important;
+                background: rgba(255, 255, 255, 0.1) !important;
+                padding: 8px !important;
+                margin-top: 4px !important;
             }
 
             .premium-dropdown-item {
-                color: rgba(255, 255, 255, 0.8) !important;
+                color: rgba(255, 255, 255, 0.9) !important;
             }
 
-            .premium-dropdown-item:hover {
-                background-color: rgba(255, 255, 255, 0.1) !important;
-                color: #fff !important;
+            .premium-dropdown-item:hover,
+            .premium-dropdown-item.active-subcategory {
+                background-color: rgba(255, 255, 255, 0.2) !important;
+                color: #ffffff !important;
             }
 
             .dropdown-header-title {
-                color: rgba(255, 255, 255, 0.5);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                color: rgba(255, 255, 255, 0.6);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.15);
             }
 
             .category-icon-wrapper {
-                background-color: rgba(255, 255, 255, 0.1);
+                background-color: rgba(255, 255, 255, 0.15);
                 color: #fff;
             }
 
@@ -558,8 +558,9 @@
         <div class="container d-flex align-items-center justify-content-between gap-2 gap-md-3">
 
             <div class="d-flex align-items-center gap-1 gap-sm-2">
+                {{-- ✨ កែប្រែ data-bs-target ឱ្យចំ ID ម៉ឺនុយពិតប្រាកដ --}}
                 <button class="navbar-toggler d-block d-lg-none text-dark border-0 p-0 me-2" type="button"
-                    data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar"
+                    data-bs-toggle="collapse" data-bs-target="#mainNavbarCollapse" aria-controls="mainNavbarCollapse"
                     aria-expanded="false" aria-label="Toggle navigation" style="font-size: 1.25rem;">
                     <i data-lucide="menu" style="width: 22px; height: 22px;"></i>
                 </button>
@@ -578,7 +579,7 @@
                 @livewire('wishlist-icon-component')
                 @livewire('cart-component')
 
-                {{-- 🔄 UPDATED CONSISTENT ACCOUNT DROPDOWN BUTTON --}}
+                {{-- 🔄 ACCOUNT DROPDOWN BUTTON --}}
                 <div class="dropdown">
                     <button class="btn d-flex align-items-center gap-2 p-0 border-0 shadow-sm" type="button"
                         id="accountDropdown" data-bs-toggle="dropdown" aria-expanded="false"
@@ -594,7 +595,6 @@
                                         '&background=ffffff&color=4f46e5&bold=true';
                             @endphp
 
-                            {{-- កែប្រែ Style ត្រង់នេះឱ្យទៅជាប៊ូតុងវែងមានឈ្មោះ និងរូបថត ស៊ីសង្វាក់គ្នាយ៉ាងល្អ --}}
                             <div class="d-flex align-items-center gap-2 px-3 py-2 text-white"
                                 style="background: #4f46e5; border-radius: 16px; height: 42px; font-weight: 600;">
                                 <img src="{{ $imagePath }}"
@@ -606,7 +606,6 @@
                                     style="font-size: 0.9rem;">{{ Str::limit(Auth::user()->name, 10) }}</span>
                             </div>
                         @else
-                            {{-- ប៊ូតុងរាងជ្រុងបត់មន (Rounded Square) ធម្មតាសម្រាប់ភ្ញៀវមិនទាន់ Login --}}
                             <div class="d-flex align-items-center justify-content-center text-white shadow-sm"
                                 style="background: #4f46e5; border-radius: 16px; width: 42px; height: 42px;">
                                 <i data-lucide="user" style="width: 20px; height: 20px;"></i>
@@ -706,8 +705,6 @@
                     </ul>
                 </div>
 
-
-
             </div>
         </div>
 
@@ -717,28 +714,39 @@
     </header>
 
 
-    {{-- 🗺️ PREMIUM DOUBLE-GRADIENT NAVIGATION BAR --}}
+    {{-- 🗺️ NAVIGATION BAR --}}
     <div class="container">
-        <nav class="navigation-bar navbar navbar-expand-lg navbar-dark p-0" id="mainNavbar">
+        <nav class="navigation-bar navbar navbar-expand-lg navbar-dark p-0 d-print-none">
             <div class="w-100 px-3">
-                <div class="collapse navbar-collapse" id="mainNavbar">
+                <div class="collapse navbar-collapse" id="mainNavbarCollapse">
                     <div
                         class="nav-menu-container flex-column flex-lg-row w-100 justify-content-lg-center align-items-stretch py-2 py-lg-0">
 
                         {{-- 1. Trending Link --}}
                         <a href="/"
-                            class="menu-item-link {{ request()->is('/') || request()->is('trending*') ? 'active' : '' }}">
-                            <i data-lucide="flame" class="me-2 text-danger"
-                                style="width: 16px; height: 16px;"></i>Trending
+                            class="menu-item-link d-inline-flex align-items-center {{ request()->is('/') || request()->is('trending*') ? 'active' : '' }}">
+                            <span
+                                class="d-inline-flex align-items-center justify-content-center me-2 rounded-2 animate__animated animate__pulse animate__infinite"
+                                style="width: 26px; height: 26px; background: rgba(255, 255, 255, 0.12); animation-duration: 2.5s;">
+                                <i data-feather="zap" style="width: 14px; height: 14px;"></i>
+                            </span>
+                            <span>Trending</span>
                         </a>
 
                         {{-- 2. Categories Dropdown --}}
                         <div class="dropdown custom-nav-dropdown">
                             <a href="#"
-                                class="menu-item-link dropdown-toggle d-flex align-items-center justify-content-between gap-2 w-100 {{ request()->is('category*') ? 'active' : '' }}"
+                                class="menu-item-link dropdown-toggle d-inline-flex align-items-center justify-content-between gap-2 w-100 {{ request()->is('category*') ? 'active' : '' }}"
                                 role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <span>Categories</span>
-                                <i data-lucide="chevron-down" class="drop-icon"
+                                <div class="d-inline-flex align-items-center">
+                                    <span
+                                        class="d-inline-flex align-items-center justify-content-center me-2 rounded-2"
+                                        style="width: 26px; height: 26px; background: rgba(255, 255, 255, 0.12);">
+                                        <i data-feather="grid" style="width: 14px; height: 14px;"></i>
+                                    </span>
+                                    <span>Categories</span>
+                                </div>
+                                <i data-feather="chevron-down" class="drop-icon"
                                     style="width: 14px; height: 14px;"></i>
                             </a>
 
@@ -751,11 +759,11 @@
                                         <div class="d-flex align-items-center justify-content-between w-100">
                                             <div class="d-flex align-items-center gap-3">
                                                 <div class="category-icon-wrapper">
-                                                    <i data-lucide="layers" style="width: 15px; height: 15px;"></i>
+                                                    <i data-feather="layers" style="width: 15px; height: 15px;"></i>
                                                 </div>
                                                 <span class="category-name">{{ $category->category_name }}</span>
                                             </div>
-                                            <i data-lucide="chevron-right" class="arrow-icon"
+                                            <i data-feather="chevron-right" class="arrow-icon"
                                                 style="width: 14px; height: 14px;"></i>
                                         </div>
                                     </a>
@@ -765,12 +773,31 @@
 
                         {{-- 3. Static Links --}}
                         <a href="/discounts"
-                            class="menu-item-link {{ request()->is('discounts*') ? 'active' : '' }}">Discounts</a>
+                            class="menu-item-link d-inline-flex align-items-center {{ request()->is('discounts*') ? 'active' : '' }}">
+                            <span class="d-inline-flex align-items-center justify-content-center me-2 rounded-2"
+                                style="width: 26px; height: 26px; background: rgba(255, 255, 255, 0.12);">
+                                <i data-feather="tag" style="width: 14px; height: 14px;"></i>
+                            </span>
+                            <span>Discounts</span>
+                        </a>
+
                         <a href="/gift-collections"
-                            class="menu-item-link {{ request()->is('gift-collections*') ? 'active' : '' }}">Gift
-                            Collections</a>
+                            class="menu-item-link d-inline-flex align-items-center {{ request()->is('gift-collections*') ? 'active' : '' }}">
+                            <span class="d-inline-flex align-items-center justify-content-center me-2 rounded-2"
+                                style="width: 26px; height: 26px; background: rgba(255, 255, 255, 0.12);">
+                                <i data-feather="gift" style="width: 14px; height: 14px;"></i>
+                            </span>
+                            <span>Gift Collections</span>
+                        </a>
+
                         <a href="/stores"
-                            class="menu-item-link {{ request()->is('stores*') ? 'active' : '' }}">Stores</a>
+                            class="menu-item-link d-inline-flex align-items-center {{ request()->is('stores*') ? 'active' : '' }}">
+                            <span class="d-inline-flex align-items-center justify-content-center me-2 rounded-2"
+                                style="width: 26px; height: 26px; background: rgba(255, 255, 255, 0.12);">
+                                <i data-feather="shopping-bag" style="width: 14px; height: 14px;"></i>
+                            </span>
+                            <span>Stores</span>
+                        </a>
 
                     </div>
                 </div>
@@ -819,10 +846,10 @@
                 <div class="col-6 col-md-6 col-lg-2 ps-lg-4">
                     <h5 class="footer-heading mb-4">Our Company</h5>
                     <ul class="footer-links list-unstyled m-0 p-0">
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Delivery Info</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms & Conditions</a></li>
+                        <li><a href="{{ route('about') }}">About Us</a></li>
+                        <li><a href="{{ route('delivery') }}">Delivery Info</a></li>
+                        <li><a href="{{ route('privacy') }}">Privacy Policy</a></li>
+                        <li><a href="{{ route('terms') }}">Terms & Conditions</a></li>
                     </ul>
                 </div>
 
@@ -908,14 +935,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             // Render Structural Vector Graphics Icons Engine
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
         });
     </script>
+
     @livewireScripts
 </body>
 

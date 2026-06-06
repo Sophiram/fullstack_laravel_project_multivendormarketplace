@@ -115,29 +115,77 @@
                     </div>
                 </div>
 
-                <!-- Shipping Form Card -->
-                @if ($order->status == 'processing')
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold mb-3" style="font-family: 'Outfit', sans-serif;">Confirm Shipment</h5>
+                <!-- Shipping Section -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3" style="font-family: 'Outfit', sans-serif;">Shipping Information</h5>
+
+                        @if ($order->shipping)
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="mb-2">
+                                    <label class="text-muted small d-block">Shipping Company</label>
+                                    {{-- ប្រើ Relationship shippingCompany ដើម្បីបង្ហាញឈ្មោះ --}}
+                                    <span
+                                        class="fw-bold text-dark">{{ $order->shipping->shippingCompany->name ?? 'N/A' }}</span>
+                                </div>
+                                <div>
+                                    <label class="text-muted small d-block">Tracking Number</label>
+                                    <span class="fw-bold text-primary">{{ $order->shipping->tracking_number }}</span>
+                                </div>
+                                <div class="mt-2">
+                                    <label class="text-muted small d-block">Shipping Cost</label>
+                                    <span
+                                        class="fw-bold text-success">${{ number_format($order->shipping->shipping_cost, 2) }}</span>
+                                </div>
+                            </div>
+                        @elseif ($order->status == 'processing')
                             <form action="{{ route('vendor.orders.updateStatus', $order->id) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="status" value="shipped">
+
                                 <div class="mb-3">
                                     <label class="small fw-bold mb-1">Shipping Company</label>
-                                    <input type="text" name="shipping_company" class="form-control form-control-custom"
-                                        required>
+                                    <select name="shipping_company_id" class="form-select form-control-custom" required
+                                        onchange="updateCost(this)">
+                                        <option value="">-- Select Company --</option>
+                                        @foreach ($shippingCompanies as $company)
+                                            <option value="{{ $company->id }}" data-fee="{{ $company->shipping_fee }}">
+                                                {{ $company->name }} (${{ number_format($company->shipping_fee, 2) }})
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
+
                                 <div class="mb-3">
                                     <label class="small fw-bold mb-1">Tracking Number</label>
                                     <input type="text" name="tracking_number" class="form-control form-control-custom"
-                                        required>
+                                        placeholder="Enter tracking number" required>
                                 </div>
+
+                                <div class="mb-3">
+                                    <label class="small fw-bold mb-1">Shipping Cost ($)</label>
+                                    <input type="number" name="shipping_cost" id="shipping_cost"
+                                        class="form-control form-control-custom" step="0.01" readonly required>
+                                </div>
+
                                 <button type="submit" class="btn btn-premium w-100 py-2 fw-bold">Confirm Shipping</button>
                             </form>
-                        </div>
+
+                            <script>
+                                function updateCost(select) {
+                                    const costInput = document.getElementById('shipping_cost');
+                                    const selectedOption = select.options[select.selectedIndex];
+                                    const fee = selectedOption.getAttribute('data-fee');
+                                    costInput.value = fee ? parseFloat(fee).toFixed(2) : '0.00';
+                                }
+                            </script>
+                        @else
+                            <p class="text-muted small">No shipping information available yet.</p>
+                        @endif
                     </div>
-                @endif
+                </div>
+
+
             </div>
         </div>
     </div>

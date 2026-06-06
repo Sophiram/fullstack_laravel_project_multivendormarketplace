@@ -3,7 +3,7 @@
 @section('admin_page_title', 'Manage Reviews - Admin Panel')
 
 @section('admin_layout')
-    <div class="container-fluid px-4 py-2">
+    <div class="container-fluid px-2 py-2">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h3 class="fw-bold text-slate-800 mb-1">Customer Reviews</h3>

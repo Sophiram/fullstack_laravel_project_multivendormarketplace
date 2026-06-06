@@ -6,9 +6,11 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage; // 👈 ថែមជួរមួយនេះចូល
+use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
@@ -74,5 +76,22 @@ class ProfileController extends Controller
     }
     // app/Http/Controllers/ProfileController.php
 
+    public function editPassword() {
+        return view('user.profile.password'); // បង្កើត View ថ្មីឈ្មោះ password.blade.php
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', Password::defaults(), 'confirmed'],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return back()->with('status', 'password-updated');
+    }
 
 }

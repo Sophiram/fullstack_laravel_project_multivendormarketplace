@@ -3,7 +3,7 @@
 @section('admin_page_title', 'Order Management - Admin Panel')
 
 @section('admin_layout')
-    <div class="container-fluid px-4 py-4">
+    <div class="container-fluid px-2 py-2">
         <div class="row g-4 mb-5">
             @foreach (['Completed' => [$stats['completed'], 'success'], 'Processing' => [$stats['processing'], 'primary'], 'On Delivery' => [$stats['delivery'], 'info'], 'Cancelled' => [$stats['cancelled'], 'danger']] as $label => $data)
                 <div class="col-12 col-sm-6 col-xl-3">

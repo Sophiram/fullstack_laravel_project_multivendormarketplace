@@ -3,7 +3,7 @@
 @section('admin_page_title', 'Order Details - ' . ($order->order_number ?? 'N/A'))
 
 @section('admin_layout')
-    <div class="container-fluid px-4 py-3">
+    <div class="container-fluid px-2 py-2">
         <a href="{{ route('admin.order.history') }}"
             class="text-decoration-none text-secondary d-inline-flex align-items-center gap-1.5 mb-4 small fw-semibold transition-all hover-text-dark">
             <i data-lucide="arrow-left" style="width: 15px; height: 15px;"></i> Back to Orders History

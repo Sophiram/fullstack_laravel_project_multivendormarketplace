@@ -149,12 +149,20 @@
                         </a>
                     </li>
 
+                    <li class="sidebar-header">Order</li>
                     <li class="sidebar-item {{ request()->routeIs('vendor.orders.history') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('vendor.orders.history') }}">
                             <i class="align-middle" data-feather="shopping-cart"></i>
                             <span class="align-middle">Order History</span>
                         </a>
                     </li>
+                    <li class="sidebar-item {{ request()->routeIs('vendor.shipping.index') ? 'active' : '' }}">
+                        <a class="sidebar-link" href="{{ route('vendor.shipping.index') }}">
+                            <i class="align-middle" data-feather="truck"></i>
+                            <span class="align-middle">Shipping Settings</span>
+                        </a>
+                    </li>
+
 
                     <li class="sidebar-header">Store</li>
                     <li class="sidebar-item {{ request()->routeIs('vendor.store.create') ? 'active' : '' }}">
@@ -209,12 +217,12 @@
                         </a>
                     </li>
 
-                    <li class="sidebar-item {{ request()->routeIs('vendor.settings') ? 'active' : '' }}">
+                    {{-- <li class="sidebar-item {{ request()->routeIs('vendor.settings') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('vendor.settings') }}">
                             <i class="align-middle" data-feather="settings"></i>
                             <span class="align-middle">Settings</span>
                         </a>
-                    </li>
+                    </li> --}}
                     <li class="sidebar-item {{ request()->routeIs('vendor.profile') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('vendor.profile') }}">
                             <i class="align-middle" data-feather="user"></i>

@@ -30,13 +30,22 @@ use App\Http\Controllers\Admin\ReviewManagementController;
 use App\Http\Controllers\Admin\SystemReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VendorController;
+use App\Http\Controllers\Vendor\ShippingCompanyController;
+use App\Http\Controllers\Vendor\VendorOrderController;
 use App\Http\Controllers\Vendor\VendorReportController;
 use App\Http\Controllers\VendorPayoutController;
 use App\Models\SubCategory;
 use App\Notifications\OrderStatusUpdated;
 use Illuminate\Support\Facades\Auth;
+
 use Livewire\Volt\Volt;
 
+
+// use SimpleSoftwareIO\QrCode\Facades\QrCode;
+
+// Route::get('/test-qr', function () {
+//     return QrCode::size(200)->generate('Hello World!');
+// });
 
 
 Route::get('/api/attributes/{attributeId}/values', function ($attributeId) {
@@ -51,7 +60,6 @@ Route::get('/api/categories/{categoryId}/subcategories', function ($categoryId) 
 });
 
 
-Route::post('/product/review', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store')->middleware('auth');
 
 
 Route::controller(HomePageController::class)->group(function () {
@@ -70,7 +78,14 @@ Route::controller(HomePageController::class)->group(function () {
     Route::get('/stores/{slug}', 'storeDetails')->name('home.store.details');
     // Route::get('/category/{category_name}', 'showCategoryProducts')->name('productby.category');
     // Route::get('/products/{id}', 'productdetails')->name('product.details');
+
+   Route::get('/about-us', 'showAboutUs')->name('about');
+    Route::get('/delivery-info', 'showDeliveryInfo')->name('delivery');
+    Route::get('/privacy-policy', 'showPrivacyPolicy')->name('privacy');
+    Route::get('/terms-conditions', 'showTermsConditions')->name('terms');
 });
+
+
 
 Volt::route('/product/{productId}', 'product-detail-component')->name('product.details');
 Volt::route('/category/{category_name}', 'product-by-category-component')->name('productby.category');
@@ -78,10 +93,9 @@ Volt::route('/wishlist', 'wishlist-page-component')->name('wishlist.index');
 
 Volt::route('/cart', 'cart-page')->name('cart');
 
-Volt::route('/checkout', 'checkout-page')->name('checkout');
 
-// Receipt Route
-Volt::route('/receipt/{order}', 'receipt-component')->name('receipt');
+
+// Volt::route('/payment/qr/{order}', 'payment-qr-page')->name('payment.qr');
 
 // admin routes
 Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () {
@@ -124,11 +138,14 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
             Route::get('/edit/{id}', 'edit')->name('edit');
             Route::put('/update/{id}', 'update')->name('update');
             Route::delete('/delete/{id}', 'destroy')->name('delete');
+
+            Route::post('/toggle-status/{id}',  'toggleStatus')->name('toggle.status');
         });
     });
     Route::prefix('admin')->group(function () {
 
             Route::get('/manage/commission', [CommissionController::class, 'index'])->name('admin.manage.commission');
+
 
             Route::controller(DiscountController::class)->group(function () {
                     Route::get('/discount/create', 'create')->name('admin.discount.create'); // បង្កើត function create() ក្នុង Controller
@@ -150,6 +167,7 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
 
 
            Route::get('/cart/history', 'cart_history')->name('admin.cart.history');
+
         //    Route::get('/order/history', 'order_history')->name('admin.order.history');
         });
 
@@ -284,17 +302,28 @@ Route::middleware(['auth', 'verified', 'rolemanager:admin'])->group(function () 
 Route::middleware(['auth', 'verified', 'rolemanager:vendor', 'approved.vendor'])->group(function () {
     Route::prefix('vendor')->group(function () {
 
-        Route::get('/order/history', [\App\Http\Controllers\OrderController::class, 'vendorIndex'])->name('vendor.orders.history');
+        Route::get('/order/history', [VendorOrderController::class, 'vendorIndex'])->name('vendor.orders.history');
         // បន្ថែម Route នេះទៅក្នុងក្រុមរបស់ Vendor (prefix 'vendor')
-        Route::get('/order/show/{id}', [OrderController::class, 'vendorShowOrder'])->name('vendor.ordershow');
-        Route::post('/orders/{order}/update-status', [App\Http\Controllers\OrderController::class, 'updateStatus'])
+        Route::get('/order/show/{id}', [VendorOrderController::class, 'vendorShowOrder'])->name('vendor.ordershow');
+
+
+        Route::post('/orders/{order}/update-status', [VendorOrderController::class, 'updateStatus'])
             ->name('vendor.orders.updateStatus');
 
+
+
         Route::get('/products/{id}', [ProductController::class, 'show'])->name('vendor.products.show');
-        Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel'])->name('vendor.order.cancel');
     // Route::get('/order/export', [OrderController::class, 'export'])->name('order.export');
 
         Route::get('/payout', [VendorPayoutController::class, 'index'])->name('vendor.payout.index');
+
+
+
+        // Shipping Routes
+    Route::get('/shipping', [ShippingCompanyController::class, 'index'])->name('vendor.shipping.index');
+    Route::post('/shipping/store', [ShippingCompanyController::class, 'store'])->name('vendor.shipping.store');
+    Route::delete('/shipping/{id}', [ShippingCompanyController::class, 'destroy'])->name('vendor.shipping.destroy');
+    Route::put('/shipping/{id}', [ShippingCompanyController::class, 'update'])->name('shipping.update');
 
 
     Route::post('/payout/request', [VendorPayoutController::class, 'requestPayout'])->name('vendor.payout.request');
@@ -344,10 +373,16 @@ Route::middleware(['auth', 'verified', 'rolemanager:vendor', 'approved.vendor'])
 // user routes
 Route::middleware(['auth', 'verified', 'rolemanager:user'])->group(function () {
     Route::prefix('user')->group(function () {
+
+        // Volt::route('/payment/qr/{order}', 'payment.qr')->name('payment.qr');
+
         Route::controller(UserMainController::class)->group(function () {
             Route::get('/dashboard', 'index')->name('dashboard');
-            Route::get('/order/history', 'history')->name('user.history');
-            Route::get('/order/show/{id}', [OrderController::class, 'show'])->name('user.ordershow');
+            Route::get('/order/history', 'history')->name('user.order.history');
+
+            Route::get('/orders/{order}', 'show')->name('user.order.show');
+
+
 
             Route::get('/settings/payment', 'payment')->name('user.payment');
             Route::get('/affiliate', 'affiliate')->name('user.affiliate');
@@ -360,31 +395,31 @@ Route::middleware(['auth', 'verified', 'rolemanager:user'])->group(function () {
                     Auth::user()->unreadNotifications->markAsRead();
                     return redirect()->back();
             })->name('user.notifications.readAll');
+
+
+            Route::get('/profile/password', [ProfileController::class, 'editPassword'])->name('user.password.edit');
+            Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('user.password.update');
         });
     });
 });
 
-Route::get('/test-notification-debug', function () {
-    $user = Auth::user();
 
-    // បង្កើត Object តេស្តមួយ
-    $order = (object)[
-        'id' => 999,
-        'order_number' => 'TEST-12345',
-        'status' => 'Delivered'
-    ];
-
-    // ផ្ញើ Notification
-    $user->notify(new OrderStatusUpdated($order));
-
-    return "Notification ត្រូវបានផ្ញើទៅកាន់ Database ហើយ!";
-})->middleware('auth');
 
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+
+    Route::post('/product/review', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store')->middleware('auth');
+
+    Volt::route('/checkout', 'checkout-page')->name('checkout');
+
+// Receipt Route
+    Volt::route('/payment/qr/{order}', 'payment-qr-page')->name('payment.qr');
+    Volt::route('/receipt/{order}', 'receipt-component')->name('receipt');
+
 });
 
 // Route::middleware(['auth', 'verified'])->group(function () {

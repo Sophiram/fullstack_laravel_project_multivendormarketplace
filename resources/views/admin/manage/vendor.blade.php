@@ -3,7 +3,7 @@
 @section('admin_page_title', 'Manage Vendors - Admin Panel')
 
 @section('admin_layout')
-    <div class="container-fluid px-4 py-3">
+    <div class="container-fluid px-2 py-2">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
             <div>
                 <h4 class="fw-bold text-dark mb-1">Manage Vendors</h4>

@@ -5,7 +5,7 @@
 @endsection
 
 @section('admin_layout')
-    <div class="container-fluid px-4 py-2">
+    <div class="container-fluid px-2 py-2">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
             <!-- ផ្នែកអត្ថបទ -->
             <div class="flex-grow-1">

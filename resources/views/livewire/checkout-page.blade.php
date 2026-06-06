@@ -4,12 +4,11 @@ use Livewire\Volt\Component;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
-use App\Models\PaymentMethod; // 👈 នាំចូល Model ដើម្បីចាប់យកទិន្នន័យ Gateway មករក្សាទុក
+use App\Models\PaymentMethod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 new class extends Component {
-    // ព័ត៌មានអតិថិជន និងអាសយដ្ឋាន
     public $fullName = '';
     public $phone = '';
     public $email = '';
@@ -17,15 +16,14 @@ new class extends Component {
     public $city = 'Phnom Penh';
     public $note = '';
 
-    // ទិន្នន័យហិរញ្ញវត្ថុទាញពី Session
     public $cartItems = [];
-    public $paymentMethodId = null; // រក្សាទុក ID នៃ Payment Method ពី Database
+    public $paymentMethodId = null;
+    public $selectedCompanyId = null;
     public $shipping = 0.0;
     public $discount = 0.0;
     public $subtotal = 0.0;
     public $total = 0.0;
 
-    // មុខងារហៅមកដំណើរការមុនគេពេលបើកទំព័រ (Mount)
     public function mount()
     {
         $this->cartItems = session()->get('cart', []);
@@ -34,8 +32,6 @@ new class extends Component {
             return redirect()->route('cart');
         }
 
-        // ចាប់យក ID នៃវិធីសាស្ត្រទូទាត់ដែលបានជ្រើសរើសពីទំពើរកន្ត្រក
-        $this->paymentMethodId = session()->get('selected_payment_method_id');
         $this->shipping = session()->get('cart_shipping', 5.0);
         $this->discount = session()->get('cart_discount', 0.0);
 
@@ -49,69 +45,136 @@ new class extends Component {
             $this->fullName = auth()->user()->name;
             $this->email = auth()->user()->email;
         }
+
+        $sessionMethodId = session()->get('selected_payment_method_id');
+
+        if ($sessionMethodId && PaymentMethod::where('id', $sessionMethodId)->where('status', true)->exists()) {
+            $this->paymentMethodId = $sessionMethodId;
+        } else {
+            $firstMethod = PaymentMethod::where('status', true)->first();
+            $this->paymentMethodId = $firstMethod ? $firstMethod->id : null;
+        }
     }
 
-    // ទាញយកព័ត៌មានលម្អិតនៃវិធីសាស្ត្រទូទាត់ដែលបានជ្រើសរើសដើម្បីបង្ហាញលើ UI
+    public function getAvailablePaymentMethodsProperty()
+    {
+        return PaymentMethod::where('status', true)->get();
+    }
+
     public function getSelectedMethodProperty()
     {
-        return PaymentMethod::find($this->paymentMethodId) ?? PaymentMethod::where('status', true)->first();
+        return PaymentMethod::find($this->paymentMethodId);
     }
 
-    // ដំណើរការរក្សាទុកការបញ្ជាទិញ (Place Order)
+    public function updatedSelectedCompanyId($value)
+    {
+        $company = \App\Models\ShippingCompany::find($value);
+        $this->shipping = $company ? $company->shipping_fee : 0.0;
+        $this->total = $this->subtotal + $this->shipping - $this->discount;
+
+        if ($this->total < 0) {
+            $this->total = 0;
+        }
+    }
+
     public function placeOrder()
     {
-        $this->validate([
-            'fullName' => 'required|string|min:3',
-            'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|min:9',
-            'address' => 'required|string',
-            'city' => 'required',
-        ]);
+        $this->validate(
+            [
+                'fullName' => 'required|string|min:3',
+                'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|min:9',
+                'address' => 'required|string',
+                'city' => 'required',
+                'selectedCompanyId' => 'required',
+                'paymentMethodId' => 'required|exists:payment_methods,id',
+            ],
+            [
+                'selectedCompanyId.required' => 'Please select a shipping company.',
+                'paymentMethodId.required' => 'Please select a payment method.',
+            ],
+        );
 
-        $order = DB::transaction(function () {
-            // ទាញយកឈ្មោះ Gateway ទៅរក្សាទុកក្នុងតារាង Order (សម្រាប់ជាប្រវត្តិ)
-            $methodName = $this->selectedMethod ? $this->selectedMethod->name : 'Unknown';
+        $methodName = $this->selectedMethod ? $this->selectedMethod->name : 'Unknown';
+        $methodType = $this->selectedMethod ? $this->selectedMethod->type : 'manual_bank';
 
-            $newOrder = Order::create([
-                'user_id' => auth()->id(),
-                'order_number' => 'ORD-' . strtoupper(Str::random(8)),
-                'total_amount' => $this->total,
-                'status' => 'pending',
-                'shipping_address' => $this->address . ', ' . $this->city,
-                'payment_method' => $methodName, // រក្សាទុកឈ្មោះ Gateway
-                'note' => $this->note,
-            ]);
-
-            foreach ($this->cartItems as $productId => $item) {
-                OrderItem::create([
-                    'order_id' => $newOrder->id,
-                    'product_id' => $productId,
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                    'total' => $item['price'] * $item['quantity'],
+        try {
+            $result = DB::transaction(function () use ($methodName, $methodType) {
+                // ១. បង្កើត Order
+                $newOrder = Order::create([
+                    'user_id' => auth()->id(),
+                    'order_number' => 'ORD-' . strtoupper(Str::random(8)),
+                    'total_amount' => $this->total,
+                    'status' => 'pending',
+                    'shipping_address' => $this->address . ', ' . $this->city,
+                    'payment_method' => $methodName,
+                    'note' => $this->note,
                 ]);
+
+                // ២. ពិនិត្យស្តុក និងកាត់ស្តុក
+                foreach ($this->cartItems as $productId => $item) {
+                    $product = \App\Models\Product::where('id', $productId)->lockForUpdate()->first();
+
+                    if (!$product) {
+                        throw new \Exception('Product not found.');
+                    }
+
+                    if ($product->stock_quantity < $item['quantity']) {
+                        throw new \Exception("Product {$product->name} is out of stock.");
+                    }
+
+                    $product->decrement('stock_quantity', $item['quantity']);
+                    $basePrice = $product->discounted_price > 0 ? $product->discounted_price : $product->regular_price;
+                    $additionalPrice = 0;
+                    if (!empty($item['attribute_value_id'])) {
+                        $productAttribute = DB::table('product_attributes')->where('product_id', $productId)->where('attribute_value_id', $item['attribute_value_id'])->first();
+
+                        if ($productAttribute) {
+                            $additionalPrice = $productAttribute->additional_price;
+                        }
+                    }
+                    $finalPrice = $basePrice + $additionalPrice;
+
+                    OrderItem::create([
+                        'order_id' => $newOrder->id,
+                        'product_id' => $productId,
+                        'quantity' => $item['quantity'],
+                        'price' => $finalPrice,
+                        'total' => $finalPrice * $item['quantity'],
+                    ]);
+                }
+
+                // ៣. បង្កើតទិន្នន័យ Payment លំនាំដើម
+                Payment::create([
+                    'order_id' => $newOrder->id,
+                    'transaction_id' => 'TXN-' . strtoupper(Str::random(12)),
+                    'amount' => $this->total,
+                    // 'status' => 'pending',
+                    'payment_method' => $methodName,
+                ]);
+
+                return [
+                    'order' => $newOrder,
+                    'type' => $methodType,
+                ];
+            });
+
+            session()->forget(['cart', 'selected_payment_method_id', 'cart_shipping', 'cart_discount', 'applied_coupon']);
+            session()->flash('success', 'Your order has been placed successfully!');
+
+            if ($methodType === 'direct_integration' || $methodType === 'qr_payment') {
+                return redirect()->route('payment.qr', ['order' => $result['order']->id]);
+            } else {
+                return redirect()->route('receipt', ['order' => $result['order']->id]);
             }
-
-            Payment::create([
-                'order_id' => $newOrder->id,
-                'transaction_id' => 'TXN-' . strtoupper(Str::random(12)),
-                'amount' => $this->total,
-                'status' => 'pending',
-                'payment_method_id' => $this->selectedMethod ? $this->selectedMethod->id : null, // តភ្ជាប់ ID ទៅតារាង Payment
-            ]);
-
-            return $newOrder;
-        });
-
-        session()->forget(['cart', 'selected_payment_method_id', 'cart_shipping', 'cart_discount', 'applied_coupon']);
-
-        session()->flash('success', 'Your order has been placed successfully!');
-
-        return redirect()->route('receipt', ['order' => $order->id]);
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+            return;
+        }
     }
 }; ?>
 
+
 <div class="checkout-wrapper py-5">
-    <!-- Google Fonts & Style Infrastructure -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -137,10 +200,8 @@ new class extends Component {
             border: 1px solid rgba(226, 232, 240, 0.8);
             border-radius: 24px;
             box-shadow: 0 10px 25px -15px rgba(0, 0, 0, 0.03);
-            transition: all 0.3s ease;
         }
 
-        /* Form Inputs Premium Styling */
         .premium-form .form-label {
             font-size: 0.82rem;
             font-weight: 600;
@@ -158,7 +219,7 @@ new class extends Component {
             font-size: 0.92rem;
             color: #0f172a;
             background-color: #f8fafc;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.2s;
         }
 
         .premium-form .form-control:focus,
@@ -173,23 +234,40 @@ new class extends Component {
             background-image: none !important;
         }
 
-        /* Selected Payment Method Notice Row */
-        .active-gateway-notice {
-            background: linear-gradient(to right, #ffffff, #f8fafc);
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 16px;
+        .payment-method-card {
+            cursor: pointer;
+        }
+
+        .payment-method-card input[type="radio"] {
+            display: none;
+        }
+
+        .payment-method-card .card-body {
+            border: 2px solid #f1f5f9;
+            background-color: #ffffff;
+            transition: all 0.25s ease;
+        }
+
+        .payment-method-card:hover .card-body {
+            border-color: #cbd5e1;
+            background-color: #f8fafc;
+        }
+
+        .payment-method-card input[type="radio"]:checked+.card-body {
+            border-color: #6366f1;
+            background-color: #f8fafc;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.12);
         }
 
         .gateway-logo-badge {
             height: 38px;
-            max-width: 120px;
+            width: 50px;
             object-fit: contain;
             display: flex;
             align-items: center;
+            justify-content: center;
         }
 
-        /* Order Review Item Line Architecture */
         .review-item-row {
             display: flex;
             align-items: center;
@@ -230,7 +308,7 @@ new class extends Component {
             background: linear-gradient(135deg, #4f46e5, #7c3aed);
             border: none;
             border-radius: 14px !important;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s;
             box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25);
         }
 
@@ -242,9 +320,17 @@ new class extends Component {
     </style>
 
     <div class="container animate__animated animate__fadeIn">
-        <div class="row g-4">
 
-            <!-- 📝 ផ្នែកខាងឆ្វេង៖ Form បំពេញព័ត៌មានដឹកជញ្ជូន (Shipping Information) -->
+        {{-- បង្ហាញ Error Message ប្រសិនបើការបញ្ជាទិញមានបញ្ហា --}}
+        @if (session()->has('error'))
+            <div class="alert alert-danger rounded-4 mb-4 border-0 shadow-sm d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span class="fw-semibold small">{{ session('error') }}</span>
+            </div>
+        @endif
+
+        <div class="row g-4">
+            <!-- 📝 Form បំពេញព័ត៌មានដឹកជញ្ជូន និងវិធីសាស្ត្រទូទាត់ប្រាក់ -->
             <div class="col-lg-7">
                 <div class="premium-card p-4 premium-form">
                     <h5 class="fw-bold text-dark mb-1 premium-heading">
@@ -253,6 +339,7 @@ new class extends Component {
                     <p class="text-muted small mb-4">Provide secure destination address details for accurate dispatch
                         courier</p>
 
+                    {{-- Form ដើរតួជាក្បាលម៉ាស៊ីន Submit ទិន្នន័យ --}}
                     <form wire:submit.prevent="placeOrder" id="checkoutForm">
                         <div class="row g-3">
                             <div class="col-12">
@@ -282,6 +369,24 @@ new class extends Component {
                                         style="font-size:0.7rem;">(Optional)</span></label>
                                 <input type="email" wire:model="email" class="form-control"
                                     placeholder="e.g. john@example.com">
+                            </div>
+
+                            <div class="col-12 mt-3">
+                                <label class="form-label">Select Shipping Courier <span
+                                        class="text-danger">*</span></label>
+                                <select wire:model.live="selectedCompanyId"
+                                    class="form-select @error('selectedCompanyId') is-invalid @enderror">
+                                    <option value="">-- Choose a courier --</option>
+                                    @foreach (\App\Models\ShippingCompany::where('is_active', true)->get() as $company)
+                                        <option value="{{ $company->id }}">
+                                            {{ $company->name }} - ${{ number_format($company->shipping_fee, 2) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('selectedCompanyId')
+                                    <div class="invalid-feedback fw-semibold small mt-1 d-block"><i
+                                            class="bi bi-exclamation-circle me-1"></i>{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="col-md-6">
@@ -314,51 +419,80 @@ new class extends Component {
                     </form>
                 </div>
 
-                <!-- 💳 ផ្នែកបង្ហាញវិធីសាស្ត្រទូទាត់ متحرក (Dynamic Gateway Summary) -->
+                <!-- 💳 ផ្នែកជ្រើសរើសវិធីសាស្ត្រទូទាត់ប្រាក់ -->
                 <div class="premium-card p-4 mt-4 animate__animated animate__fadeInUp">
                     <h5 class="fw-bold text-dark mb-1 premium-heading">
-                        <i class="bi bi-credit-card-2-front me-2 text-primary"></i>Selected Payment Gateway
+                        <i class="bi bi-credit-card-2-front me-2 text-primary"></i>Payment Method <span
+                            class="text-danger">*</span>
                     </h5>
-                    <p class="text-muted small mb-3">Your transaction routing point chosen from the shopping cart phase
-                    </p>
+                    <p class="text-muted small mb-3">Choose how you want to pay for your order</p>
 
-                    <div class="active-gateway-notice d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-success-subtle p-2 text-success d-flex align-items-center justify-content-center"
-                                style="width: 32px; height: 32px;">
-                                <i class="bi bi-shield-check-fill fs-5"></i>
-                            </div>
-                            <div>
-                                @if ($this->selectedMethod && $this->selectedMethod->logo)
-                                    <div class="gateway-logo-badge">
-                                        <img src="{{ asset('storage/' . $this->selectedMethod->logo) }}"
-                                            alt="{{ $this->selectedMethod->name }}"
-                                            style="max-height: 100%; max-width: 100%;">
+                    <div class="row g-3">
+                        @forelse ($this->availablePaymentMethods as $method)
+                            <div class="col-12 col-md-6">
+                                <label class="payment-method-card w-100 m-0">
+                                    {{-- ភ្ជាប់ទៅកាន់ Form ID ខាងលើដើម្បីរក្សាទិន្នន័យទូទាត់ --}}
+                                    <input type="radio" wire:model.live="paymentMethodId" name="payment_method"
+                                        value="{{ $method->id }}" form="checkoutForm">
+                                    <div
+                                        class="card-body p-3 rounded-4 d-flex align-items-center justify-content-between h-100">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="gateway-logo-badge bg-light rounded-3 p-1 border">
+                                                @if ($method->logo)
+                                                    <img src="{{ asset('storage/' . $method->logo) }}"
+                                                        alt="{{ $method->name }}"
+                                                        style="max-height: 100%; max-width: 100%;">
+                                                @else
+                                                    <i class="bi bi-bank2 text-secondary fs-5"></i>
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold text-dark small">{{ $method->name }}</h6>
+                                                @if ($method->description)
+                                                    <p class="text-muted mb-0 text-truncate"
+                                                        style="font-size: 0.72rem; max-width: 120px;"
+                                                        title="{{ $method->description }}">
+                                                        {{ $method->description }}
+                                                    </p>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div class="radio-check-indicator ms-2">
+                                            @if ($paymentMethodId == $method->id)
+                                                <i class="bi bi-check-circle-fill text-primary fs-5"></i>
+                                            @else
+                                                <i class="bi bi-circle text-muted opacity-50 fs-5"></i>
+                                            @endif
+                                        </div>
                                     </div>
-                                @else
-                                    <span class="fw-bold text-dark text-uppercase font-monospace fs-6">
-                                        {{ $this->selectedMethod ? $this->selectedMethod->name : 'Standard Pay' }}
-                                    </span>
-                                @endif
-                                <p class="text-muted mb-0" style="font-size: 0.72rem;">Secured End-to-End Processing
-                                    Network</p>
+                                </label>
                             </div>
-                        </div>
-                        <a href="/cart"
-                            class="btn btn-sm btn-outline-secondary px-3 fw-bold rounded-3 text-decoration-none"
-                            style="font-size: 0.8rem; border-radius: 10px!important;">
-                            Modify
-                        </a>
+                        @empty
+                            <div class="col-12">
+                                <div
+                                    class="alert alert-light border border-warning text-warning-emphasis small py-2 d-flex align-items-center mb-0">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i> No payment methods available
+                                    right now.
+                                </div>
+                            </div>
+                        @endforelse
+
+                        @error('paymentMethodId')
+                            <div class="col-12 mt-1">
+                                <div class="invalid-feedback fw-semibold small d-block"><i
+                                        class="bi bi-exclamation-circle me-1"></i>{{ $message }}</div>
+                            </div>
+                        @enderror
                     </div>
                 </div>
             </div>
 
-            <!-- 📊 ផ្នែកខាងស្តាំ៖ សេចក្ដីសង្ខេបការបញ្ជាទិញ (Order Metrics Summary Box) -->
+            <!-- 📊 សេចក្ដីសង្ខេបការបញ្ជាទិញ (Order Summary Box) -->
             <div class="col-lg-5">
                 <div class="premium-card p-4 position-sticky animate__animated animate__fadeIn" style="top: 24px;">
                     <h5 class="mb-3 fw-bold text-dark premium-heading">Review Your Order</h5>
 
-                    <!-- បញ្ជីទំនិញសង្ខេបស្អាតប្រណីត -->
                     <div class="order-items-list mb-4 style-scroll pe-1" style="max-height: 220px; overflow-y: auto;">
                         @foreach ($cartItems as $item)
                             <div class="review-item-row">
@@ -379,21 +513,20 @@ new class extends Component {
                         @endforeach
                     </div>
 
-                    <!-- ផ្នែកគណនាតម្លៃសរុប -->
                     <div class="d-flex justify-content-between mb-2.5 small">
                         <span class="text-muted">Subtotal</span>
                         <span
-                            class="fw-semibold text-dark summary-price-text">${{ number_format($this->subtotal, 2) }}</span>
+                            class="fw-semibold text-dark summary-price-text">${{ number_format($subtotal, 2) }}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2.5 small">
                         <span class="text-muted">Voucher Discount</span>
                         <span
-                            class="text-success fw-semibold summary-price-text">-${{ number_format($this->discount, 2) }}</span>
+                            class="text-success fw-semibold summary-price-text">-${{ number_format($discount, 2) }}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-3 small">
                         <span class="text-muted">Courier Shipping</span>
                         <span
-                            class="fw-semibold text-dark summary-price-text">${{ number_format($this->shipping, 2) }}</span>
+                            class="fw-semibold text-dark summary-price-text">${{ number_format($shipping, 2) }}</span>
                     </div>
 
                     <hr class="my-3.5" style="border-color: #e2e8f0;">
@@ -401,11 +534,11 @@ new class extends Component {
                     <div class="d-flex justify-content-between mb-4 align-items-center">
                         <span class="fw-bold text-dark fs-6">Grand Total</span>
                         <span
-                            class="fw-extrabold text-danger summary-price-text fs-4">${{ number_format($this->total, 2) }}</span>
+                            class="fw-extrabold text-danger summary-price-text fs-4">${{ number_format($total, 2) }}</span>
                     </div>
 
-                    <!-- ប៊ូតុងបញ្ជាក់ការកុម្ម៉ង់លោត Loading Form Action -->
-                    <button wire:click="placeOrder" wire:loading.attr="disabled" type="button"
+                    {{-- កែប្រែត្រង់នេះ៖ បន្ថែម form="checkoutForm" និង type="submit" ដើម្បីឱ្យ Enter Key ដំណើរការ --}}
+                    <button form="checkoutForm" type="submit" wire:loading.attr="disabled"
                         class="btn btn-primary place-order-btn-premium w-100 mb-2.5 fw-bold py-2.5 text-white d-flex align-items-center justify-content-center gap-2">
                         <span wire:loading wire:target="placeOrder" class="spinner-border spinner-border-sm"></span>
                         <i wire:loading.remove wire:target="placeOrder" class="bi bi-shield-lock-fill fs-6"></i>

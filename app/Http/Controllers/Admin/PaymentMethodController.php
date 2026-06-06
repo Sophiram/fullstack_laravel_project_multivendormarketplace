@@ -14,15 +14,20 @@ class PaymentMethodController extends Controller
     }
 
 
-public function add() {
-    return view('admin.payment.add');
-}
+
+    public function add() {
+        return view('admin.payment.add');
+    }
+
     public function store(Request $request)
     {
+
         $validated = $request->validate([
-            'name' => 'required',
-            'type' => 'required',
-            'logo' => 'image|nullable',
+            'name'        => 'required|string|max:255',
+            'type'        => 'required',
+            'description' => 'nullable|string', // បន្ថែមជួរនេះ
+            'logo'        => 'image|nullable|mimes:jpeg,png,jpg|max:2048',
+            'qr_code'     => 'image|nullable|mimes:jpeg,png,jpg|max:2048', // បន្ថែមការការពារហ្វាល QR
         ]);
 
         $data = $request->except(['api_public_key', 'api_secret_key', 'account_name', 'account_number', 'logo', 'qr_code']);
@@ -52,61 +57,75 @@ public function add() {
 
         return redirect()->route('admin.payment.manage')->with('success', 'Payment method added successfully!');
     }
-    // ១. បង្ហាញទំព័រ Edit
-public function edit($id)
-{
-    $method = PaymentMethod::findOrFail($id);
-    return view('admin.payment.edit', compact('method'));
-}
 
-// ២. អនុវត្តការ Update
-public function update(Request $request, $id)
-{
-    $method = PaymentMethod::findOrFail($id);
+        public function edit($id)
+        {
+            $method = PaymentMethod::findOrFail($id);
+            return view('admin.payment.edit', compact('method'));
+        }
 
-    $validated = $request->validate([
-        'name' => 'required',
-        'type' => 'required',
-        'logo' => 'image|nullable',
-    ]);
+    // ២. អនុវត្តការ Update
+    public function update(Request $request, $id)
+    {
+        $method = PaymentMethod::findOrFail($id);
 
-    $data = $request->except(['api_public_key', 'api_secret_key', 'account_name', 'account_number', 'logo', 'qr_code']);
+        $validated = $request->validate([
+            'name' => 'required',
+            'type' => 'required',
+            'logo' => 'image|nullable',
+        ]);
 
-    // បញ្ចូល Credentials ថ្មី
-    if ($request->type == 'direct_integration') {
-        $data['credentials'] = [
-            'public_key' => $request->api_public_key,
-            'secret_key' => $request->api_secret_key,
-            'environment' => $request->environment
-        ];
-    } elseif ($request->type == 'manual_bank') {
-        $data['credentials'] = [
-            'account_name' => $request->account_name,
-            'account_number' => $request->account_number
-        ];
-    } else {
-        $data['credentials'] = null;
+        $data = $request->except(['api_public_key', 'api_secret_key', 'account_name', 'account_number', 'logo', 'qr_code']);
+
+        // បញ្ចូល Credentials ថ្មី
+        if ($request->type == 'direct_integration') {
+            $data['credentials'] = [
+                'public_key' => $request->api_public_key,
+                'secret_key' => $request->api_secret_key,
+                'environment' => $request->environment
+            ];
+        } elseif ($request->type == 'manual_bank') {
+            $data['credentials'] = [
+                'account_name' => $request->account_name,
+                'account_number' => $request->account_number
+            ];
+        } else {
+            $data['credentials'] = null;
+        }
+
+        // គ្រប់គ្រងរូបភាពថ្មី (បើមាន)
+        if ($request->hasFile('logo')) {
+            // លុបរូបភាពចាស់ចេញ (ស្រេចចិត្ត)
+            $data['logo'] = $request->file('logo')->store('payments', 'public');
+        }
+        if ($request->hasFile('qr_code')) {
+            $data['qr_code'] = $request->file('qr_code')->store('payments', 'public');
+        }
+
+        $method->update($data);
+
+        return redirect()->route('admin.payment.manage')->with('success', 'Payment method updated successfully!');
     }
 
-    // គ្រប់គ្រងរូបភាពថ្មី (បើមាន)
-    if ($request->hasFile('logo')) {
-        // លុបរូបភាពចាស់ចេញ (ស្រេចចិត្ត)
-        $data['logo'] = $request->file('logo')->store('payments', 'public');
+    // ៣. លុប
+    public function destroy($id)
+    {
+        $method = PaymentMethod::findOrFail($id);
+        $method->delete();
+        return redirect()->route('admin.payment.manage')->with('success', 'Payment method deleted successfully!');
     }
-    if ($request->hasFile('qr_code')) {
-        $data['qr_code'] = $request->file('qr_code')->store('payments', 'public');
+
+    public function toggleStatus($id)
+    {
+        $method = PaymentMethod::findOrFail($id);
+
+        $method->status = !$method->status;
+        $method->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status' . $method->name . ' has been ' . ($method->status ? 'enabled' : 'disabled') . '!',
+            'status' => $method->status
+        ]);
     }
-
-    $method->update($data);
-
-    return redirect()->route('admin.payment.manage')->with('success', 'Payment method updated successfully!');
-}
-
-// ៣. លុប
-public function destroy($id)
-{
-    $method = PaymentMethod::findOrFail($id);
-    $method->delete();
-    return redirect()->route('admin.payment.manage')->with('success', 'Payment method deleted successfully!');
-}
 }

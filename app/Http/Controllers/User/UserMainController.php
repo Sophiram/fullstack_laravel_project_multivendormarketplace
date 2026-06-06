@@ -18,22 +18,28 @@ class UserMainController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-        $userId = Auth::id();
+        $userId = auth()->id();
 
-        if (!$user) {
-            return redirect()->route('login');
-        }
-    $totalOrders = Order::where('user_id', $userId)->count();
+        // ស្ថិតិ: យើងមិនគួរប្រើ query object តែមួយសម្រាប់គ្រប់កន្លែងទេ
+        // ដើម្បីចៀសវាងការជាន់គ្នា (Mutation)
+        $stats = [
+            'totalOrders'     => \App\Models\Order::where('user_id', $userId)->count(),
+            'totalSpent'      => \App\Models\Order::where('user_id', $userId)->where('status', 'completed')->sum('total_amount'),
+            'pendingOrders'   => \App\Models\Order::where('user_id', $userId)->whereIn('status', ['pending', 'processing'])->count(),
+            'completedOrders' => \App\Models\Order::where('user_id', $userId)->where('status', 'completed')->count(),
+        ];
 
-    // ២. ទាញយកទិន្នន័យ Orders ចុងក្រោយដើម្បីបោះទៅកាន់ Loop (ដោះស្រាយកំហុស Error)
-    $orders = Order::where('user_id', $userId)->latest()->get();
-        return view('user.dashboard', compact('totalOrders', 'orders'));
+        // ទាញយក Orders ថ្មីៗដោយប្រើ query ថ្មីមួយដាច់ដោយឡែក
+        $orders = \App\Models\Order::where('user_id', $userId)->latest()->get();
+
+        return view('user.dashboard', compact('stats', 'orders'));
     }
 
-    public function history(){
-        $orders = Order::where('user_id', auth()->id())->latest()->get();
-        return view('user.history', compact('orders'));
+    public function history()
+    {
+        // ប្រើ paginate(10) ដើម្បីបង្ហាញតែ 10 orders ក្នុងមួយទំព័រ
+        $orders = Order::where('user_id', auth()->id())->latest()->paginate(10);
+        return view('user.orders.history', compact('orders'));
     }
 
     public function payment(){
@@ -101,4 +107,17 @@ class UserMainController extends Controller
         return Redirect::to('/');
     }
 
+
+       public function show($id)
+        {
+            // ទាញយកពត៌មានលម្អិតនៃ Order និង Items ដែលមានក្នុង Order នោះ
+            $order = \App\Models\Order::with(['items.product', 'shipping'])->findOrFail($id);
+
+            // ពិនិត្យមើលថាតើ Order នេះជារបស់អ្នកប្រើដែលកំពុង Login មែនឬទេ (ការពារសុវត្ថិភាព)
+            if ($order->user_id !== auth()->id()) {
+                abort(403);
+            }
+
+            return view('user.orders.show', compact('order'));
+        }
 }

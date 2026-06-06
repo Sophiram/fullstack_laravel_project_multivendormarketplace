@@ -36,8 +36,9 @@
                                     <th class="ps-4 py-3" style="width: 120px;">Order ID</th>
                                     <th class="py-3">Customer</th>
                                     <th class="py-3">Store Name</th>
+                                    <th class="py-3">Shipping Info</th>
                                     <th class="py-3">Your Sales</th>
-                                    <th class="py-3">Net Earnings (-Comm.)</th>
+                                    <th class="py-3">Net Earnings</th>
                                     <th class="py-3">Status</th>
                                     <th class="py-3">Date Ordered</th>
                                     <th class="pe-4 py-3 text-end" style="width: 140px;">Action</th>
@@ -46,7 +47,6 @@
                             <tbody class="small text-dark">
                                 @forelse ($orders as $order)
                                     @php
-                                        // 🟢 គណនាទឹកប្រាក់លក់សរុប និង ចំណូលសុទ្ធរបស់ Vendor ម្នាក់នេះក្នុង Order នេះ
                                         $vendorSales = $order->items->sum(function ($item) {
                                             return $item->price * $item->quantity;
                                         });
@@ -54,44 +54,42 @@
                                     @endphp
                                     <tr>
                                         <td class="ps-4 fw-bold text-primary">#{{ $order->order_number }}</td>
-
                                         <td>
                                             <div class="fw-semibold">{{ $order->user->name ?? 'Unknown Customer' }}</div>
                                             <div class="text-muted" style="font-size: 11px;">{{ $order->user->email ?? '' }}
                                             </div>
                                         </td>
-
                                         <td>
                                             @php
-                                                // ទាញយកឈ្មោះហាងទាំងអស់របស់ Vendor នេះដែលមាននៅក្នុង Order នេះ
                                                 $stores = $order->items
-                                                    ->map(function ($item) {
-                                                        return $item->product->store->store_name ?? null;
-                                                    })
+                                                    ->map(fn($item) => $item->product->store->store_name ?? null)
                                                     ->filter()
                                                     ->unique();
                                             @endphp
-
-                                            <!-- 🟢 បន្ថែម d-flex flex-wrap និង gap-1 ដើម្បីឱ្យវាហូរតាមជួរអេក្រង់ដោយស្វ័យប្រវត្តិ និងមានគម្លាតស្អាត -->
                                             <div class="d-flex flex-wrap gap-1"
                                                 style="max-width: 200px; white-space: normal;">
                                                 @forelse($stores as $storeName)
-                                                    <span class="badge bg-light text-dark border fw-medium px-2 py-1">
-                                                        {{ $storeName }}
-                                                    </span>
+                                                    <span
+                                                        class="badge bg-light text-dark border fw-medium px-2 py-1">{{ $storeName }}</span>
                                                 @empty
                                                     <span
                                                         class="badge bg-light text-muted border fw-medium px-2 py-1">N/A</span>
                                                 @endforelse
                                             </div>
                                         </td>
-
-                                        <!-- 🟢 បង្ហាញតម្លៃលក់សរុបជារបស់ Vendor នេះ -->
+                                        <td>
+                                            @if ($order->shipping)
+                                                <div class="small">
+                                                    <strong>{{ $order->shipping->shipping_company }}</strong><br>
+                                                    <span
+                                                        class="text-primary">{{ $order->shipping->tracking_number }}</span>
+                                                </div>
+                                            @else
+                                                <span class="text-muted small">Not Assigned</span>
+                                            @endif
+                                        </td>
                                         <td class="fw-bold text-secondary">${{ number_format($vendorSales, 2) }}</td>
-
-                                        <!-- 🟢 បង្ហាញទឹកប្រាក់សុទ្ធដែលទទួលបាន (ក្រោយកាត់ % ក្រុមហ៊ុនរួច) -->
                                         <td class="fw-bold text-success">${{ number_format($vendorNet, 2) }}</td>
-
                                         <td>
                                             @if ($order->status == 'completed')
                                                 <span
@@ -110,15 +108,11 @@
                                                     class="badge bg-soft-danger text-danger border border-danger-subtle px-2 py-1 rounded-pill">Cancelled</span>
                                             @endif
                                         </td>
-
                                         <td class="text-muted">
-                                            {{ $order->created_at ? $order->created_at->format('M d, Y') : 'N/A' }}
-                                        </td>
-
-                                        <!-- 🟢 កែប្រែដោយបន្ថែម d-flex justify-content-end លើយុថ្កា (A tag) ឬ TD -->
+                                            {{ $order->created_at ? $order->created_at->format('M d, Y') : 'N/A' }}</td>
+                                        <!-- ជំនួសកន្លែង Action នេះ -->
                                         <td class="pe-4 text-end">
                                             <div class="d-flex justify-content-end align-items-center gap-2">
-                                                <!-- View Details Button -->
                                                 <a href="{{ route('vendor.ordershow', $order->id) }}"
                                                     class="btn btn-sm btn-light border shadow-none d-flex align-items-center justify-content-center"
                                                     title="View Details" style="width: 32px; height: 32px;">
@@ -126,12 +120,12 @@
                                                         style="width: 15px; height: 15px;"></i>
                                                 </a>
 
-                                                <!-- Edit Status Dropdown Form -->
                                                 <form action="{{ route('vendor.orders.updateStatus', $order->id) }}"
                                                     method="POST" class="m-0">
                                                     @csrf
                                                     <select name="status" class="form-select form-select-sm shadow-none"
-                                                        onchange="this.form.submit()" style="width: 120px;">
+                                                        onchange="handleStatusChange(this, '{{ $order->id }}')"
+                                                        style="width: 120px;">
                                                         <option value="pending"
                                                             {{ $order->status == 'pending' ? 'selected' : '' }}>Pending
                                                         </option>
@@ -139,8 +133,8 @@
                                                             {{ $order->status == 'processing' ? 'selected' : '' }}>
                                                             Processing</option>
                                                         <option value="shipped"
-                                                            {{ $order->status == 'shipped' ? 'selected' : '' }}>Shipped
-                                                        </option>
+                                                            {{ $order->status == 'shipped' ? 'selected' : '' }}
+                                                            {{ $order->shipping ? 'disabled' : '' }}>Shipped</option>
                                                         <option value="completed"
                                                             {{ $order->status == 'completed' ? 'selected' : '' }}>Completed
                                                         </option>
@@ -149,14 +143,63 @@
                                                         </option>
                                                     </select>
                                                 </form>
+
+                                                <div class="modal fade" id="shipModal{{ $order->id }}" tabindex="-1">
+                                                    <div class="modal-dialog">
+                                                        <form
+                                                            action="{{ route('vendor.orders.updateStatus', $order->id) }}"
+                                                            method="POST" class="modal-content">
+                                                            @csrf
+                                                            <input type="hidden" name="status" value="shipped">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">Shipping Details</h5>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <select name="shipping_company_id" class="form-select"
+                                                                    required
+                                                                    onchange="updateShippingCost(this, '{{ $order->id }}')">
+                                                                    <option value="">-- Select Shipping Company --
+                                                                    </option>
+                                                                    @foreach ($shippingCompanies as $company)
+                                                                        <option value="{{ $company->id }}">
+                                                                            {{ $company->name }}
+                                                                            (${{ number_format($company->shipping_fee, 2) }})
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+
+                                                                <!-- បន្ថែម onclick ឱ្យបញ្ជូន orderId ចូល -->
+                                                                <input name="tracking_number"
+                                                                    id="tracking_input_{{ $order->id }}"
+                                                                    class="form-control mt-2" placeholder="Tracking Number">
+                                                                <button type="button"
+                                                                    class="btn btn-sm btn-outline-primary"
+                                                                    onclick="generateTracking('{{ $order->id }}')">Generate
+                                                                    Auto</button>
+
+
+                                                                <input type="number" name="shipping_cost"
+                                                                    class="form-control mt-2" placeholder="Shipping Cost"
+                                                                    step="0.01">
+                                                                <textarea name="notes" class="form-control mt-2" placeholder="Notes..."></textarea>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="submit" class="btn btn-success">Confirm
+                                                                    Shipping</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+
+
+
                                             </div>
                                         </td>
-
-                                        
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center py-5 text-muted">
+                                        <!-- 🟢 កែតម្រូវត្រង់នេះទៅជា 9 ដើម្បីឱ្យត្រូវនឹងជួរឈរសរុប -->
+                                        <td colspan="9" class="text-center py-5 text-muted">
                                             <i class="align-middle d-block mb-2 fs-3 text-secondary"
                                                 data-feather="inbox"></i>
                                             No orders found yet.
@@ -165,6 +208,9 @@
                                 @endforelse
                             </tbody>
                         </table>
+
+
+
                     </div>
                 </div>
 
@@ -206,6 +252,7 @@
             background-color: #e3f2fd !important;
         }
 
+
         .bg-soft-danger {
             background-color: #ffebee !important;
         }
@@ -235,4 +282,71 @@
             font-size: 13px;
         }
     </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: '{{ session('success') }}',
+                    confirmButtonColor: '#0d6efd',
+                    timer: 3000
+                });
+            @endif
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops!',
+                    text: '{{ session('error') }}',
+                    confirmButtonColor: '#dc3545',
+                });
+            @endif
+        });
+
+        function showShipModal(orderId) {
+            var myModal = new bootstrap.Modal(document.getElementById('shipModal' + orderId));
+            myModal.show();
+        }
+
+        function handleStatusChange(selectElement, orderId) {
+            if (selectElement.value === 'shipped') {
+                var myModal = new bootstrap.Modal(document.getElementById('shipModal' + orderId));
+                myModal.show();
+            } else {
+                selectElement.form.submit();
+            }
+        }
+
+        // បន្ថែមមុខងារនេះ ដើម្បី reset select វិញ បើអ្នកប្រើបិទ Modal
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('hidden.bs.modal', function() {
+                // រក select ដែលទាក់ទងនឹង order ID នេះ ហើយកំណត់វាត្រឡប់ទៅតម្លៃដើម
+                location.reload(); // ងាយស្រួលបំផុតគឺ refresh ដើម្បីឱ្យ select ត្រឡប់ទៅ status ដើម
+            });
+        });
+
+        function generateTracking(orderId) {
+            const randomCode = 'TRK-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            // ជ្រើសរើស input តាម ID ឱ្យចំ order នោះ
+            document.getElementById('tracking_input_' + orderId).value = randomCode;
+        }
+        const shippingFees = {
+            @foreach ($shippingCompanies as $company)
+                "{{ $company->id }}": {{ $company->shipping_fee }},
+            @endforeach
+        };
+
+        function updateShippingCost(selectElement, orderId) {
+            const costInput = document.querySelector(`#shipModal${orderId} input[name="shipping_cost"]`);
+            const selectedId = selectElement.value;
+
+            // បញ្ចូលតម្លៃពី Object ទៅក្នុង Input
+            if (shippingFees[selectedId]) {
+                costInput.value = shippingFees[selectedId].toFixed(2);
+            } else {
+                costInput.value = '';
+            }
+        }
+    </script>
 @endsection

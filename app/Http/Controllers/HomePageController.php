@@ -96,4 +96,29 @@ class HomePageController extends Controller
         return view('home.store_details', compact('store'));
     }
 
+
+    // ទំព័រអំពីយើង
+    public function showAboutUs()
+    {
+        return view('home.about-us');
+    }
+
+    // ទំព័រព័ត៌មានដឹកជញ្ជូន
+    public function showDeliveryInfo()
+    {
+        return view('home.delivery-info');
+    }
+
+    // ទំព័រគោលការណ៍ឯកជនភាព
+    public function showPrivacyPolicy()
+    {
+        return view('home.privacy-policy');
+    }
+
+    // ទំព័រលក្ខខណ្ឌប្រើប្រាស់
+    public function showTermsConditions()
+    {
+        return view('home.terms-conditions');
+    }
+
 }

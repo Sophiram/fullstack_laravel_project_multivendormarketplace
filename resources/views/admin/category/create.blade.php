@@ -3,13 +3,26 @@
 @section('admin_page_title', 'Create Category - Admin Panel')
 
 @section('admin_layout')
-    <div class="container-fluid px-3 px-md-4 py-4">
+    <div class="container-fluid px-2 py-2">
         <div class="mb-3">
             <a href="{{ route('category.manage') }}"
                 class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 hover-opacity">
                 <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back to List
             </a>
         </div>
+
+         @if ($errors->any())
+                <div class="alert alert-warning alert-dismissible fade show shadow-sm rounded-3 mb-4">
+                    <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please fix the following
+                        errors:</div>
+                    <ul class="mb-0 sm-thin">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
         <div class="row">
             <div class="col-12 col-md-8 col-lg-6">
