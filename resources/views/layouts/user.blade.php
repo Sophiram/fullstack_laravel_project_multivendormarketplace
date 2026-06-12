@@ -830,21 +830,7 @@
 
                         {{-- 2. Categories Dropdown --}}
                         <div class="dropdown custom-nav-dropdown">
-                            {{-- <a href="#"
-                                class="menu-item-link dropdown-toggle d-inline-flex align-items-center justify-content-between gap-2 w-100 {{ request()->is('category*') ? 'active' : '' }}"
-                                role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <div class="d-inline-flex align-items-center">
-                                    <span
-                                        class="d-inline-flex align-items-center justify-content-center me-2 rounded-2"
-                                        style="width: 26px; height: 26px; background: rgba(255, 255, 255, 0.12);">
-                                        <i data-feather="grid" style="width: 14px; height: 14px;"></i>
-                                    </span>
-                                    <span>Categories</span>
-                                </div>
-                                <i data-feather="chevron-down" class="drop-icon"
-                                    style="width: 14px; height: 14px;"></i>
-                            </a> --}}
-                            <!-- កែសម្រួលត្រង់នេះ -->
+
                             <a href="#"
                                 class="menu-item-link dropdown-toggle d-inline-flex align-items-center justify-content-between gap-2 {{ request()->is('category*') ? 'active' : '' }}"
                                 role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -875,13 +861,11 @@
                                                     <div class="category-icon-wrapper d-flex align-items-center justify-content-center"
                                                         style="width: 24px; height: 24px; overflow: hidden; border-radius: 4px;">
 
-                                                        {{-- ✨ កែសម្រួល៖ ប្រើលក្ខខណ្ឌដូចទៅនឹង Component ធំ ($category->image) --}}
                                                         @if ($category->image && file_exists(public_path($category->image)))
                                                             <img src="{{ asset($category->image) }}"
                                                                 alt="{{ $category->category_name }}"
                                                                 class="w-100 h-100 object-fit-cover">
                                                         @else
-                                                            {{-- រូបភាពលំនាំដើមបើគ្មានរូបក្នុង DB --}}
                                                             <img src="{{ asset('images/default-category.png') }}"
                                                                 alt="{{ $category->category_name }}"
                                                                 class="w-100 h-100 object-fit-cover">
@@ -908,24 +892,20 @@
                                                     <a href="{{ route('productby.category', $sub->subcategory_name) }}"
                                                         class="sub-item d-flex align-items-center gap-2 py-2 px-3">
 
-                                                        {{-- 🖼️ ប្រអប់បង្ហាញរូបភាពរបស់ Subcategory --}}
                                                         <div class="subcategory-img-wrapper d-flex align-items-center justify-content-center"
                                                             style="width: 20px; height: 20px; overflow: hidden; border-radius: 4px; flex-shrink: 0; background: #f1f5f9;">
 
-                                                            {{-- ✨ កែសម្រួល៖ ប្រើលក្ខខណ្ឌត្រួតពិនិត្យរូបភាពដូច Subcategory ក្នុង Component ធំ --}}
                                                             @if ($sub->image && file_exists(public_path($sub->image)))
                                                                 <img src="{{ asset($sub->image) }}"
                                                                     alt="{{ $sub->subcategory_name }}"
                                                                     class="w-100 h-100 object-fit-cover">
                                                             @else
-                                                                {{-- បង្ហាញរូបភាព Placeholder បើគ្មានរូបភាព Subcategory --}}
                                                                 <img src="https://placehold.co/50x50?text={{ urlencode($sub->subcategory_name) }}"
                                                                     alt="{{ $sub->subcategory_name }}"
                                                                     class="w-100 h-100 object-fit-cover">
                                                             @endif
                                                         </div>
 
-                                                        {{-- ឈ្មោះ Subcategory --}}
                                                         <span class="sub-name"
                                                             style="font-size: 13px;">{{ $sub->subcategory_name }}</span>
                                                     </a>
@@ -1117,24 +1097,20 @@
     @livewireScripts
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // ដំណើរការសម្រាប់តែទំហំអេក្រង់តូចជាង 992px ប៉ុណ្ណោះ
             if (window.innerWidth < 992) {
                 let submenuTriggers = document.querySelectorAll('.custom-has-submenu > a');
 
                 submenuTriggers.forEach(function(trigger) {
                     trigger.addEventListener('click', function(e) {
-                        // ប្រសិនបើ Category នោះមាន Submenu
                         let submenu = this.nextElementSibling;
                         if (submenu && submenu.classList.contains('custom-subcategory-menu')) {
                             e.preventDefault(); // ឃាត់កុំឱ្យលោតទៅ Link ថ្មីសិន
 
-                            // បិទ Submenu ផ្សេងទៀតដែលកំពុងបើក
                             document.querySelectorAll('.custom-subcategory-menu').forEach(function(
                                 item) {
                                 if (item !== submenu) item.style.display = 'none';
                             });
 
-                            // បើក/បិទ Submenu មួយនេះ
                             if (submenu.style.display === 'block') {
                                 submenu.style.display = 'none';
                                 this.setAttribute('data-clicked', 'false');
@@ -1145,7 +1121,6 @@
                         }
                     });
 
-                    // អនុញ្ញាតឱ្យចុចចូល Link ផ្ទាល់បើគេ Double Tap
                     trigger.addEventListener('dblclick', function(e) {
                         window.location.href = this.getAttribute('href');
                     });

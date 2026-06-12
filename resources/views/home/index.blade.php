@@ -8,21 +8,17 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap"
         rel="stylesheet">
 
-    {{-- 🌟 HERO BANNER SECTION (Premium Soft Gradient Theme) --}}
     <div class="hero-wrapper">
         <div class="container">
             <div class="row g-4 align-items-stretch">
 
-                {{-- 🎇 ផ្នែកទី ១: Big Promo Banner (ខាងឆ្វេង - Vibrant Soft Gradient) --}}
                 <div class="col-12 col-lg-8">
                     <div class="main-hero-banner position-relative overflow-hidden h-100 d-flex align-items-center">
-                        {{-- Soft Lighting Glows ជំនួយពន្លឺ --}}
                         <div class="glow-circle bg-white opacity-20 position-absolute"
                             style="top: -20%; right: -10%; width: 300px; height: 300px; filter: blur(80px); border-radius: 50%;">
                         </div>
 
                         <div class="row w-100 align-items-center g-4 position-relative z-index-2 m-0 p-0">
-                            {{-- អក្សរព័ត៌មានលម្អិត --}}
                             <div class="col-12 col-md-7 text-start p-0 ps-md-4">
                                 <span
                                     class="badge hero-promo-badge mb-3 animate__animated animate__flash animate__infinite animate__slower">Limited
@@ -56,7 +52,6 @@
                                 @endif
                             </div>
 
-                            {{-- រូបភាពផលិតផលអណ្តែត --}}
                             <div class="col-12 col-md-5 d-flex justify-content-center align-items-center p-0">
                                 <div class="hero-image-container">
                                     @if (isset($homepagesetting->discountedProduct) && $homepagesetting->discountedProduct->images->first())
@@ -69,10 +64,8 @@
                     </div>
                 </div>
 
-                {{-- 🎴 ផ្នែកទី ២: Side Cards (ខាងស្តាំ ២ ជាន់) --}}
                 <div class="col-12 col-lg-4 d-flex flex-column gap-4">
 
-                    {{-- 🛋️ Card ខាងលើ (Featured Product 1) --}}
                     <div
                         class="side-promo-card-new top-card position-relative overflow-hidden flex-grow-1 d-flex align-items-center">
                         <div class="row w-100 align-items-center g-0 position-relative z-index-2 m-0">
@@ -109,7 +102,6 @@
                         </div>
                     </div>
 
-                    {{-- 💻 Card ខាងក្រោម (Featured Product 2) --}}
                     <div
                         class="side-promo-card-new bottom-card position-relative overflow-hidden flex-grow-1 d-flex align-items-center">
                         <div class="row w-100 align-items-center g-0 position-relative z-index-2 m-0">
@@ -150,7 +142,6 @@
 
             </div>
 
-            {{-- 🛒 ផ្នែក Livewire Product Filter ខាងក្រោម --}}
             <div class="pt-5 mt-2">
                 @livewire('home-product-filter-component')
             </div>
@@ -160,9 +151,6 @@
 @endsection
 
 <style>
-    /* -----------------------------------------
-       ✨ MODERN HERO VIBRANT GRADIENT STYLES
-    -------------------------------------------- */
 
     .hero-wrapper {
         font-family: 'Plus Jakarta Sans', sans-serif;

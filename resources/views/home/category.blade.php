@@ -84,7 +84,6 @@
 
         </div>
     </div>
-    {{-- @livewire('home-product-filter-component') --}}
 @endsection
 <style>
     .transition-all {

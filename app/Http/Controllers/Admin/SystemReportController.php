@@ -15,10 +15,7 @@ class SystemReportController extends Controller
     public function index()
     {
         $reportData = $this->getReportData();
-
-        // បង្ហាញតែ ១០ ថ្មីៗបំផុតនៅលើ UI
         $payouts = PayoutRequest::with('user')->latest()->take(10)->get();
-
         return view('admin.reports.index', compact('reportData', 'payouts'));
     }
 
@@ -27,18 +24,13 @@ class SystemReportController extends Controller
     {
         $reportData = $this->getReportData();
         $payouts = PayoutRequest::with('user')->latest()->get();
-
-        // កូដនេះនឹងដំណើរការហៅ Master Export ដែលមាន Sheets ច្រើនខាងលើដោយស្វ័យប្រវត្ត
         return Excel::download(new SystemReportExport($reportData, $payouts), 'global_system_report.xlsx');
     }
 
-    // បង្កើតលក្ខខណ្ឌជំនួយ (Helper) ដើម្បីកុំឱ្យសរសេរកូដដដែលៗ
     private function getReportData()
     {
         $startDate = request('start_date');
         $endDate = request('end_date');
-
-        // បង្កើតលក្ខខណ្ឌជំនួយសម្រាប់ចម្រោះកាលបរិច្ឆេទ
         $filterDate = function($query) use ($startDate, $endDate) {
             if ($startDate && $endDate) {
                 return $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);

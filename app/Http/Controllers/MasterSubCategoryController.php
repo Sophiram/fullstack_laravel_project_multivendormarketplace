@@ -109,19 +109,14 @@ class MasterSubCategoryController extends Controller
         return redirect()->back()->with('success', 'SubCategory Updated Successfully');
     }
 
-    /**
-     * លុប SubCategory និងឯកសាររូបភាពដែលពាក់ព័ន្ធ
-     */
     public function deletesubcat($id)
     {
         $subcategory = SubCategory::findOrFail($id);
 
-        // លុបរូបភាពចេញពី Server មុននឹងលុបទិន្នន័យចេញពី Database
         if ($subcategory->image && File::exists(public_path($subcategory->image))) {
             File::delete(public_path($subcategory->image));
         }
 
-        // លុបកំណត់ត្រាចេញពី Database
         $subcategory->delete();
 
         return redirect()->back()->with('success', 'SubCategory Deleted Successfully');

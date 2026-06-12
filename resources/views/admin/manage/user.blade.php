@@ -13,8 +13,6 @@
                 <p class="text-muted small mb-0">Monitor user accounts, permissions, roles, and account status activities.
                 </p>
             </div>
-
-            <!-- ផ្នែកប៊ូតុង -->
             <div class="flex-shrink-0">
                 <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 py-2 fw-bold w-100 w-sm-auto"
                     data-bs-toggle="modal" data-bs-target="#addUserModal">
@@ -117,7 +115,7 @@
                             </div>
                         </div>
 
-                        <!-- ផ្នែកតម្រង (Filters) -->
+
                         <div class="col-12 col-md-auto d-flex gap-2">
                             <!-- Filter Role -->
                             <select name="role" class="form-select form-select-sm bg-light text-muted">
@@ -251,7 +249,6 @@
                 document.getElementById('filterForm').submit();
             });
 
-            // សម្រាប់ Input search ឱ្យវា Submit នៅពេលចុច Enter
             if (element.tagName === 'INPUT') {
                 element.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {

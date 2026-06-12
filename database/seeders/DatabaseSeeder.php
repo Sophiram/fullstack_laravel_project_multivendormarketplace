@@ -3,45 +3,50 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // 1. Admin User
-        User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password'),
-            'role' => 0, // សន្មតថា 0 គឺជា Admin
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin123@email.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('admin123'),
+                'role' => 0,
+            ]
+        );
 
-        // 2. Vendor User
-        User::factory()->create([
-            'name' => 'Vendor User',
-            'email' => 'vendor@example.com',
-            'password' => Hash::make('password'),
-            'role' => 1, // សន្មតថា 1 គឺជា Vendor
-        ]);
+        User::firstOrCreate(
+            ['email' => 'vendor123@example.com'],
+            [
+                'name' => 'Vendor User',
+                'password' => Hash::make('vendor123'),
+                'role' => 1,
+            ]
+        );
 
-        // 3. Customer User
-        User::factory()->create([
-            'name' => 'Customer User',
-            'email' => 'customer@example.com',
-            'password' => Hash::make('password'),
-            'role' => 2, // សន្មតថា 2 គឺជា Customer
-        ]);
-
+        User::firstOrCreate(
+            ['email' => 'customer@example.com'],
+            [
+                'name' => 'Customer User',
+                'password' => Hash::make('password'),
+                'role' => 2,
+            ]
+        );
 
         $this->call([
             CategorySeeder::class,
             SubCategorySeeder::class,
+
+            VendorSeeder::class,
+            StoreSeeder::class,
+            
+            ProductSeeder::class,
+            ProductImageSeeder::class,
+            HomePageSettingSeeder::class,
         ]);
     }
 }

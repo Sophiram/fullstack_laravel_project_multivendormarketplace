@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    // សម្រាប់បង្ហាញបញ្ជី User និង Filter
+
     public function manage_user(Request $request)
     {
         $stats = [
@@ -18,7 +18,6 @@ class UserController extends Controller
             'suspended' => User::where('status', 'suspended')->count(),
         ];
 
-        // ២. ទាញទិន្នន័យជាមួយនឹង Search & Filter
         $users = User::query()
             ->when($request->search, function($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
@@ -31,12 +30,10 @@ class UserController extends Controller
         return view('admin.manage.user', compact('users', 'stats'));
     }
 
-    // សម្រាប់ប្តូរ Status (Toggle)
     public function toggleStatus($id)
         {
             $user = User::findOrFail($id);
 
-            // ប្តូរស្ថានភាព
             $user->status = ($user->status === 'active') ? 'suspended' : 'active';
             $user->save();
 
