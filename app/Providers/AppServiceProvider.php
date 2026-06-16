@@ -23,14 +23,15 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // ប្ដូរ Driver ទៅជា 'array' ដើម្បីកុំឱ្យវាប្រើ Database សម្រាប់ Cache ពេលដែល DB មានបញ្ហា
+        config(['cache.default' => 'array']);
+
         View::composer('*', function ($view) {
-            // យើងប្រើ Cache ដើម្បីកុំឱ្យវាហៅ DB គ្រប់ពេលដែលបើក Page
             $categories = Cache::remember('navbar_categories', 3600, function () {
-                // យើងបន្ថែម try-catch ដើម្បីកុំឱ្យវាលោត Error បើ DB មិនទាន់មានតារាង
                 try {
                     return \App\Models\Category::with('subcategories')->get();
                 } catch (\Exception $e) {
-                    return collect(); // បើមានបញ្ហា ឱ្យវាផ្ញើទិន្នន័យទទេជំនួសវិញ
+                    return collect();
                 }
             });
 
