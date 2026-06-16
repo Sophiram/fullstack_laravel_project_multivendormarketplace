@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Store;
 use App\Models\Product;
 use App\Models\Category;
-use App\Models\Discount; 
+use App\Models\Discount;
 use App\Models\GiftCollection;
 use App\Models\HomePageSetting;
 use Illuminate\Http\Request;
@@ -14,16 +14,24 @@ class HomePageController extends Controller
 {
     public function index()
     {
-        $homepagesetting = HomePageSetting::with([
-            'discountedProduct.images',
-            'featuredProduct1.images',
-            'featuredProduct2.images'
-        ])->first();
-        $latestProducts = \App\Models\Product::with('images')
-        ->where('status', 'Published')
-        ->latest()
-        ->take(8)
-        ->get();
+        try {
+            $homepagesetting = HomePageSetting::with([
+                'discountedProduct.images',
+                'featuredProduct1.images',
+                'featuredProduct2.images'
+            ])->first();
+
+            $latestProducts = \App\Models\Product::with('images')
+                ->where('status', 'Published')
+                ->latest()
+                ->take(8)
+                ->get();
+        } catch (\Exception $e) {
+            // បើមានបញ្ហា DB ឱ្យវាត្រលប់មកទទេវិញជំនួសឱ្យការគាំង
+            $homepagesetting = null;
+            $latestProducts = collect();
+        }
+
         return view('home.index', compact('homepagesetting', 'latestProducts'));
     }
     public function showCategoryProducts($category_name)
