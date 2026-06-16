@@ -1,5 +1,5 @@
 # ប្រើប្រាស់ PHP ជំនាន់ទី 8.2 ជាមួយ Apache (អាចដូរជំនាន់តាម Project របស់អ្នក)
-FROM php:8.2-apache
+FROM php:8.4-apache
 
 # ដំឡើង System Dependencies ដែលចាំបាច់ (បន្ថែម libzip-dev)
 RUN apt-get update && apt-get install -y \
