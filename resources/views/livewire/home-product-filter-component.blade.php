@@ -119,10 +119,13 @@ new class extends Component {
                 })
                 ->paginate(10);
         } catch (\Exception $e) {
+            // នៅពេល DB មានបញ្ហា យើងផ្ដល់ឱ្យនូវ Paginator ទទេមួយ ដើម្បីកុំឱ្យ Error
             $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10);
         }
 
-        return view('livewire.home-product-filter-component', ['products' => $products]);
+        return [
+            'products' => $products,
+        ];
     }
 }; ?>
 
