@@ -21,8 +21,8 @@ class KhqrService
 
 
         $this->baseUrl       = rtrim(config('khqr.base_url', 'https://api-bakong.nbc.gov.kh'), '/');
-        // $this->token         = config('khqr.token');
-        $this->token         = $method ? $method->api_key : config('khqr.token');
+        $this->token         = config('khqr.token');
+        // $this->token         = $method ? $method->api_key : config('khqr.token');
         $this->bakongAccount = config('khqr.account');       // e.g. hongly_boun@bkrt
         $this->merchantName  = config('khqr.merchant_name', 'My Shop');
         $this->storeLabel    = config('khqr.store_label', 'POS');

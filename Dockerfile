@@ -1,13 +1,14 @@
 # ប្រើប្រាស់ PHP ជំនាន់ទី 8.2 ជាមួយ Apache (អាចដូរជំនាន់តាម Project របស់អ្នក)
 FROM php:8.2-apache
 
-# ដំឡើង System Dependencies ដែលចាំបាច់
+# ដំឡើង System Dependencies ដែលចាំបាច់ (បន្ថែម libzip-dev)
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libzip-dev \
     zip \
     unzip \
     nodejs \
@@ -16,8 +17,8 @@ RUN apt-get update && apt-get install -y \
 # សម្អាត Cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# ដំឡើង PHP Extensions សម្រាប់ Laravel និង MySQL
-RUN docker-php-ext-install pdo_mysql mbstring pcntl bcmath gd
+# ដំឡើង PHP Extensions សម្រាប់ Laravel និង MySQL (បន្ថែម zip នៅខាងចុង)
+RUN docker-php-ext-install pdo_mysql mbstring pcntl bcmath gd zip
 
 # បើកដំណើរការ Apache mod_rewrite
 RUN a2enmod rewrite
