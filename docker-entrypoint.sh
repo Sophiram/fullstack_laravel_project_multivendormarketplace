@@ -2,22 +2,29 @@
 
 # Clear old config to ensure fresh data from Render/Railway
 php artisan config:clear
+php artisan cache:clear
 
 # ============================================================
 # Wait for MySQL to be ready before running migrations
 # ============================================================
 echo "Waiting for MySQL database to be ready..."
 
-DB_HOST=${DB_HOST:-127.0.0.1}
-DB_PORT=${DB_PORT:-3306}
+# 💡 កែប្រែត្រង់ចំណុចនេះ៖ ឱ្យវាយកតម្លៃពី DB_HOST ឬ MYSQLHOST ដែលបានមកពី Environment
+TARGET_HOST=${DB_HOST:-$MYSQLHOST}
+TARGET_PORT=${DB_PORT:-$MYSQLPORT}
+
+# បើនៅតែទទេ ឱ្យយកតម្លៃ Default នេះ
+TARGET_HOST=${TARGET_HOST:-127.0.0.1}
+TARGET_PORT=${TARGET_PORT:-3306}
+
 MAX_ATTEMPTS=30
 ATTEMPT=1
 
 # Try to connect to database with retry logic
 while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-    echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking database connection to $DB_HOST:$DB_PORT..."
+    echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking database connection to $TARGET_HOST:$TARGET_PORT..."
 
-    if nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; then
+    if nc -z "$TARGET_HOST" "$TARGET_PORT" 2>/dev/null; then
         echo "✓ Database is reachable!"
         break
     fi
@@ -32,6 +39,11 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
     sleep 2
 done
 
+# Cache configurations សម្រាប់ល្បឿនលឿននៅលើ Production
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
 # ============================================================
 # Run migrations and seeders
 # ============================================================
@@ -42,7 +54,7 @@ php artisan migrate --force
 if [ $? -eq 0 ]; then
     echo "✓ Migrations completed successfully"
 else
-    echo "✗ Migrations failed - database might not be ready yet"
+    echo "✗ Migrations failed"
 fi
 
 echo ""
@@ -57,4 +69,4 @@ fi
 
 echo ""
 echo "Starting Apache..."
-apache2-foreground
+exec apache2-foreground
