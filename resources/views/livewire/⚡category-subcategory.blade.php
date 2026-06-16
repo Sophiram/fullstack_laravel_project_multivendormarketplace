@@ -13,7 +13,11 @@ new class extends Component {
 
     public function mount()
     {
-        $this->categories = Category::all();
+        try {
+            $this->categories = \App\Models\Category::all();
+        } catch (\Exception $e) {
+            $this->categories = collect(); // បើ DB ចូលមិនបាន ឱ្យវាទុកជាទទេ
+        }
     }
 
     public function updatedSelectedCategory($categoryId)
@@ -24,7 +28,7 @@ new class extends Component {
 ?>
 
 <div>
-    <label  for="category_id" class="fw-bold mb-1 mt-1">Category</label>
+    <label for="category_id" class="fw-bold mb-1 mt-1">Category</label>
     <select class="form-control" name="category_id" wire:model.live="selectedCategory">
         <option value="">Select A Category</option>
         @foreach ($categories as $category)
@@ -33,7 +37,7 @@ new class extends Component {
     </select>
 
     {{-- <label class="form-label mt-3">Sub Category</label> --}}
-    <label  for="subcategory_id" class="fw-bold mb-1 mt-3">Sub Category</label>
+    <label for="subcategory_id" class="fw-bold mb-1 mt-3">Sub Category</label>
     <select class="form-control" name="subcategory_id">
         <option value="">Select A Sub Category</option>
         @foreach ($subcategories as $subcategory)

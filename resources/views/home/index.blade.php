@@ -24,7 +24,7 @@
                                     class="badge hero-promo-badge mb-3 animate__animated animate__flash animate__infinite animate__slower">Limited
                                     Offer</span>
 
-                                @if ($homepagesetting)
+                                @if (isset($homepagesetting) && $homepagesetting)
                                     <h1 class="fw-extrabold text-white mb-2 line-height-1 hero-discount-text">
                                         {{ number_format($homepagesetting->discount_percent ?? 0, 0) }}%
                                         <span class="fs-2 fw-bold text-warning">OFF</span>
@@ -54,7 +54,11 @@
 
                             <div class="col-12 col-md-5 d-flex justify-content-center align-items-center p-0">
                                 <div class="hero-image-container">
-                                    @if (isset($homepagesetting->discountedProduct) && $homepagesetting->discountedProduct->images->first())
+                                    {{-- @if (isset($homepagesetting->discountedProduct) && $homepagesetting->discountedProduct->images->first())
+                                        <img src="{{ asset('storage/' . $homepagesetting->discountedProduct->images->first()->image_path) }}"
+                                            alt="Discounted Product" class="img-fluid floating-product-img">
+                                    @endif --}}
+                                    @if (isset($homepagesetting->discountedProduct) && $homepagesetting->discountedProduct->images->isNotEmpty())
                                         <img src="{{ asset('storage/' . $homepagesetting->discountedProduct->images->first()->image_path) }}"
                                             alt="Discounted Product" class="img-fluid floating-product-img">
                                     @endif
@@ -151,7 +155,6 @@
 @endsection
 
 <style>
-
     .hero-wrapper {
         font-family: 'Plus Jakarta Sans', sans-serif;
         padding: 10px 0 30px 0 !important;

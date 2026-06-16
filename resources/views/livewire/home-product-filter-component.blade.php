@@ -12,7 +12,11 @@ new class extends Component {
 
     public function mount()
     {
-        $this->categories = Category::all();
+        try {
+            $this->categories = \App\Models\Category::all();
+        } catch (\Exception $e) {
+            $this->categories = collect(); // បើ DB ចូលមិនបាន ឱ្យវាទុកជាទទេ
+        }
     }
     public function boot(): void
     {
