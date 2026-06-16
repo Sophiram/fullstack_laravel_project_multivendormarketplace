@@ -103,14 +103,26 @@ new class extends Component {
 
     public function with(): array
     {
-        return [
-            'products' => Product::with(['images', 'productReviews'])
+        // return [
+        //     'products' => Product::with(['images', 'productReviews'])
+        //         ->where('status', 'published')
+        //         ->when($this->selectedCategory, function ($query) {
+        //             $query->where('category_id', $this->selectedCategory);
+        //         })
+        //         ->paginate(10),
+        // ];
+        try {
+            $products = \App\Models\Product::with(['images', 'productReviews'])
                 ->where('status', 'published')
                 ->when($this->selectedCategory, function ($query) {
                     $query->where('category_id', $this->selectedCategory);
                 })
-                ->paginate(10),
-        ];
+                ->paginate(10);
+        } catch (\Exception $e) {
+            $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10);
+        }
+
+        return view('livewire.home-product-filter-component', ['products' => $products]);
     }
 }; ?>
 
