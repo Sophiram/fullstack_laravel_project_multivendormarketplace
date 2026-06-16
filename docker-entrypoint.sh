@@ -1,9 +1,12 @@
 #!/bin/bash
 
+# សម្អាត Config ចាស់ៗសិន ដើម្បីឱ្យប្រាកដថាវាទទួលយកទិន្នន័យថ្មីពី Render
+php artisan config:clear
+
 # បង្ហាញសារថាកំពុងដំណើរការ Migration
 echo "Running Migrations and Seeders..."
 
-# ដំណើរការ Migration និង Seeder (ប្រើ --force ព្រោះនេះជា Production environment)
+# ដំណើរការ Migration និង Seeder
 php artisan migrate --force
 php artisan db:seed --force
 
