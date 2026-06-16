@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use App\Models\Category;
+use Illuminate\Support\Facades\Cache;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,14 +23,14 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // ប្រើ Cache ដើម្បីការពារកុំឱ្យហៅ Database រាល់ពេលផ្ទុកទំព័រ
         View::composer('*', function ($view) {
-            $categories = \Illuminate\Support\Facades\Cache::remember('navbar_categories', 3600, function () {
-                // ប្រើ try-catch ដើម្បីការពារករណី Database មានបញ្ហា វានឹងមិនធ្វើឱ្យវេបសាយគាំងឡើយ
+            // យើងប្រើ Cache ដើម្បីកុំឱ្យវាហៅ DB គ្រប់ពេលដែលបើក Page
+            $categories = Cache::remember('navbar_categories', 3600, function () {
+                // យើងបន្ថែម try-catch ដើម្បីកុំឱ្យវាលោត Error បើ DB មិនទាន់មានតារាង
                 try {
                     return \App\Models\Category::with('subcategories')->get();
                 } catch (\Exception $e) {
-                    return collect(); // បើទាញមិនបាន ឱ្យវាត្រលប់មកទទេវិញ
+                    return collect(); // បើមានបញ្ហា ឱ្យវាផ្ញើទិន្នន័យទទេជំនួសវិញ
                 }
             });
 
