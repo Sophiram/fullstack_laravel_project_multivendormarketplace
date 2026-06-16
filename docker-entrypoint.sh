@@ -1,16 +1,16 @@
 #!/bin/bash
 
-# Clear old config to ensure fresh data from Render/Railway
+echo "Cleaning and caching configuration..."
+# សម្អាត Cache គ្រប់ប្រភេទមុនពេលចាប់ផ្ដើម Apache
 php artisan config:clear
 php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
 
-# Optimize for production configuration
+# បង្កើត Cache ថ្មី (នេះជាកន្លែងដែលវាអាន Environment Variables ថ្មីៗចូល)
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# ============================================================
-# 🚀 បើកដំណើរការ Web Server ភ្លាមៗ (ការពារកំហុស 502)
-# ============================================================
-echo "Starting Apache Web Server..."
+echo "Starting Apache..."
 exec apache2-foreground
