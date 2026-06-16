@@ -38,7 +38,8 @@ COPY . .
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # ដំណើរការ Composer ដើម្បីដំឡើង Packages របស់ Laravel
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+# RUN composer install --no-interaction --optimize-autoloader --no-dev
+RUN composer install --no-interaction --optimize-autoloader --no-dev --ignore-platform-reqs
 
 # ដំណើរការ NPM ដើម្បី Build Frontend (Blade/Vite)
 RUN npm install && npm run build
