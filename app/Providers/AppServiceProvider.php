@@ -22,9 +22,18 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // កូដនេះនឹងបញ្ជូនទិន្នន័យទៅគ្រប់ View ដែលមានប្រើប្រាស់ Navbar
+        // ប្រើ Cache ដើម្បីការពារកុំឱ្យហៅ Database រាល់ពេលផ្ទុកទំព័រ
         View::composer('*', function ($view) {
-            $view->with('navbarCategories', Category::all());
+            $categories = \Illuminate\Support\Facades\Cache::remember('navbar_categories', 3600, function () {
+                // ប្រើ try-catch ដើម្បីការពារករណី Database មានបញ្ហា វានឹងមិនធ្វើឱ្យវេបសាយគាំងឡើយ
+                try {
+                    return \App\Models\Category::with('subcategories')->get();
+                } catch (\Exception $e) {
+                    return collect(); // បើទាញមិនបាន ឱ្យវាត្រលប់មកទទេវិញ
+                }
+            });
+
+            $view->with('navbarCategories', $categories);
         });
     }
 }
