@@ -24,10 +24,19 @@ RUN docker-php-ext-install pdo_mysql mbstring pcntl bcmath gd zip
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
+# # Set Apache DocumentRoot to Laravel's public folder
+# ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+# RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+# RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
 # Set Apache DocumentRoot to Laravel's public folder
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# === ថែម ២ ជួរនេះ ដើម្បីបង្ខំឱ្យ Apache ផ្លាស់ប្ដូររន្ធ Port ទៅតាម Render ទាំងក្នុង ports.conf និង vhost ===
+RUN sed -s -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf
+RUN sed -s -i 's/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/g' /etc/apache2/sites-available/*.conf
 
 # Set working directory
 WORKDIR /var/www/html
@@ -54,7 +63,8 @@ COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port 80
-EXPOSE 80
+# EXPOSE 80
+EXPOSE 10000
 
 # Run entrypoint script when container starts
 ENTRYPOINT ["docker-entrypoint.sh"]
