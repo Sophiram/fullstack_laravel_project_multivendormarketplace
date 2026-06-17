@@ -18,9 +18,9 @@ php artisan view:clear
 # php artisan route:cache
 # php artisan view:cache
 
-echo "Running database migrations..."
-php artisan migrate:fresh --force
+echo "Running database migrations and seeding..."
+# === កែប្រែជួរកូដខាងក្រោមនេះ ដោយថែម --seed ទៅខាងចុង ===
+php artisan migrate:fresh --force --seed
 
 echo "Starting Apache..."
 exec apache2-foreground
-
