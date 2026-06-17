@@ -23,11 +23,11 @@ php artisan view:clear
 # php artisan migrate:fresh --force --seed
 
 echo "Running database migrations..."
-# ដកពាក្យ --seed ចេញ ទុកតែត្រឹមនេះសិន ដើម្បីឱ្យវា Deploy ជាប់សិន
 php artisan migrate:fresh --force
 
 echo "Running database seeds..."
-php artisan db:seed
+# ត្រូវប្រាកដថាបានថែម --force ដូចខាងក្រោមនេះ
+php artisan db:seed --force
 
 echo "Starting Apache..."
 exec apache2-foreground
