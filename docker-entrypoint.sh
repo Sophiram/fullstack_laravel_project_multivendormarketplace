@@ -18,5 +18,9 @@ php artisan view:clear
 # php artisan route:cache
 # php artisan view:cache
 
+echo "Running database migrations..."
+php artisan migrate:fresh --force
+
 echo "Starting Apache..."
 exec apache2-foreground
+
