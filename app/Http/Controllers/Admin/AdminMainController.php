@@ -32,7 +32,7 @@ class AdminMainController extends Controller
                 DB::raw("DATE_FORMAT(created_at, '%b') as month")
             )
             ->groupBy('month')
-            ->orderBy('created_at', 'ASC')
+            ->orderBy(DB::raw('MIN(created_at)'), 'ASC') // <--- កែប្រែត្រង់ជួរនេះ ដោយប្រើ Aggregate Function MIN()
             ->get();
 
         // រៀបចំទិន្នន័យជាទម្រង់ Array JSON សម្រាប់ផ្ញើទៅកាន់ JavaScript ApexCharts
