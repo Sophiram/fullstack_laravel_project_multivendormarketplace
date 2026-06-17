@@ -40,6 +40,23 @@ use Illuminate\Support\Facades\Auth;
 
 use Livewire\Volt\Volt;
 
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+Route::get('/debug-user', function () {
+    $user = User::where('email', 'admin123@email.com')->first();
+
+    if (!$user) {
+        return 'Admin user not found';
+    }
+
+    return [
+        'email' => $user->email,
+        'password_hash' => $user->password,
+        'password_match' => Hash::check('admin123', $user->password),
+    ];
+});
+
 
 // use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
