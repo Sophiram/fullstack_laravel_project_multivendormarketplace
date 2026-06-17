@@ -13,6 +13,7 @@ use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use App\Notifications\NewVendorRegistered;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Notification;
 
 class RegisteredUserController extends Controller
@@ -41,13 +42,25 @@ class RegisteredUserController extends Controller
 
         $roleValue = ($request->role === 'vendor') ? 1 : 2;
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $roleValue,
-            'is_approved' => ($request->role === 'vendor') ? false : true, // Vendor ត្រូវបានកំណត់ is_approved ជា false ដោយ default
-        ]);
+       try {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => $roleValue,
+                'is_approved' => ($request->role === 'vendor') ? false : true,
+            ]);
+        } catch (QueryException $e) {
+            // ប្រសិនបើដានរកឃើញកំហុសរកមិនឃើញ Column (SQLSTATE[42S22])
+            if ($e->getCode() === '42S22') {
+                return redirect()->back()
+                    ->withInput($request->only('name', 'email', 'role'))
+                    ->withErrors(['email' => 'ប្រព័ន្ធ Database មិនទាន់មានទិន្នន័យ "is_approved" ឡើយ។ សូមទាក់ទង Admin ដើម្បីរត់ Migration!']);
+            }
+
+            // បើជាកំហុស Database ផ្សេងទៀត ឱ្យវាបង្ហាញសារធម្មតា
+            return redirect()->back()->withInput()->withErrors(['email' => 'មានបញ្ហាបច្ចេកទេសទាក់ទងនឹង Database៖ ' . $e->getMessage()]);
+        }
         if ($request->role === 'vendor') {
     // រក Admin (ប្រសិនបើអ្នកកំណត់ role 2 ជា admin ក្នុង database របស់អ្នក សូមប្តូរជាលេខ 2)
             $admin = User::where('role', 0)->first(); // ឧទាហរណ៍ 0 គឺជា Admin
@@ -56,19 +69,6 @@ class RegisteredUserController extends Controller
                 $admin->notify(new NewVendorRegistered($user));
              }
         }
-        // if ($request->role === 'vendor') {
-        //     $admin = User::where('role', 0)->first();
-
-        //     // បន្ថែមបន្ទាត់នេះ ដើម្បី Debug
-        //     if (!$admin) {
-        //         dd('រកមិនឃើញ Admin ដែលមាន role = 0 ទេ!');
-        //     }
-
-        //     Notification::send($admin, new \App\Notifications\NewVendorRegistered($user));
-
-        //     // បន្ថែមបន្ទាត់នេះ ដើម្បីបញ្ជាក់ថាវាបានផ្ញើហើយ
-        //     dd('Notification បានផ្ញើទៅកាន់ Admin រួចរាល់!');
-        // }
 
         event(new Registered($user));
 
