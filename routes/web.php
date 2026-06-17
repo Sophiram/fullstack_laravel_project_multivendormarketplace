@@ -76,24 +76,6 @@ return [
 });
 
 
-Route::get('/setup-admin', function () {
-    // លុបអាចាស់ចោលសិន បើមាន កុំឱ្យជាន់ Email
-    \App\Models\User::where('email', 'admin123@email.com')->delete();
-
-    // បង្កើត Admin ថ្មីចូល Database ផ្ទាល់ហ្មង
-    $user = \App\Models\User::create([
-        'name'              => 'Super Admin',
-        'email'             => 'admin123@email.com',
-        'password'          => \Illuminate\Support\Facades\Hash::make('admin123'),
-        'role'              => 'admin',          // ដាក់ឱ្យត្រូវនឹង Middleware rolemanager របស់បង
-        'status'            => 'active',         // ដាក់តាម Structure table របស់បង
-        'gender'            => 'male',
-        'is_approved'       => true,             // បើក true កុំឱ្យវាជាប់គាំងត្រង់លក្ខខណ្ឌ Approved
-        'email_verified_at' => now(),
-    ]);
-
-    return 'បង្កើតគណនី Admin ជោគជ័យហើយបង! សាកល្បង Login មើលម្តងទៀត។';
-});
 
 
 // use SimpleSoftwareIO\QrCode\Facades\QrCode;
