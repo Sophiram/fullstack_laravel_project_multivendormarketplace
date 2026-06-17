@@ -35,6 +35,8 @@ WORKDIR /var/www/html
 # Copy entire project
 COPY . .
 
+RUN rm -f .env bootstrap/cache/*.php
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

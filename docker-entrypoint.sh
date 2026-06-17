@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# ទុកអាជួរ Echo នេះដើម្បីផ្ទៀងផ្ទាត់មើល Log ក្នុង Render
 echo "DB_HOST=$DB_HOST"
 echo "DB_PORT=$DB_PORT"
 echo "DB_DATABASE=$DB_DATABASE"
@@ -7,11 +8,15 @@ echo "DB_USERNAME=$DB_USERNAME"
 
 echo "Cleaning caches..."
 php artisan optimize:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
 
-echo "Caching configuration..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+# === បិទអាជួរខាងក្រោមនេះចោលទាំងអស់ កុំឱ្យវាបង្កក Config ងាប់ ===
+# echo "Caching configuration..."
+# php artisan config:cache
+# php artisan route:cache
+# php artisan view:cache
 
 echo "Starting Apache..."
 exec apache2-foreground
