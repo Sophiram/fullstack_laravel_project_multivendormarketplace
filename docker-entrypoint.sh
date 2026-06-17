@@ -1,13 +1,14 @@
 #!/bin/bash
 
-echo "Cleaning and caching configuration..."
-# សម្អាត Cache គ្រប់ប្រភេទមុនពេលចាប់ផ្ដើម Apache
-php artisan config:clear
-php artisan cache:clear
-php artisan route:clear
-php artisan view:clear
+echo "DB_HOST=$DB_HOST"
+echo "DB_PORT=$DB_PORT"
+echo "DB_DATABASE=$DB_DATABASE"
+echo "DB_USERNAME=$DB_USERNAME"
 
-# បង្កើត Cache ថ្មី (នេះជាកន្លែងដែលវាអាន Environment Variables ថ្មីៗចូល)
+echo "Cleaning caches..."
+php artisan optimize:clear
+
+echo "Caching configuration..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
