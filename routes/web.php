@@ -65,6 +65,17 @@ Route::get('/clear-cache', function () {
     return "បានសម្អាត Cache របស់ Laravel ខ្ទេចខ្ទីអស់ហើយបង! សាកល្បងចូលទៅកាន់ /debug-user ម្តងទៀតមើល៍។";
 });
 
+Route::get('/env-check', function () {
+return [
+'DB_HOST' => env('DB_HOST'),
+'DB_PORT' => env('DB_PORT'),
+'DB_DATABASE' => env('DB_DATABASE'),
+'DB_USERNAME' => env('DB_USERNAME'),
+'APP_ENV' => env('APP_ENV'),
+];
+});
+
+
 Route::get('/setup-admin', function () {
     // លុបអាចាស់ចោលសិន បើមាន កុំឱ្យជាន់ Email
     \App\Models\User::where('email', 'admin123@email.com')->delete();
