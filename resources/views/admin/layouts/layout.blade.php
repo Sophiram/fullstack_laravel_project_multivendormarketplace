@@ -547,12 +547,56 @@
         </div>
     </div>
 
+    @livewireScripts
+
     <script>
-        // លាក់ Loading វិញនៅពេលទំព័រដំបូងត្រូវបាន Load ជោគជ័យ
+        const loader = document.getElementById('pageLoader');
+
+        // ១. លាក់ Loading វិញនៅពេលទំព័រដំបូងត្រូវបាន Load ជោគជ័យ (Normal Page Load)
         window.addEventListener('load', function() {
-            const loader = document.getElementById('pageLoader');
-            if (loader) {
-                loader.style.setProperty('display', 'none', 'important');
+            if (loader) loader.style.setProperty('display', 'none', 'important');
+        });
+
+        // ២. គ្រប់គ្រង Loading សម្រាប់ Livewire (Real-time AJAX)
+        document.addEventListener('livewire:init', () => {
+            // កូដនេះដំណើរការសម្រាប់ Livewire Version 3
+            Livewire.hook('commit', ({
+                component,
+                commit,
+                respond,
+                succeed,
+                fail
+            }) => {
+                // បង្ហាញ Loading ពេលចាប់ផ្តើម Request
+                if (loader) loader.style.display = 'flex';
+
+                succeed(({
+                    snapshot,
+                    effect
+                }) => {
+                    // លាក់ Loading វិញពេលជោគជ័យ
+                    if (loader) loader.style.setProperty('display', 'none', 'important');
+                });
+
+                fail(() => {
+                    // លាក់ Loading វិញទោះបីជាមានកំហុស (Error) ក៏ដោយ
+                    if (loader) loader.style.setProperty('display', 'none', 'important');
+                });
+            });
+        });
+
+        // សម្រាប់គាំទ្រ Livewire Version 2 (ក្នុងករណីអ្នកកំពុងប្រើជំនាន់ចាស់)
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.Livewire) {
+                Livewire.hook('message.sent', () => {
+                    if (loader) loader.style.display = 'flex';
+                });
+                Livewire.hook('message.processed', () => {
+                    if (loader) loader.style.setProperty('display', 'none', 'important');
+                });
+                Livewire.hook('message.failed', () => {
+                    if (loader) loader.style.setProperty('display', 'none', 'important');
+                });
             }
         });
     </script>
@@ -568,15 +612,19 @@
             const wrapper = document.querySelector('.wrapper');
             const overlay = document.getElementById('sidebarOverlay');
 
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                wrapper.classList.toggle('toggled');
-            });
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    wrapper.classList.toggle('toggled');
+                });
+            }
 
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('active');
-                wrapper.classList.remove('toggled');
-            });
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    wrapper.classList.remove('toggled');
+                });
+            }
         });
 
         // Re-initialize Lucide on submenu collapse to prevent visual bugs
@@ -588,7 +636,6 @@
             });
         });
     </script>
-    @livewireScripts
 </body>
 
 </html>

@@ -356,6 +356,8 @@
             <span class="visually-hidden">Loading...</span>
         </div>
     </div>
+    @livewireScripts
+
 
     <script>
         // លាក់ Loading វិញនៅពេលទំព័រដំបូងត្រូវបាន Load ជោគជ័យ
@@ -441,7 +443,6 @@
             });
         @endif
     </script>
-    @livewireScripts
 </body>
 
 </html>
