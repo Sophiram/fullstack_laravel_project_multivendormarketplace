@@ -74,7 +74,32 @@ new class extends Component {
 
     public function render(): mixed
     {
-        $category = Category::with('subcategories')->where('category_name', $this->category_name)->firstOrFail();
+        // ១. សាកល្បងស្វែងរកនៅក្នុង Table Category មេសិន
+        $category = Category::with('subcategories')->where('category_name', $this->category_name)->first();
+
+        // ២. បើស្វែងរកក្នុង Category មេមិនឃើញ (មានន័យថា URL នោះអាចជាឈ្មោះ Subcategory)
+        if (!$category) {
+            // ស្វែងរកនៅក្នុង Table Subcategory ម្តង (សូមប្រាកដថាអ្នកមាន Model Subcategory រួចរាល់)
+            $subcategory = \App\Models\Subcategory::where('subcategory_name', $this->category_name)->first();
+
+            if ($subcategory) {
+                // កំណត់ទាញយក ID របស់ Subcategory នោះដើម្បីយកទៅ Filter ផលិតផលដោយស្វ័យប្រវត្ត
+                $this->selected_subcategory_id = $subcategory->id;
+
+                // ទាញយកទិន្នន័យ Category មេរបស់វាត្រឡប់មកវិញដើម្បីកុំឱ្យកូដខាងក្រោម Error
+                $category = Category::with('subcategories')->find($subcategory->category_id);
+
+                // អាប់ដេតឈ្មោះ Category មេទៅក្នុង State វិញ
+                $this->category_name = $category->category_name;
+            } else {
+                // បើស្វែងរកទាំងពីរ Table ហើយនៅតែមិនឃើញទិន្នន័យពិតមែន គឺបោះកំហុស 404 Not Found
+                abort(404);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // ខាងក្រោមនេះជាកូដដើមរបស់អ្នកទាំងអស់ (រក្សាទុកដដែល)
+        // -------------------------------------------------------------
         $categories = Category::with('subcategories')->get();
 
         // បង្កើត SQL Statement សម្រាប់កំណត់យកតម្លៃលក់ពិតប្រាកដ

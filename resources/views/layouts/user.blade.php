@@ -533,7 +533,8 @@
             .brand-logo {
                 font-size: 1.3rem;
             }
-/*
+
+            /*
             .menu-item-link {
                 padding: 12px 16px;
                 width: 100%;
@@ -641,6 +642,41 @@
 
             .brand-logo {
                 font-size: 1.2rem;
+            }
+        }
+
+        /* 🌀 PREMIUM CUSTOM SPINNER & GLASSMORPHISM LOADER */
+        .custom-premium-spinner {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            /* ប្រើប្រាស់ពណ៌ស្វាយ និងបៃតងដេញតាមរង្វង់ឱ្យត្រូវនឹង Theme QuickCart */
+            background: conic-gradient(#0000 10%, #4f46e5, #10b981);
+            -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 5px), #000 0);
+            mask: radial-gradient(farthest-side, #0000 calc(100% - 5px), #000 0);
+            animation: premium-spin 0.8s infinite linear;
+        }
+
+        @keyframes premium-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* បន្ថែម Effect រំញ័រតិចៗពេលវាលោតមក */
+        .pulse-box {
+            animation: loader-pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes loader-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
             }
         }
     </style>
@@ -881,7 +917,7 @@
                                             </div>
                                         </a>
 
-                                        {{-- 🗂️ Subcategories Menu --}}
+                                        <!-- 🗂️ Subcategories Menu -->
                                         @if ($category->subcategories && $category->subcategories->count() > 0)
                                             <div class="custom-subcategory-menu animate__animated animate__fadeInFast">
                                                 <div class="dropdown-header-title text-muted px-3 pt-2 pb-1"
@@ -889,12 +925,18 @@
                                                     Subcategories
                                                 </div>
                                                 @foreach ($category->subcategories as $sub)
-                                                    <a href="{{ route('productby.category', $sub->subcategory_name) }}"
-                                                        class="sub-item d-flex align-items-center gap-2 py-2 px-3">
+                                                    @php
+                                                        // 🔄 ពិនិត្យមើលថាតើ Subcategory នេះកំពុងត្រូវបាន Filter នៅក្នុង URL មែនឬទេ
+                                                        $isSubActive =
+                                                            request()->query('subcategory') == $sub->subcategory_name;
+                                                    @endphp
+
+                                                    <a href="{{ route('productby.category', $category->category_name) }}?subcategory={{ urlencode($sub->subcategory_name) }}"
+                                                        class="sub-item d-flex align-items-center gap-2 py-2 px-3 {{ $isSubActive ? 'text-primary fw-bold' : '' }}"
+                                                        style="{{ $isSubActive ? 'background-color: #f3f4f6; padding-left: 20px;' : '' }}">
 
                                                         <div class="subcategory-img-wrapper d-flex align-items-center justify-content-center"
                                                             style="width: 20px; height: 20px; overflow: hidden; border-radius: 4px; flex-shrink: 0; background: #f1f5f9;">
-
                                                             @if ($sub->image && file_exists(public_path($sub->image)))
                                                                 <img src="{{ asset($sub->image) }}"
                                                                     alt="{{ $sub->subcategory_name }}"
@@ -1064,6 +1106,63 @@
         </div>
     </footer>
 
+    <!-- 🚀 PREMIUM GLOBAL LOADER (Modern Glassmorphism Version) -->
+    <div id="global-loader"
+        class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+        style="z-index: 9999; background: rgba(11, 19, 41, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity 0.35s ease;">
+
+        <div class="text-center p-4 pulse-box"
+            style="background: #ffffff; min-width: 240px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.7);">
+
+            <!-- កងវិលដេញពណ៌បែបម៉ូដទាន់សម័យ -->
+            <div class="d-flex justify-content-center mb-3">
+                <div class="custom-premium-spinner"></div>
+            </div>
+
+            <!-- អក្សរ Logo Brand របស់ QuickCart -->
+            <div class="fw-extrabold mb-1"
+                style="font-size: 1.15rem; font-weight: 800; color: #4f46e5; letter-spacing: -0.5px;">
+                Quick<span style="color: #10b981;">Cart</span>
+            </div>
+
+            <!-- អក្សរប្រាប់ដំណើការ -->
+            <div class="text-secondary fw-medium small" style="font-size: 0.82rem; color: #64748b !important;">
+                <i class="fa-solid fa-circle-notch fa-spin me-1" style="font-size: 11px; opacity: 0.6;"></i>
+                Loading, Please wait...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const loader = document.getElementById("global-loader");
+
+            // ១. ពេលទំព័រដោនឡូដ (Load) រួចរាល់ គឺត្រូវលាក់ Loading ភ្លាម
+            window.addEventListener("load", function() {
+                loader.style.opacity = "0";
+                setTimeout(() => {
+                    loader.classList.add(
+                        "d-none"); // ប្រើ d-none របស់ Bootstrap ដើម្បីលាក់វាឱ្យបាត់ទាំងស្រុង
+                }, 300);
+            });
+
+            // ២. ពេល User ចុចប្ដូរទំព័រ (ដើរចេញពីទំព័រចាស់ទៅទំព័រថ្មី) ឱ្យលោត Loading
+            window.addEventListener("beforeunload", function() {
+                loader.classList.remove("d-none"); // ដក d-none ចេញដើម្បីបង្ហាញ Loading ឡើងវិញ
+                loader.style.opacity = "1";
+            });
+
+            // ៣. ពេល User ចុច Submit លើ Form ណាមួយ (ដូចជា Login, Register, Filter)
+            const forms = document.querySelectorAll("form");
+            forms.forEach(form => {
+                form.addEventListener("submit", function() {
+                    loader.classList.remove("d-none"); // បង្ហាញ Loading ពេលចុចប៊ូតុង Submit Form
+                    loader.style.opacity = "1";
+                });
+            });
+        });
+    </script>
+
     @if (session('vendor_registered'))
         <script>
             Swal.fire({
@@ -1095,36 +1194,58 @@
     </script>
 
     @livewireScripts
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            if (window.innerWidth < 992) {
-                let submenuTriggers = document.querySelectorAll('.custom-has-submenu > a');
+            function setupMobileSubmenu() {
+                if (window.innerWidth < 992) {
+                    let submenuTriggers = document.querySelectorAll('.custom-has-submenu > a');
 
-                submenuTriggers.forEach(function(trigger) {
-                    trigger.addEventListener('click', function(e) {
-                        let submenu = this.nextElementSibling;
-                        if (submenu && submenu.classList.contains('custom-subcategory-menu')) {
-                            e.preventDefault(); // ឃាត់កុំឱ្យលោតទៅ Link ថ្មីសិន
+                    submenuTriggers.forEach(function(trigger) {
+                        // ដក Event ចាស់ចេញសិនដើម្បីការពារការរៀបចំជាន់គ្នា (ករណីមានការលោតទំព័រ)
+                        trigger.removeEventListener('click', handleMobileSubmenuClick);
+                        trigger.addEventListener('click', handleMobileSubmenuClick);
+                    });
+                }
+            }
 
-                            document.querySelectorAll('.custom-subcategory-menu').forEach(function(
-                                item) {
-                                if (item !== submenu) item.style.display = 'none';
-                            });
+            function handleMobileSubmenuClick(e) {
+                let submenu = this.nextElementSibling;
 
-                            if (submenu.style.display === 'block') {
-                                submenu.style.display = 'none';
-                                this.setAttribute('data-clicked', 'false');
-                            } else {
-                                submenu.style.display = 'block';
-                                this.setAttribute('data-clicked', 'true');
-                            }
+                if (submenu && submenu.classList.contains('custom-subcategory-menu')) {
+                    // 🛑 关键/សំខាន់បំផុត៖ ឃាត់កុំឱ្យព្រឹត្តិការណ៍ចុចនេះរាលដាលទៅដល់ Bootstrap (បង្ការកុំឱ្យវាបិទម៉ឺនុយធំ)
+                    e.stopPropagation();
+
+                    // ពិនិត្យមើលស្ថានភាពបង្ហាញពិតប្រាកដចេញពី CSS (ទោះបីជាគ្មាន Inline Style ក៏ឆែកដឹង)
+                    let currentDisplay = window.getComputedStyle(submenu).display;
+
+                    if (currentDisplay === 'block') {
+                        // ប្រសិនបើ Submenu កំពុងបើកបង្ហាញស្រាប់ (នេះជាការចុចលើកទី២) អនុញ្ញាតឱ្យលោតទៅ Link href ធម្មតា
+                        return;
+                    }
+
+                    // ប្រសិនបើជាការចុចលើកទី១ ត្រូវឃាត់មិនឱ្យលោតទៅកាន់ Link ឡើយ ដើម្បីទុកពេលបើក Submenu
+                    e.preventDefault();
+
+                    // លាក់ Submenu ផ្សេងៗទៀតដែលកំពុងបើកចំហរ កុំឱ្យវាលោតជាន់គ្នាអាក្រក់មើល
+                    document.querySelectorAll('.custom-subcategory-menu').forEach(function(item) {
+                        if (item !== submenu) {
+                            item.style.display = 'none';
                         }
                     });
 
-                    trigger.addEventListener('dblclick', function(e) {
-                        window.location.href = this.getAttribute('href');
-                    });
-                });
+                    // បើកបង្ហាញ Submenu របស់ Category ដែលបានចុចចំ
+                    submenu.style.display = 'block';
+                }
+            }
+
+            // ដំណើរការមុខងារនៅពេល Load ទំព័រដំបូង
+            setupMobileSubmenu();
+
+            // បន្ថែមការគាំទ្រសម្រាប់ Livewire (ការពារករណី Livewire Re-render ធ្វើឱ្យបាត់ Event លែងចុចកើត)
+            if (typeof Livewire !== 'undefined') {
+                document.addEventListener('livewire:navigated', setupMobileSubmenu);
+                document.addEventListener('livewire:load', setupMobileSubmenu);
             }
         });
     </script>

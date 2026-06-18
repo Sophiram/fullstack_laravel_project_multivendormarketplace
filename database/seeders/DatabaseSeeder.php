@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin123@email.com'],
             [
+                
                 'name' => 'Admin User',
                 'password' => Hash::make('admin123'),
                 'role' => 0,
@@ -43,7 +44,7 @@ class DatabaseSeeder extends Seeder
 
             VendorSeeder::class,
             StoreSeeder::class,
-            
+
             ProductSeeder::class,
             ProductImageSeeder::class,
             HomePageSettingSeeder::class,

@@ -2,7 +2,7 @@
     <div class="container-fluid p-0 overflow-hidden">
         <div class="row g-0 min-vh-100">
 
-            <!-- 🌌 ផ្នែកខាងឆ្វេង៖ រូបភាព និង អត្ថបទផ្សព្វផ្សាយ (បង្ហាញតែលើអេក្រង់ធំ d-none d-lg-flex) -->
+            <!-- 🌌 ផ្នែកខាងឆ្វេង៖ រូបភាព និង អត្ថបទផ្សព្វផ្សាយ -->
             <div class="col-lg-6 d-none d-lg-flex flex-column justify-content-between p-5 text-white position-relative"
                 style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.95), rgba(59, 130, 246, 0.9)), url('https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=1632&auto=format&fit=crop') no-repeat center center; background-size: cover;">
 
@@ -37,7 +37,7 @@
                 </div>
             </div>
 
-            <!-- 📝 ផ្នែកខាងស្តាំ៖ ទម្រង់ Register Form (Responsive ពេញអេក្រង់លើទូរស័ព្ទ) -->
+            <!-- 📝 ផ្នែកខាងស្តាំ៖ ទម្រង់ Register Form -->
             <div
                 class="col-12 col-lg-6 d-flex align-items-center justify-content-center bg-white p-4 p-sm-5 position-relative">
 
@@ -47,7 +47,7 @@
                 </a>
 
                 <div class="register-box-width py-4">
-                    <!-- Logo សម្រាប់បង្ហាញលើទូរស័ព្ទ (d-lg-none) -->
+                    <!-- Logo សម្រាប់បង្ហាញលើទូរស័ព្ទ -->
                     <div class="text-center mb-4 d-lg-none">
                         <a href="/" class="brand-link">
                             <i class="fa-solid fa-bag-shopping"></i> Quick<span>Cart</span>
@@ -70,7 +70,8 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('register') }}" class="needs-validation">
+                    <!-- 💡 បានថែម id="registerForm" នៅត្រង់នេះ -->
+                    <form method="POST" action="{{ route('register') }}" class="needs-validation" id="registerForm">
                         @csrf
 
                         <!-- Full Name Input -->
@@ -125,8 +126,8 @@
                             </div>
                         </div>
 
-                        <!-- Submit Button -->
-                        <button type="submit" class="btn btn-gradient-primary w-100 py-3 mb-4">
+                        <!-- Submit Button | 💡 បានថែម id="submitBtn" នៅត្រង់នេះ -->
+                        <button type="submit" id="submitBtn" class="btn btn-gradient-primary w-100 py-3 mb-4">
                             <i class="fa-solid fa-user-plus me-2"></i>Register
                         </button>
                     </form>
@@ -150,19 +151,17 @@
         </div>
     </div>
 
-    <!-- 🎨 Modern Professional Custom CSS (ស៊ីគ្នាជាមួយទំព័រ Login) -->
+    <!-- 🎨 Modern Professional Custom CSS -->
     <style>
         body {
             background-color: #ffffff !important;
         }
 
-        /* ទំហំប្រអប់ Form */
         .register-box-width {
             width: 100%;
             max-width: 440px;
         }
 
-        /* Branding link នៅផ្នែកចំហៀង */
         .brand-link-side {
             font-size: 2rem;
             font-weight: 800;
@@ -175,7 +174,6 @@
             color: #10b981;
         }
 
-        /* Branding link សម្រាប់ Mobile */
         .brand-link {
             font-size: 2.2rem;
             font-weight: 800;
@@ -187,7 +185,6 @@
             color: #10b981;
         }
 
-        /* Custom Input & Select Groups */
         .custom-input-group {
             background-color: #f9fafb;
             border: 1px solid #e5e7eb;
@@ -218,13 +215,11 @@
             color: #1f2937;
         }
 
-        /* សម្រាប់ Style ទៅលើ Select Dropdown */
         .form-select-custom {
             cursor: pointer;
             appearance: none;
         }
 
-        /* Button Gradient Style */
         .btn-gradient-primary {
             background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
             border: none;
@@ -246,7 +241,6 @@
             transform: translateY(0);
         }
 
-        /* Floating Back Home Button */
         .btn-back-home {
             position: absolute;
             top: 30px;
@@ -266,7 +260,6 @@
             color: #1f2937;
         }
 
-        /* Utilities */
         .backdrop-blur {
             backdrop-filter: blur(8px);
         }
@@ -279,4 +272,49 @@
             text-decoration: underline !important;
         }
     </style>
+
+    <!-- 🛠️ ផ្នែក JavaScript សម្រាប់ចាប់ដំណើរការ Loading ពេលចុច Register -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+
+            // មុខងារ Loading នៅពេលទម្រង់ Register ត្រូវបាន Submit
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', function() {
+                    if (this.checkValidity()) {
+                        const btn = document.getElementById('submitBtn');
+                        if (btn) {
+                            btn.innerHTML =
+                                '<i class="fa-solid fa-spinner fa-spin me-2"></i> Please wait...';
+                            btn.disabled = true;
+                        }
+                    }
+                });
+            }
+
+            // SweetAlert សម្រាប់ Success Notification
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: '{{ session('success') }}',
+                    confirmButtonColor: '#0d6efd',
+                    timer: 3000
+                });
+            @endif
+
+            // SweetAlert សម្រាប់ Error Notification
+            @if ($errors->any())
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: '{{ $errors->first() }}',
+                    confirmButtonColor: '#dc3545'
+                });
+            @endif
+        });
+    </script>
 </x-guest-layout>

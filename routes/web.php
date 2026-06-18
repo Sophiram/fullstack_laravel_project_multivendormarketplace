@@ -126,6 +126,8 @@ Route::controller(HomePageController::class)->group(function () {
 
 Volt::route('/product/{productId}', 'product-detail-component')->name('product.details');
 Volt::route('/category/{category_name}', 'product-by-category-component')->name('productby.category');
+// Route::get('/subcategory/{name}', [ProductController::class, 'productsBySubcategory'])->name('productby.subcategory');
+
 Volt::route('/wishlist', 'wishlist-page-component')->name('wishlist.index');
 
 Volt::route('/cart', 'cart-page')->name('cart');

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ShippingCompanyController extends Controller
 {
-    // បង្ហាញបញ្ជីក្រុមហ៊ុន
+    // បង្ហាញបញ្ជីក្រុមហ៊ុនដឹកជញ្ជូនរបស់ Vendor ម្នាក់ៗ
     public function index()
     {
         $companies = ShippingCompany::where('vendor_id', Auth::id())->get();
@@ -19,18 +19,20 @@ class ShippingCompanyController extends Controller
     // រក្សាទុកក្រុមហ៊ុនថ្មី
     public function store(Request $request)
     {
+        // 💡 បន្ថែម shipping_fee ចូលក្នុង Validation វិញ
         $request->validate([
             'name' => 'required|string|max:255',
-            'tracking_url_template' => 'nullable', // ដក url validation ចេញបើ template មាន placeholder {tracking_number}
-            'shipping_fee' => 'required|numeric|min:0', // បន្ថែម Validation សម្រាប់ថ្លៃដឹកជញ្ជូន
+            'shipping_fee' => 'required|numeric|min:0', // កំណត់ឱ្យបញ្ចូលជាលេខ និងមិនតូចជាង ០
+            'tracking_url_template' => 'nullable',
         ]);
 
+        // 💡 បង្កើតទិន្នន័យដោយរួមបញ្ចូល shipping_fee
         ShippingCompany::create([
             'vendor_id' => Auth::id(),
             'name' => $request->name,
+            'shipping_fee' => $request->shipping_fee, // ដាក់ fee វិញ
             'tracking_url_template' => $request->tracking_url_template,
-            'shipping_fee' => $request->shipping_fee, // បញ្ចូលតម្លៃថ្លៃដឹកជញ្ជូន
-            'is_active' => $request->has('is_active'),
+            'is_active' => $request->has('is_active') ? 1 : 0,
         ]);
 
         return redirect()->back()->with('success', 'Shipping company added successfully!');
@@ -45,20 +47,24 @@ class ShippingCompanyController extends Controller
         return redirect()->back()->with('success', 'Shipping company removed.');
     }
 
-    // សម្រាប់ Update ទិន្នន័យ
+    // សម្រាប់ Update ទិន្នន័យក្រុមហ៊ុន
     public function update(Request $request, $id)
     {
+        // 💡 បន្ថែម shipping_fee ចូលក្នុង Validation វិញ
         $request->validate([
             'name' => 'required|string|max:255',
-            'shipping_fee' => 'required|numeric|min:0', // បន្ថែម Validation
+            'shipping_fee' => 'required|numeric|min:0', // ដាក់ fee វិញ
+            'tracking_url_template' => 'nullable',
         ]);
 
         $company = ShippingCompany::where('vendor_id', Auth::id())->findOrFail($id);
+
+        // 💡 ធ្វើបច្ចុប្បន្នភាពដោយរួមបញ្ចូល shipping_fee
         $company->update([
             'name' => $request->name,
+            'shipping_fee' => $request->shipping_fee, // ដាក់ fee វិញ
             'tracking_url_template' => $request->tracking_url_template,
-            'shipping_fee' => $request->shipping_fee, // អាប់ដេតថ្លៃដឹកជញ្ជូន
-            'is_active' => $request->has('is_active'),
+            'is_active' => $request->has('is_active') ? 1 : 0,
         ]);
 
         return redirect()->back()->with('success', 'Shipping company updated successfully!');

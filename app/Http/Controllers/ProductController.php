@@ -49,26 +49,28 @@ class ProductController extends Controller
     }
 
     public function show($id)
-{
-    // បន្ថែម 'attributes.attribute', 'attributes.attributeValue' ចូលទៅក្នុង with()
-    $product = Product::with([
-        'category',
-        'store',
-        'images',
-        // 'vendor',
-        'vendor.stores', // <-- កែប្រែ និងបន្ថែមត្រង់ចំណុចនេះ
-        'attributes.attribute',
-        'attributes.attributeValue'])
-        ->withAvg('reviews', 'rating')
-        ->findOrFail($id);
+    {
+        // បន្ថែម 'attributes.attribute', 'attributes.attributeValue' ចូលទៅក្នុង with()
+        $product = Product::with([
+            'category',
+            'store',
+            'images',
+            // 'vendor',
+            'vendor.stores', // <-- កែប្រែ និងបន្ថែមត្រង់ចំណុចនេះ
+            'attributes.attribute',
+            'attributes.attributeValue'])
+            ->withAvg('reviews', 'rating')
+            ->findOrFail($id);
 
-    $relatedProducts = Product::where('category_id', $product->category_id)
-        ->where('id', '!=', $product->id)
-        ->limit(5)
-        ->get();
+        $relatedProducts = Product::where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->limit(5)
+            ->get();
 
-    $reviews = $product->reviews()->paginate(5);
+        $reviews = $product->reviews()->paginate(5);
 
-    return view('products.show', compact('product', 'relatedProducts', 'reviews'));
-}
+        return view('products.show', compact('product', 'relatedProducts', 'reviews'));
+    }
+
+    
 }
