@@ -118,6 +118,21 @@
                 min-width: 100% !important;
             }
         }
+
+        /* Global Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 </head>
 
@@ -335,6 +350,22 @@
             </footer>
         </div>
     </div>
+    <!-- Page Load Spinner -->
+    <div id="pageLoader" class="loading-overlay">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <script>
+        // លាក់ Loading វិញនៅពេលទំព័រដំបូងត្រូវបាន Load ជោគជ័យ
+        window.addEventListener('load', function() {
+            const loader = document.getElementById('pageLoader');
+            if (loader) {
+                loader.style.setProperty('display', 'none', 'important');
+            }
+        });
+    </script>
 
     <script src="{{ asset('admin_asset/js/app.js') }}"></script>
 
