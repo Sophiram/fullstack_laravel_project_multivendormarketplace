@@ -12,12 +12,6 @@ php artisan config:clear
 php artisan route:clear
 php artisan view:clear
 
-# === បិទអាជួរខាងក្រោមនេះចោលទាំងអស់ កុំឱ្យវាបង្កក Config ងាប់ ===
-# echo "Caching configuration..."
-# php artisan config:cache
-# php artisan route:cache
-# php artisan view:cache
-
 # echo "Running database migrations and seeding..."
 # # === កែប្រែជួរកូដខាងក្រោមនេះ ដោយថែម --seed ទៅខាងចុង ===
 # php artisan migrate:fresh --force --seed
