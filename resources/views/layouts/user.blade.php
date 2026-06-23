@@ -1107,7 +1107,7 @@
     </footer>
 
     <!-- 🚀 PREMIUM GLOBAL LOADER (Modern Glassmorphism Version) -->
-    <div id="global-loader"
+    {{-- <div id="global-loader"
         class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
         style="z-index: 9999; background: rgba(11, 19, 41, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity 0.35s ease;">
 
@@ -1131,7 +1131,7 @@
                 Loading, Please wait...
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {

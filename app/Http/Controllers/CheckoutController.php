@@ -30,7 +30,7 @@ class CheckoutController extends Controller
         $validated = $request->validate([
             'shipping_address' => 'required|string|min:10',
             'billing_address' => 'nullable|string|min:10',
-            'payment_method' => 'required|in:credit_card,debit_card,paypal'
+            'payment_method' => 'required|in:credit_card,debit_card,paypal,bakong'
         ]);
 
         $user = Auth::user();
@@ -112,7 +112,14 @@ class CheckoutController extends Controller
 
             DB::commit();
 
+           if ($validated['payment_method'] === 'bakong') {
+                return redirect()->route('payment.qr', ['order' => $order->id])
+                                 ->with('success', 'Order placed! Please scan to pay.');
+            }
+
+            // បើបង់តាមវិធីផ្សេង (ឧទាហរណ៍៖ credit_card) ឱ្យទៅទំព័របង្ហាញ Order ធម្មតា
             return redirect()->route('order.show', $order->id)->with('success', 'Order placed successfully');
+
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Error processing order: ' . $e->getMessage());

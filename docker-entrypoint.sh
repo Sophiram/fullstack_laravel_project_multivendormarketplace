@@ -22,12 +22,12 @@ php artisan view:clear
 # # === កែប្រែជួរកូដខាងក្រោមនេះ ដោយថែម --seed ទៅខាងចុង ===
 # php artisan migrate:fresh --force --seed
 
-echo "Running database migrations..."
-php artisan migrate:fresh --force
+# echo "Running database migrations..."
+# php artisan migrate:fresh --force
 
-echo "Running database seeds..."
-# ត្រូវប្រាកដថាបានថែម --force ដូចខាងក្រោមនេះ
-php artisan db:seed --force
+# echo "Running database seeds..."
+# # ត្រូវប្រាកដថាបានថែម --force ដូចខាងក្រោមនេះ
+# php artisan db:seed --force
 
 echo "Starting Apache..."
 exec apache2-foreground
