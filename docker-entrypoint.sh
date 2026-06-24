@@ -15,7 +15,7 @@ php artisan view:clear
 # echo "Running database migrations and seeding..."
 # # === កែប្រែជួរកូដខាងក្រោមនេះ ដោយថែម --seed ទៅខាងចុង ===
 # php artisan migrate:fresh --force --seed
-php artisan migrate
+php artisan migrate --force
 
 # echo "Running database migrations..."
 # php artisan migrate:fresh --force
