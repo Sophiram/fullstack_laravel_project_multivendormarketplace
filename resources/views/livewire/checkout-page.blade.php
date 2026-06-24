@@ -152,7 +152,7 @@ new class extends Component {
                     OrderItem::create([
                         'order_id' => $newOrder->id,
                         'product_id' => $productId,
-                        'vendor_id' => $product->store->vendor->user_id ?? null,
+                        'vendor_id' => $product->store->vendor->id ?? null,
                         'quantity' => $item['quantity'],
                         'price' => $finalPrice,
                         'total' => $totalItemPrice,
