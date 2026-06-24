@@ -73,8 +73,14 @@ class CheckoutController extends Controller
 
                 $product = $cartItem->product;
 
-                // ចាប់យក user_id របស់ Vendor តាមរយៈលំហូរ store->vendor->user_id
-                $vendor_id = ($product->store && $product->store->vendor) ? $product->store->vendor->id : null;
+                $vendor = ($product->store && $product->store->vendor) ? $product->store->vendor : null;
+
+                // ២. បន្ថែមលក្ខខណ្ឌការពារ៖ បើរកមិនឃើញ Vendor ក្នុង Database ទេ ឱ្យបោះ Error ប្រាប់ឱ្យដឹងខ្លួនភ្លាម
+                if (!$vendor) {
+                    throw new \Exception("ផលិតផល '{$product->name}' មិនមានគណនី Vendor ត្រឹមត្រូវនៅក្នុងប្រព័ន្ធឡើយ។ សូមពិនិត្យមើល Database!");
+                }
+
+                $vendor_id = $vendor->id; // ចាប់យក ID ពីតារាង vendors
 
                 $item_total_amount = $cartItem->price * $cartItem->quantity;
 
