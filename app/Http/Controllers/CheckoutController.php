@@ -74,7 +74,7 @@ class CheckoutController extends Controller
                 $product = $cartItem->product;
 
                 // ចាប់យក user_id របស់ Vendor តាមរយៈលំហូរ store->vendor->user_id
-                $vendor_id = ($product->store && $product->store->vendor) ? $product->store->vendor->user_id : null;
+                $vendor_id = ($product->store && $product->store->vendor) ? $product->store->vendor->id : null;
 
                 $item_total_amount = $cartItem->price * $cartItem->quantity;
 
