@@ -56,7 +56,7 @@ new class extends Component {
         $service = new KhqrService();
         $result = $service->checkPayment($this->md5);
 
-        \Illuminate\Support\Facades\Log::info('Payment Result:', $result);
+        \Illuminate\Support\Facades\Log::info('Payment Result payload', $result);
 
         if ($result['paid']) {
             $this->order->update([
